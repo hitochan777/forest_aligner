@@ -23,8 +23,8 @@ class PartialGridAlignment(object):
       self.links = [ ]
       self.score = 0
       self.fscore = 0
-      self.hope = 0
-      self.fear = 0
+      # self.hope = 0
+      # self.fear = 0
       # local feature vector
       self.scoreVector = svector.Vector()
       self.scoreVector_nonlocal = svector.Vector()

@@ -11,9 +11,7 @@ class ForestNode:
         self.setup(data)
 
     def setup(self, data):
-        self.partialAlignments = []
-        self.partialAlignments_hope = []
-        self.partialAlignments_fear = []
+        self.partialAlignments = {"hyp": [], "oracle": []}
         self.data = data
         self.parent = []
         self.hyperEdges = []
@@ -21,9 +19,6 @@ class ForestNode:
         self.unprocessedChildNum = -1 # the number of children whose k-best hasn't been calculated yet
         self.terminals = None
         self.eIndex = -1
-        self.hope = None
-        self.oracle = None
-        self.fear = None
         self.i = -1
         self.j = -1
         self.order = 0

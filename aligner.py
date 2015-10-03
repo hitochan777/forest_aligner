@@ -357,19 +357,15 @@ else:
 
       # Set the oracle item
       oracle = None
-      if FLAGS.oracle == 'gold':
+      if FLAGS.oracle in  ('gold', 'hope'):
           oracle = model.oracle
-      elif FLAGS.oracle == 'hope':
-          oracle = model.hope
       else:
           sys.stderr.write("ERROR: Unknown oracle class: %s\n" %(FLAGS.oracle))
 
       # Set the hypothesis item
       hyp = None
-      if FLAGS.hyp == '1best':
-          hyp = model.modelBest
-      elif FLAGS.hyp == 'fear':
-          hyp = model.fear
+      if FLAGS.hyp in ('1best','fear'):
+          hyp = model.hyp
       else:
           sys.stderr.write("ERROR: Unknown hyp class: %s\n" %(FLAGS.hyp))
       # Debiasing
