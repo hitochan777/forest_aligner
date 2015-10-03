@@ -38,7 +38,7 @@ import io_helper
 import mpi
 import svector
 from pyglog import *
-from DependencyParserHelper import *
+from DependencyForestHelper import *
 
 FLAGS = flags.FLAGS
 

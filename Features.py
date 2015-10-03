@@ -5,9 +5,7 @@
 #########################################################
 
 from collections import defaultdict
-from DependencyParserHelper import containsSpan
 import sys
-import hminghkm as minghkm
 from pyglog import *
 
 class LocalFeatures:
@@ -690,7 +688,7 @@ class NonlocalFeatures:
         else:
             fspan = (minF, maxF)
             currentFNode = minFNode
-            while not containsSpan(currentFNode, fspan):
+            while not currentFNode.containsSpan(fspan):
                 currentFNode = currentFNode.getParent()
             srcTag = currentFNode.data["pos"]
             value1 =  '%s:%s' % (tgtTag,srcTag)
