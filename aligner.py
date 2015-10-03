@@ -38,7 +38,7 @@ import io_helper
 import mpi
 import svector
 from pyglog import *
-from DependencyParserHelper import *
+from DependencyForestHelper import *
 
 FLAGS = flags.FLAGS
 
@@ -141,56 +141,56 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
     masterRank = 0
     # How many processors are there?
     nProcs = mpi.size
-  
+
     results = [ ]
     allResults = None
     fmeasure = 0.0
-  
+
     ##########################################
     # Keep track of time to train this epoch
     ##########################################
     startTime = time.time()
     result_file = robustWrite(tmpdir+'/results.'+str(mpi.rank))
-  
+
     for i, instanceID in enumerate(indices[:FLAGS.subset]):
-      if myRank == i % nProcs:
-        # Assign the current instances we will look at
+        if myRank == i % nProcs:
+            # Assign the current instances we will look at
         f = blob['f_instances'][instanceID]
         e = blob['e_instances'][instanceID]
         etree = blob['etree_instances'][instanceID]
         if FLAGS.train:
-          gold_str = blob['gold_instances'][instanceID]
+            gold_str = blob['gold_instances'][instanceID]
           gold = Alignment.Alignment(gold_str)
-  
+
         ftree = None
         if FLAGS.ftrees is not None:
-          ftree = blob['ftree_instances'][instanceID]
-  
+            ftree = blob['ftree_instances'][instanceID]
+
         inverse = None
         if FLAGS.inverse is not None:
-          inverse = blob['inverse_instances'][instanceID]
-  
+            inverse = blob['inverse_instances'][instanceID]
+
         a1 = None
         if FLAGS.a1 is not None:
-          a1 = blob['a1_instances'][instanceID]
-  
+            a1 = blob['a1_instances'][instanceID]
+
         a2 = None
         if FLAGS.a2 is not None:
-          a2 = blob['a2_instances'][instanceID]
-  
+            a2 = blob['a2_instances'][instanceID]
+
         # Prepare input data.
         # f, e are sequences of words
         f = f.split()
         e = e.split()
-  
+
         # Initialize model for this instance
         model = GridAlign.Model(f, e, etree, ftree, instanceID, weights, a1, a2,
-                                inverse, DECODING=True,
-                                LOCAL_FEATURES=blob['localFeatures'],
-                                NONLOCAL_FEATURES=blob['nonlocalFeatures'],
-                                FLAGS=FLAGS)
+                inverse, DECODING=True,
+                LOCAL_FEATURES=blob['localFeatures'],
+                NONLOCAL_FEATURES=blob['nonlocalFeatures'],
+                FLAGS=FLAGS)
         if FLAGS.train:
-          model.gold = gold
+            model.gold = gold
         # Initialize model with data tables
         model.pef = blob['pef']
         model.pfe = blob['pfe']
@@ -199,30 +199,30 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
         model.align()
         # Dump intermediate chunk to disk. Reassemble later.
         if FLAGS.train:
-          cPickle.dump((model.modelBest.links, model.gold.links_dict), result_file, protocol=cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump((model.modelBest.links, model.gold.links_dict), result_file, protocol=cPickle.HIGHEST_PROTOCOL)
         elif FLAGS.align:
-          # cPickle.dump(model.modelBest.links, result_file, protocol=cPickle.HIGHEST_PROTOCOL)
+            # cPickle.dump(model.modelBest.links, result_file, protocol=cPickle.HIGHEST_PROTOCOL)
           cPickle.dump((model.modelBest.links,model.modelBest.score), result_file, protocol=cPickle.HIGHEST_PROTOCOL)
     result_file.close()
     done = mpi.gather(value=True, root=0)
-  
+
     # REDUCE HERE
     if myRank == masterRank:
-      # Open result files for reading
+        # Open result files for reading
       resultFiles = { }
       for i in range(nProcs):
-        resultFiles[i] = open(tmpdir+'/results.'+str(i),'r')
-  
+          resultFiles[i] = open(tmpdir+'/results.'+str(i),'r')
+
       if FLAGS.train:
-        ##########################################################################
+          ##########################################################################
         # Compute f-measure over all alignments
         ##########################################################################
         numCorrect = 0
         numModelLinks = 0
         numGoldLinks = 0
-  
+
         for i, instanceID in enumerate(indices[:FLAGS.subset]):
-          # What node stored instance i
+            # What node stored instance i
           node = i % nProcs
           # Retrieve result from instance i
           resultTuple = cPickle.load(resultFiles[node])
@@ -230,16 +230,16 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
           gold = resultTuple[1]
           # Update F-score counts
           numCorrect_, numModelLinks_, numGoldLinks_ = f1accumulator(modelBest,
-                                                                     gold)
+                  gold)
           numCorrect += numCorrect_
           numModelLinks += numModelLinks_
           numGoldLinks += numGoldLinks_
         # Compute F-measure, Precision, and Recall
         fmeasure, precision, recall = f1score(numCorrect,
-                                              numModelLinks,
-                                              numGoldLinks)
+                numModelLinks,
+                numGoldLinks)
         elapsedTime = time.time() - startTime
-  
+
         ######################################################################
         # Print report for this iteration
         ######################################################################
@@ -252,11 +252,11 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
         sys.stderr.write('# Me Total: %d\n' % (numModelLinks))
         sys.stderr.write('# Gold Total: %d\n' % (numGoldLinks))
         sys.stderr.write("[%d] Finished decoding.\n" %(myRank))
-      else:
+    else:
         if score_out!=None:
-          sout = open(score_out,"w")
+            sout = open(score_out,"w")
         for i, instanceID in enumerate(indices):
-          node = i % nProcs
+            node = i % nProcs
           resultTuple = cPickle.load(resultFiles[node])
           modelBestLinks = resultTuple[0]
           score = resultTuple[1]
@@ -265,11 +265,11 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
               sout.write("%s\n" % (score))
       # CLEAN UP
       for i in range(nProcs):
-        resultFiles[i].close()
+          resultFiles[i].close()
     return
 
 def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_names = None):
-  """
+    """
   Implements parallelized version of perceptron training for structured outputs
   (Collins, 2002; McDonald, 2010).
   """
@@ -287,10 +287,10 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
   # Will ignore any weights passed during function call.
   weights_restart_filename = '%s/training-restart.%s' % (tmpdir, str(mpi.rank))
   if os.path.isfile(weights_restart_filename):
-    weights_restart_file = open(weights_restart_filename, 'r')
+      weights_restart_file = open(weights_restart_filename, 'r')
     weights = cPickle.load(weights_restart_file)
     weights_restart_file.close()
-  else:
+else:
     # If weights passed during function call is None start with empty.
     if weights is None or len(weights) == 0:
         weights = svector.Vector()
@@ -298,17 +298,17 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
   # Restart with previous running weight sum, also.
   weights_sum_filename = '%s/training.%s' % (tmpdir, str(mpi.rank))
   if os.path.isfile(weights_sum_filename):
-    weights_sum_file = open(weights_sum_filename, 'r')
+      weights_sum_file = open(weights_sum_filename, 'r')
     weights_sum = cPickle.load(weights_sum_file)
     weights_sum_file.close()
-  else:
+else:
     weights_sum = svector.Vector()
 
   numChanged = 0
   done = False
   for i, instanceID in enumerate(indices[:FLAGS.subset]):
-    if myRank == i % nProcs:
-      # Assign the current instances we will look at
+      if myRank == i % nProcs:
+          # Assign the current instances we will look at
       f = blob['f_instances'][instanceID]
       e = blob['e_instances'][instanceID]
       etree = blob['etree_instances'][instanceID]
@@ -316,19 +316,19 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
 
       inverse = None
       if FLAGS.inverse is not None:
-        inverse = blob['inverse_instances'][instanceID]
+          inverse = blob['inverse_instances'][instanceID]
 
       a1 = None
       if FLAGS.a1 is not None:
-        a1 = blob['a1_instances'][instanceID]
+          a1 = blob['a1_instances'][instanceID]
 
       a2 = None
       if FLAGS.a2 is not None:
-        a2 = blob['a2_instances'][instanceID]
+          a2 = blob['a2_instances'][instanceID]
 
       ftree = None
       if FLAGS.ftrees is not None:
-        ftree = blob['ftree_instances'][instanceID]
+          ftree = blob['ftree_instances'][instanceID]
 
       # Preprocess input data
       # f, e are sequences of words
@@ -339,9 +339,9 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
 
       # Initialize model for this instance
       model = GridAlign.Model(f, e, etree, ftree, instanceID, weights, a1, a2,
-                              inverse, LOCAL_FEATURES=blob['localFeatures'],
-                              NONLOCAL_FEATURES=blob['nonlocalFeatures'],
-                              FLAGS=FLAGS)
+              inverse, LOCAL_FEATURES=blob['localFeatures'],
+              NONLOCAL_FEATURES=blob['nonlocalFeatures'],
+              FLAGS=FLAGS)
       model.gold = gold
 
       # Initialize model with data tables
@@ -358,20 +358,20 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
       # Set the oracle item
       oracle = None
       if FLAGS.oracle == 'gold':
-        oracle = model.oracle
+          oracle = model.oracle
       elif FLAGS.oracle == 'hope':
-        oracle = model.hope
+          oracle = model.hope
       else:
-        sys.stderr.write("ERROR: Unknown oracle class: %s\n" %(FLAGS.oracle))
+          sys.stderr.write("ERROR: Unknown oracle class: %s\n" %(FLAGS.oracle))
 
       # Set the hypothesis item
       hyp = None
       if FLAGS.hyp == '1best':
-        hyp = model.modelBest
+          hyp = model.modelBest
       elif FLAGS.hyp == 'fear':
-        hyp = model.fear
+          hyp = model.fear
       else:
-        sys.stderr.write("ERROR: Unknown hyp class: %s\n" %(FLAGS.hyp))
+          sys.stderr.write("ERROR: Unknown hyp class: %s\n" %(FLAGS.hyp))
       # Debiasing
       if FLAGS.debiasing:
           validate_features(oracle.scoreVector, valid_feature_names)
@@ -432,9 +432,9 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
   masterWeights = svector.Vector()
 
   if myRank == masterRank:
-    # Read pickled output
+      # Read pickled output
     for rank in range(nProcs):
-      input_filename = tmpdir+'/training.'+str(rank)
+        input_filename = tmpdir+'/training.'+str(rank)
       input_file = open(input_filename,'r')
       masterWeights += cPickle.load(input_file)
       input_file.close()
@@ -470,7 +470,7 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
   ######################################################################
   elapsedTime = time.time() - startTime
   if myRank == masterRank:
-    # masterRank is printing elapsed time.
+      # masterRank is printing elapsed time.
     # May differ at each node.
     sys.stderr.write("Time: %0.2f\n" %(elapsedTime))
     sys.stderr.write("[%d] Finished training.\n" %(mpi.rank))
@@ -478,70 +478,70 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
   return masterWeights
 
 def f1score(numCorrect, numModelLinks, numGoldLinks):
-  if numGoldLinks == 0 and numModelLinks == 0:
-    return 1.0, 1.0, 1.0
+    if numGoldLinks == 0 and numModelLinks == 0:
+        return 1.0, 1.0, 1.0
   elif numGoldLinks == 0 or numModelLinks == 0:
-    return 0.0, 0.0, 0.0
+      return 0.0, 0.0, 0.0
 
   precision = numCorrect / numModelLinks
   recall = numCorrect / numGoldLinks
 
   if precision == 0 or recall == 0:
-    return 0.0, 0.0, 0.0
+      return 0.0, 0.0, 0.0
 
   f1 = (2*precision*recall) / (precision + recall)
   return f1, precision, recall
 
 def f1accumulator(hyp, gold):
-  numModelLinks = len(hyp)
+    numModelLinks = len(hyp)
   numGoldLinks = len(gold)
 
   if numGoldLinks == 0 and numModelLinks == 0:
-    return 0.0, numModelLinks, numGoldLinks
+      return 0.0, numModelLinks, numGoldLinks
   elif numGoldLinks == 0 or numModelLinks == 0:
-    return 0.0, numModelLinks, numGoldLinks
+      return 0.0, numModelLinks, numGoldLinks
 
   numCorrect = 0.0
   for link in hyp:
-    numCorrect += link in gold
+      numCorrect += link in gold
   return numCorrect, numModelLinks, numGoldLinks
 
 def validate_features(weights, valid_feature_names):
-  """
+    """
   Get rid of features not in valid_feature_names.
   """
   for k in weights.iterkeys():
-    if not valid_feature_names.has_key(k):
-      del weights[k]
+      if not valid_feature_names.has_key(k):
+          del weights[k]
 
 def getFeatureNames(weights):
-  """
+    """
   Get feature names (keys) from an input svector object.
   Return as a hashtable for quick lookup later.
   """
   valid_feature_names = { }
   for k in weights.iterkeys():
-    valid_feature_names[k] = True
+      valid_feature_names[k] = True
   return valid_feature_names
 
 def validateInput(FLAGS):
-  """
+    """
   Validate input arguments. Terminate with message on error.
   """
   try:
-    if not (FLAGS.train ^ FLAGS.align): # xor
-      raise Exception, "You must specify one and only one of --train or --align."
+      if not (FLAGS.train ^ FLAGS.align): # xor
+          raise Exception, "You must specify one and only one of --train or --align."
     if FLAGS.train and (FLAGS.f is None or FLAGS.e is None or FLAGS.etrees is None or FLAGS.gold):
-      raise Exception, "Not all required arguments properly specified."
+        raise Exception, "Not all required arguments properly specified."
     if FLAGS.train and (FLAGS.fdev is None or FLAGS.edev is None or FLAGS.etreesdev is None or FLAGS.golddev is None):
-      raise Exception, "No heldout devset provided for training."
+        raise Exception, "No heldout devset provided for training."
   except Exception, msg:
-    if mpi.rank == 0:
-      sys.stderr.write("Error: %s\nSee %s --help\n" % (msg, sys.argv[0]))
+      if mpi.rank == 0:
+          sys.stderr.write("Error: %s\nSee %s --help\n" % (msg, sys.argv[0]))
     sys.exit(1)
 
 def do_training(indices, training_blob, heldout_blob, weights, weights_out, debiasing_weights):
-  """
+    """
   Helper/wrapper function for parallel perceptron training.
   Runs one epoch of perceptron training and reports current accuracy on
   training data and on heldout data.
@@ -551,14 +551,14 @@ def do_training(indices, training_blob, heldout_blob, weights, weights_out, debi
   # run regularized training scheme.
   valid_feature_names = None
   if FLAGS.debiasing:
-    valid_feature_names = getFeatureNames(debiasing_weights)
+      valid_feature_names = getFeatureNames(debiasing_weights)
 
   for epoch in range(FLAGS.maxepochs):
-    # Randomize order of examples; broadcast this randomized order to all processes.
+      # Randomize order of examples; broadcast this randomized order to all processes.
     # The particular subset any perceptron process gets for this epoch is dependent
     # upon this randomized ordering.
     if myRank == 0 and FLAGS.shuffle:
-      random.shuffle(indices)
+        random.shuffle(indices)
     indices = mpi.broadcast(value=indices, root=0)
 
     ##################################################
@@ -567,13 +567,13 @@ def do_training(indices, training_blob, heldout_blob, weights, weights_out, debi
     # Run one epoch over training data
     io_helper.write_master("===EPOCH %d TRAINING===\n" %(epoch))
     newWeights_avg = perceptron_parallel(epoch, indices, training_blob, weights,
-                                         valid_feature_names)
+            valid_feature_names)
     ####################################
     # Dump weights for this iteration
     ####################################
     if myRank == 0:
-      cPickle.dump(newWeights_avg, weights_out, protocol=cPickle.HIGHEST_PROTOCOL)
- 	    # Need to flush output somehow here. Does weights_out.flush() work?
+        cPickle.dump(newWeights_avg, weights_out, protocol=cPickle.HIGHEST_PROTOCOL)
+            # Need to flush output somehow here. Does weights_out.flush() work?
       weights_out.flush()
 
     ##################################################
@@ -582,10 +582,10 @@ def do_training(indices, training_blob, heldout_blob, weights, weights_out, debi
     ##################################################
     # Decode dev data with same new learned weight vector
     if FLAGS.decodeheldout:
-      io_helper.write_master("===EPOCH %d DECODE HELDOUT===\n" %(epoch))
+        io_helper.write_master("===EPOCH %d DECODE HELDOUT===\n" %(epoch))
       decode_parallel(newWeights_avg, indices_dev, heldout_blob, "dev")
   if myRank == 0:
-    weights_out.close()
+      weights_out.close()
 
 if __name__ == "__main__":
     myRank = mpi.rank
@@ -643,9 +643,9 @@ if __name__ == "__main__":
     argv = FLAGS(sys.argv)
 
     if FLAGS.debiasing and FLAGS.debiasing_weights is None:
-      LOG(FATAL, "Must provide weight vector to use when debiasing mode enabled.")
+        LOG(FATAL, "Must provide weight vector to use when debiasing mode enabled.")
     if FLAGS.debiasing and FLAGS.tau is not None:
-      LOG(FATAL, "Regularization not permitted under debiasing mode. Disable the --tau flag.")
+        LOG(FATAL, "Regularization not permitted under debiasing mode. Disable the --tau flag.")
 
     ##################################################
     # Import features for the specified language-pair
@@ -659,22 +659,22 @@ if __name__ == "__main__":
     # instead of the standard Features.py
     #
     if FLAGS.langpair is not None:
-      try:
-        if myRank == 0:
-          LOG(INFO, "Language pair %s specified; loading %s featureset." %(FLAGS.langpair, FLAGS.langpair))
+        try:
+            if myRank == 0:
+                LOG(INFO, "Language pair %s specified; loading %s featureset." %(FLAGS.langpair, FLAGS.langpair))
         Features = __import__("Features_%s" % (FLAGS.langpair))
       except:
-        if myRank == 0:
-          err_msg = "Could not import language-specific features Features_%s.py. " %(FLAGS.langpair)
+          if myRank == 0:
+              err_msg = "Could not import language-specific features Features_%s.py. " %(FLAGS.langpair)
           err_msg += "Using standard featureset."
           LOG(INFO, err_msg)
         import Features
     else:
-      import Features
+        import Features
 
     pid = str(os.getpid())
     if myRank == 0:
-      print os.getpid()
+        print os.getpid()
       print "NOTES: %s" %(FLAGS.notes)
     file_handles = io_helper.open_files(FLAGS)
 
@@ -711,7 +711,7 @@ if __name__ == "__main__":
     inverse_instances = []
 
     if FLAGS.train:
-      f_dev_instances = []
+        f_dev_instances = []
       e_dev_instances = []
       etree_dev_instances = []
       ftree_dev_instances = []
@@ -722,16 +722,16 @@ if __name__ == "__main__":
 
     tmpdir = None
     if mpi.rank == 0:
-      base_tempdir = None
+        base_tempdir = None
       if FLAGS.tempdir is not None:
-        base_tempdir = FLAGS.tempdir
+          base_tempdir = FLAGS.tempdir
       else:
-        base_tempdir = tempfile.gettempdir()
+          base_tempdir = tempfile.gettempdir()
       if base_tempdir is None:
-        base_tempdir = "."
+          base_tempdir = "."
       tmpdir = tempfile.mkdtemp(prefix='align-'+str(os.getpid())+'-',
-                                dir=base_tempdir)
-    tmpdir = mpi.broadcast(value=tmpdir, root=0)
+              dir=base_tempdir)
+      tmpdir = mpi.broadcast(value=tmpdir, root=0)
 
 
     ################################################
@@ -755,9 +755,9 @@ if __name__ == "__main__":
         for g in file_handles['gold']:
             gold_instances.append(g.strip())
         for f, e, etree, g in izip(file_handles['fdev'],
-                                 file_handles['edev'],
-                                 etreedev_file_handle,
-                                 file_handles['golddev']):
+                file_handles['edev'],
+                etreedev_file_handle,
+                file_handles['golddev']):
             f_dev_instances.append(f.strip())
             e_dev_instances.append(e.strip())
             etree_dev_instances.append(etree.strip())
@@ -800,10 +800,10 @@ if __name__ == "__main__":
     # Initialize weights
     ###########################################################
     if FLAGS.weights is not None:
-      # Restart from another parameter vector
+        # Restart from another parameter vector
         weights = readWeights(file_handles['weights'])
     else:
-      # Start with empty weight vector
+        # Start with empty weight vector
         weights = None
 
     debiasing_weights = None
@@ -825,34 +825,34 @@ if __name__ == "__main__":
     # A Binary Large OBject (BLOB) is a collection of binary data stored as a single entity in a database management system.
     ###########################################################
     common_blob = {
-        'pef': pef,
-        'pfe': pfe,
-        'localFeatures': localFeatures,
-        'nonlocalFeatures': nonlocalFeatures,
-        'tmpdir': tmpdir
-    }
+            'pef': pef,
+            'pfe': pfe,
+            'localFeatures': localFeatures,
+            'nonlocalFeatures': nonlocalFeatures,
+            'tmpdir': tmpdir
+            }
     training_blob = {
-        'f_instances': f_instances,
-        'e_instances': e_instances,
-        'etree_instances': etree_instances,
-        'ftree_instances': ftree_instances,
-        'gold_instances': gold_instances,
-        'a1_instances': a1_instances,
-        'a2_instances': a2_instances,
-        'inverse_instances': inverse_instances
-    }
+            'f_instances': f_instances,
+            'e_instances': e_instances,
+            'etree_instances': etree_instances,
+            'ftree_instances': ftree_instances,
+            'gold_instances': gold_instances,
+            'a1_instances': a1_instances,
+            'a2_instances': a2_instances,
+            'inverse_instances': inverse_instances
+            }
     if FLAGS.train:
         heldout_blob = {
-            'f_instances': f_dev_instances,
-            'e_instances': e_dev_instances,
-            'etree_instances': etree_dev_instances,
-            'ftree_instances': ftree_dev_instances,
-            'gold_instances': gold_dev_instances,
-            'a1_instances': a1_dev_instances,
-            'a2_instances': a2_dev_instances,
-            'inverse_instances': inverse_dev_instances
-        }
-    training_blob.update(common_blob)
+                'f_instances': f_dev_instances,
+                'e_instances': e_dev_instances,
+                'etree_instances': etree_dev_instances,
+                'ftree_instances': ftree_dev_instances,
+                'gold_instances': gold_dev_instances,
+                'a1_instances': a1_dev_instances,
+                'a2_instances': a2_dev_instances,
+                'inverse_instances': inverse_dev_instances
+                }
+        training_blob.update(common_blob)
     if FLAGS.train:
         heldout_blob.update(common_blob)
 

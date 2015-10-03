@@ -44,7 +44,8 @@ def parser(string):
         tail = map(int, edge_infos[1].split(","))
         score = float(edge_infos[2])
         nodeList[head].addHyperEdge(nodeList[head], tail, score)
-     
+        nodeList[head].childnum += len(tail)
+
     for line in buf: # process child and parent relations
         if not line.strip():
             break
@@ -63,7 +64,7 @@ def parser(string):
             root.addHyperEdge(root,[node], 0.0) # Since root is dummy, it is natural to think scores of incoming hyperedge is zero
             # print len(root.hyperEdges)
     return root
-        
+
 if __name__ == "__main__":
     fname=sys.argv[1]
     y = readDependencyFile(fname)
