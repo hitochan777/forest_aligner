@@ -738,7 +738,7 @@ if __name__ == "__main__":
     # Load training examples
     ################################################
     count = 1
-    etree_file_handle = readDependencyFile(FLAGS.etrees)
+    etree_file_handle = readDependencyForestFile(FLAGS.etrees)
     for f, e, etree in izip(file_handles['f'], file_handles['e'], etree_file_handle):
         f_instances.append(f.strip())
         e_instances.append(e.strip())
@@ -750,7 +750,7 @@ if __name__ == "__main__":
     ################################################
     # Load held-out dev examples
     ################################################
-    etreedev_file_handle = readDependencyFile(FLAGS.etreesdev)
+    etreedev_file_handle = readDependencyForestFile(FLAGS.etreesdev)
     if FLAGS.train:
         for g in file_handles['gold']:
             gold_instances.append(g.strip())
@@ -768,10 +768,10 @@ if __name__ == "__main__":
     # LOAD OPTIONAL EXTRAS
     ################################################
     if FLAGS.ftrees is not None:
-        for ftree in readDependencyFile(FLAGS.ftrees):
+        for ftree in readDependencyForestFile(FLAGS.ftrees):
             ftree_instances.append(ftree.strip())
         if FLAGS.train:
-            for ftree in readDependencyFile(FLAGS.ftreesdev):
+            for ftree in readDependencyForestFile(FLAGS.ftreesdev):
                 ftree_dev_instances.append(ftree.strip())
 
     if FLAGS.inverse is not None:
