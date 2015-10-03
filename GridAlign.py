@@ -240,7 +240,7 @@ class Model(object):
       return
   # print self.etree 
     # Add first-level nodes to the queue
-    for terminal in self.etree.getTreeTerminals():
+    for terminal in self.etree.getTerminals():
         queue.append(terminal)
     # Visit each node in the queue and put parent
     # in queue if not there already
@@ -250,9 +250,9 @@ class Model(object):
       # Put parent in the queue if it is not there already
       # We are guaranteed to have visited all of a node's children before we visit that node
       for parent in currentNode.parent:
-          if len(currentNode.parent) > 0 and (len(queue) == 0 or not queue[-1] in currentNode.parent):
-              # if abs(currentNode.parent().depth() - currentNode.depth()) == 1: # TODO: DO WE NEED THIS LINE 
-           queue += currentNode.parent
+          parent.unprocessedChildNum -= 1
+          if parent.unprocessedChildNum == 0:
+              queue.append(parent)
 
       # Visit node here.
         self.terminal_operation(currentNode)

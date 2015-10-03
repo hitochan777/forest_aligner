@@ -32,7 +32,15 @@ def parser(string):
         node = ForestNode()
         word_infos = line.split()
         node.i, node.j = map(lambda x: int(x), word_infos[1].split(",")) # add span
-        node.data = {"word_id": int(word_infos[2]), "surface": word_infos[3], "dict_form": word_infos[4], "pos": word_infos[5], "isContent": word_infos[6]=="1", "pos2": word_infos[7]}
+        node.data = {
+                "id": int(word_infos[0]), # node ID which is unique
+                "word_id": int(word_infos[2]), 
+                "surface": word_infos[3],
+                "dict_form": word_infos[4],
+                "pos": word_infos[5],
+                "isContent": word_infos[6]=="1",
+                "pos2": word_infos[7]
+        }
         nodeList.append(node)
         sent_len = max(sent_len, node.data["word_id"])
 
@@ -43,7 +51,7 @@ def parser(string):
         head = int(edge_infos[0])
         tail = map(int, edge_infos[1].split(","))
         score = float(edge_infos[2])
-        nodeList[head].addHyperEdge(nodeList[head], tail, score)
+        nodeList[head].addHyperEdge(nodeList[head], map(lambda id: nodeList[id], tail), score)
         nodeList[head].childnum += len(tail)
 
     for line in buf: # process child and parent relations
@@ -59,6 +67,7 @@ def parser(string):
     root.i, root.j = 0, sent_len
 
     for node in nodeList:
+        node.unprocessedChildNum = node.childnum
         if node.i == 0 and node.j + 1 == sent_len:
             node.addParent(root, 0) 
             root.addHyperEdge(root,[node], 0.0) # Since root is dummy, it is natural to think scores of incoming hyperedge is zero
