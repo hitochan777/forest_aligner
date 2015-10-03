@@ -33,7 +33,6 @@ from Alignment import readAlignmentString
 from PartialGridAlignment import PartialGridAlignment
 import Fmeasure
 import svector
-import hminghkm # for rule extraction
 import ScoreFunctions
 
 class Model(object):
