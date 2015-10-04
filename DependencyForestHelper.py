@@ -65,6 +65,15 @@ def parser(string):
 
     root = ForestNode() # Dummy root node which collects all root nodes(A forest has multiple roots) in the forest.
     root.i, root.j = 0, sent_len
+    root.data = {
+        "id": None,
+        "word_id": None,
+        "surface": None,
+        "dict_form": None,
+        "pos": "TOP",
+        "isContent": False,
+        "pos2": "TOP"
+    }
 
     for node in nodeList:
         node.unprocessedChildNum = node.childnum

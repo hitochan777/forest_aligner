@@ -199,10 +199,10 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
         model.align()
         # Dump intermediate chunk to disk. Reassemble later.
         if FLAGS.train:
-          cPickle.dump((model.modelBest.links, model.gold.links_dict), result_file, protocol=cPickle.HIGHEST_PROTOCOL)
+          cPickle.dump((model.hyp.links, model.gold.links_dict), result_file, protocol=cPickle.HIGHEST_PROTOCOL)
         elif FLAGS.align:
           # cPickle.dump(model.modelBest.links, result_file, protocol=cPickle.HIGHEST_PROTOCOL)
-          cPickle.dump((model.modelBest.links,model.modelBest.score), result_file, protocol=cPickle.HIGHEST_PROTOCOL)
+          cPickle.dump((model.hyp.links,model.hyp.score), result_file, protocol=cPickle.HIGHEST_PROTOCOL)
     result_file.close()
     done = mpi.gather(value=True, root=0)
   
@@ -357,19 +357,15 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
 
       # Set the oracle item
       oracle = None
-      if FLAGS.oracle == 'gold':
+      if FLAGS.oracle in ['gold','hope']:
         oracle = model.oracle
-      elif FLAGS.oracle == 'hope':
-        oracle = model.hope
       else:
         sys.stderr.write("ERROR: Unknown oracle class: %s\n" %(FLAGS.oracle))
 
       # Set the hypothesis item
       hyp = None
-      if FLAGS.hyp == '1best':
-        hyp = model.modelBest
-      elif FLAGS.hyp == 'fear':
-        hyp = model.fear
+      if FLAGS.hyp in ['1best', 'fear']:
+        hyp = model.hyp
       else:
         sys.stderr.write("ERROR: Unknown hyp class: %s\n" %(FLAGS.hyp))
       # Debiasing
@@ -821,4 +817,42 @@ if __name__ == "__main__":
         else:
             weights_out = open("weights."+pid, "w")
     ###########################################################
-    # Initialize blobs to pass to train
+    # Initialize blobs to pass to train and decoding methods
+    # A Binary Large OBject (BLOB) is a collection of binary data stored as a single entity in a database management system.
+    ###########################################################
+    common_blob = {
+        'pef': pef,
+        'pfe': pfe,
+        'localFeatures': localFeatures,
+        'nonlocalFeatures': nonlocalFeatures,
+        'tmpdir': tmpdir
+    }
+    training_blob = {
+        'f_instances': f_instances,
+        'e_instances': e_instances,
+        'etree_instances': etree_instances,
+        'ftree_instances': ftree_instances,
+        'gold_instances': gold_instances,
+        'a1_instances': a1_instances,
+        'a2_instances': a2_instances,
+        'inverse_instances': inverse_instances
+    }
+    if FLAGS.train:
+        heldout_blob = {
+            'f_instances': f_dev_instances,
+            'e_instances': e_dev_instances,
+            'etree_instances': etree_dev_instances,
+            'ftree_instances': ftree_dev_instances,
+            'gold_instances': gold_dev_instances,
+            'a1_instances': a1_dev_instances,
+            'a2_instances': a2_dev_instances,
+            'inverse_instances': inverse_dev_instances
+        }
+    training_blob.update(common_blob)
+    if FLAGS.train:
+        heldout_blob.update(common_blob)
+
+    if FLAGS.train:
+        do_training(indices, training_blob, heldout_blob, weights, weights_out, debiasing_weights)
+    elif FLAGS.align:
+        decode_parallel(weights, indices, training_blob, "align",out=file_handles['out'],score_out=FLAGS.score_out)

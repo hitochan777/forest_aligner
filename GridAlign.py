@@ -120,10 +120,10 @@ class Model(object):
       self.pef = { }
       self.pfe = { }
   
-      self.etree = stringToDependencyTreeWeakRef(etree) 
+      self.etree = parser(etree) 
       self.etree.terminals = self.etree.setTerminals()
       if ftree is not None:
-          self.ftree = stringToDependencyTreeWeakRef(ftree) 
+          self.ftree = parser(ftree) 
           self.ftree.terminals = self.ftree.setTerminals()
       else:
         self.ftree = None
@@ -211,49 +211,55 @@ class Model(object):
       # *DONE* Now finalize everything; final bookkeeping.
   
       self.hyp = self.etree.partialAlignments["hyp"][0]
-      self.oracle = self.etree.partialAlignments["oracle"][0]
+      if self.COMPUTE_HOPE:
+          self.oracle = self.etree.partialAlignments["oracle"][0]
+      else:
+          self.oracle = self.etree.partialAlignments["oracle"]
   
     def bottom_up_visit(self):
-      """
-      Visit each node in the tree, bottom up, and in level-order.
+        """
+        Visit each node in the tree, bottom up, and in level-order.
   
-      ###########################################################
-      # bottom_up_visit(self):
-      # traverse etree bottom-up, in level order
-      # (1) Add terminal nodes to the visit queue
-      # (2) As each node is visited, add its parent to the visit
-      #     queue if not already on the queue
-      # (3) During each visit, perform the proper alignment function
-      #     depending on the type of node: 'terminal' or 'non-terminal'
-      ###########################################################
-      """
-      queue = [ ]
-      if self.etree is None or self.etree.data is None:
-          empty = PartialGridAlignment()
-          empty.score = None
-          self.etree.partialAlignments.append(empty)
-          self.etree.partialAlignments["oracle"] = PartialGridAlignment()
-          return
+        ###########################################################
+        # bottom_up_visit(self):
+        # traverse etree bottom-up, in level order
+        # (1) Add terminal nodes to the visit queue
+        # (2) As each node is visited, add its parent to the visit
+        #     queue if not already on the queue
+        # (3) During each visit, perform the proper alignment function
+        #     depending on the type of node: 'terminal' or 'non-terminal'
+        ###########################################################
+        """
+        queue = [ ]
+        if self.etree is None:
+            empty = PartialGridAlignment()
+            empty.score = None
+            self.etree.partialAlignments["hyp"].append(empty)
+            self.etree.partialAlignments["oracle"] = PartialGridAlignment()
+            return
 
-      # Add first-level nodes to the queue
-      for terminal in self.etree.getTerminals():
-          queue.append(terminal)
-      # Visit each node in the queue and put parent
-      # in queue if not there already
-      # Parent is there already if it is the last one in the queue
-      while len(queue) > 0:
-          currentNode = queue.pop(0)
-        # Put parent in the queue if it is not there already
-        # We are guaranteed to have visited all of a node's children before we visit that node
-          for parent in currentNode.parent:
-              parent.unprocessedChildNum -= 1
-              if parent.unprocessedChildNum == 0:
-                  queue.append(parent)
-    
-        # Visit node here.
-          self.terminal_operation(currentNode)
-          if len(currentNode.children) > 0:
-              self.nonterminal_operation_cube(currentNode)
+        # Add first-level nodes to the queue
+        for terminal in self.etree.getTerminals():
+            queue.append(terminal)
+        print map(lambda x: x().parent, self.etree.terminals)
+        # Visit each node in the queue and put parent
+        # in queue if not there already
+        # Parent is there already if it is the last one in the queue
+        while len(queue) > 0:
+            currentNode = queue.pop(0)
+          # Put parent in the queue if it is not there already
+          # We are guaranteed to have visited all of a node's children before we visit that node
+            for parent in currentNode.parent:
+                parent.unprocessedChildNum -= 1
+                # print parent.unprocessedChildNum 
+                if parent.unprocessedChildNum == 0:
+                    queue.append(parent)
+      
+          # Visit node here.
+            self.terminal_operation(currentNode)
+            # print len(currentNode.hyperEdges)
+            if len(currentNode.hyperEdges) > 0:
+                self.nonterminal_operation_cube(currentNode)
 
     ################################################################################
     # nonterminal_operation_cube(self, currentNode):
