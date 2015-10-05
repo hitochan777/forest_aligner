@@ -121,7 +121,7 @@ class Model(object):
       self.pfe = { }
   
       self.etree = parser(etree) 
-      self.etree.terminals = self.etree.setTerminals()
+      # self.etree.terminals = self.etree.setTerminals()
       if ftree is not None:
           self.ftree = parser(ftree) 
           self.ftree.terminals = self.ftree.setTerminals()
@@ -241,7 +241,6 @@ class Model(object):
         # Add first-level nodes to the queue
         for terminal in self.etree.getTerminals():
             queue.append(terminal)
-        print map(lambda x: x().parent, self.etree.terminals)
         # Visit each node in the queue and put parent
         # in queue if not there already
         # Parent is there already if it is the last one in the queue
@@ -249,11 +248,11 @@ class Model(object):
             currentNode = queue.pop(0)
           # Put parent in the queue if it is not there already
           # We are guaranteed to have visited all of a node's children before we visit that node
-            for parent in currentNode.parent:
-                parent.unprocessedChildNum -= 1
+            for edgeToParent in currentNode.parent:
+                edgeToParent["parent"].unprocessedChildNum -= 1
                 # print parent.unprocessedChildNum 
-                if parent.unprocessedChildNum == 0:
-                    queue.append(parent)
+                if edgeToParent["parent"].unprocessedChildNum == 0:
+                    queue.append(edgeToParent["parent"])
       
           # Visit node here.
             self.terminal_operation(currentNode)
@@ -275,9 +274,10 @@ class Model(object):
         # span is an ordered pair [i,j] where:
         # i = index of the first eword in span of currentNode
         # j = index of the  last eword in span of currentNode
+        currentNode.span = (currentNode.span_start(), currentNode.span_end())
 
     	############################# Start of hypothesis calculation ####################################
-        self.kbest("hyp")   
+        self.kbest(currentNode, "hyp")   
     	############################# End of hypothesis calculation ####################################
   
         ############################# Start of oracle calculation("oracle" or "hope") ######################################
@@ -287,7 +287,7 @@ class Model(object):
           for hyperEdge in currentNode.hyperEdges:
             oracleChildEdges = [c.oracle for c in hyperEdge.tail]
             oracleChildEdges.append(currentNode.oracle)
-            oracleAlignment, boundingBox = self.createEdge(oracleChildEdges, currentNode, span)
+            oracleAlignment, boundingBox = self.createEdge(oracleChildEdges, currentNode, currentNode.span)
             if oracleAlignment > currentNode.oracle:
                 currentNode.oracle = oracleAlignment
           # Oracle AFTER beam is applied.
@@ -296,7 +296,7 @@ class Model(object):
           #oracleAlignment = oracleCandidates[0]
           # currentNode.oracle = oracleAlignment
         else:
-            self.kbest("oracle")
+            self.kbest(currentNode, "oracle")
              
     def createEdge(self, childEdges, currentNode, span):
       """
@@ -646,7 +646,7 @@ class Model(object):
       # f_recall = 1./((0.1/precision)+(0.9/recall))
       return f1
 
-    def kbest(self, type = "hyp"):
+    def kbest(self, currentNode, type = "hyp"):
         # Initialize
         queue = []
         heapify(queue)
@@ -675,7 +675,7 @@ class Model(object):
                 edge = currentChild.partialAlignments[type][edgeNumber]
                 edges.append(edge)
             edges.append(oneColumnAlignments[position[-1]])
-            newEdge, boundingBox = self.createEdge(edges, currentNode, span)
+            newEdge, boundingBox = self.createEdge(edges, currentNode, currentNode.span)
             if type == "hyp":
                 newEdge.score = self.hypScoreFunc(newEdge)
             else:
@@ -711,7 +711,7 @@ class Model(object):
                     if neighborPosition[componentNumber] >= len(oneColumnAlignments):
                         continue
                 else:
-                    if neighborPosition[componentNumber] >= len(currentNode.tail[currentBestCombinedEdge.hyperEdgeNumber][componentNumber].partialAlignments[type]):
+                    if neighborPosition[componentNumber] >= len(currentNode.hyperEdges[currentBestCombinedEdge.hyperEdgeNumber].tail[componentNumber].partialAlignments[type]):
                         continue
                 # Has this neighbor already been visited?
                 #if duplicates.has_key(tuple(neighborPosition)):
@@ -729,17 +729,18 @@ class Model(object):
                 # Now build the neighbor edge
                 neighbor = []
                 for cellNumber in xrange(arity):
-                    cell = currentNode.tail[currentBestCombinedEdge][cellNumber]
+                    cell = currentNode.hyperEdges[currentBestCombinedEdge.hyperEdgeNumber].tail[cellNumber]
                     edgeNumber = neighborPosition[cellNumber]
                     edge = cell.partialAlignments[type][edgeNumber]
                     neighbor.append(edge)
                 neighbor.append(oneColumnAlignments[neighborPosition[-1]])
-                neighborEdge, boundingBox = self.createEdge(neighbor, currentNode, span)
+                neighborEdge, boundingBox = self.createEdge(neighbor, currentNode, currentNode.span)
                 neighborEdge.position = neighborPosition
+                neighborEdge.hyperEdgeNumber = currentBestCombinedEdge.hyperEdgeNumber
                 if type == "hyp":
-                    newEdge.score = self.hypScoreFunc(newEdge)
+                    neighborEdge.score = self.hypScoreFunc(newEdge)
                 else:
-                    newEdge.score = self.oracleScoreFunc(newEdge)
+                    neighborEdge.score = self.oracleScoreFunc(newEdge)
                 heappush(queue, (-1*neighborEdge.score, neighborEdge))
   
         ####################################################################

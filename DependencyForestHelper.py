@@ -25,6 +25,7 @@ def parser(string):
     # keys = ["id","span","word_id", "surface", "base", "pos", "is_content", "pos2","type", "other"]
     buf = StringIO.StringIO(string)
     nodeList = []
+    nodeChildrenSetList = []
     sent_len = 0
     for line in buf:
         if not line.strip():
@@ -42,6 +43,7 @@ def parser(string):
                 "pos2": word_infos[7]
         }
         nodeList.append(node)
+        nodeChildrenSetList.append(set())
         sent_len = max(sent_len, node.data["word_id"])
 
     for line in buf: # process hyperedge
@@ -52,7 +54,8 @@ def parser(string):
         tail = map(int, edge_infos[1].split(","))
         score = float(edge_infos[2])
         nodeList[head].addHyperEdge(nodeList[head], map(lambda id: nodeList[id], tail), score)
-        nodeList[head].childnum += len(tail)
+        for element in tail:
+            nodeChildrenSetList[head].add(element)
 
     for line in buf: # process child and parent relations
         if not line.strip():
@@ -76,8 +79,8 @@ def parser(string):
     }
 
     for node in nodeList:
-        node.unprocessedChildNum = node.childnum
-        if node.i == 0 and node.j + 1 == sent_len:
+        node.unprocessedChildNum = node.childnum = len(nodeChildrenSetList[node.data["id"]])
+        if node.i == 0 and node.j == sent_len + 1:
             node.addParent(root, 0) 
             root.addHyperEdge(root,[node], 0.0) # Since root is dummy, it is natural to think scores of incoming hyperedge is zero
             # print len(root.hyperEdges)
