@@ -1,20 +1,20 @@
-#choa
-a hierarchical, syntax-based discriminative alignment package
+# Forest Aligner
+a hierarchical, forest-based discriminative alignment package
 
 This document describes how to use and run Nile.
 
-##CONTENTS
-1. REQUIREMENTS
-2. PREPARING YOUR DATA
-3. TRAINING
-4. USER-DEFINED FEATURES
-5. ITERATIVE VITERBI TRAINING & INFERENCE
-6. TESTING
-7. OTHER OPTIONS
-8. QUESTIONS/COMMENTS
-9. REFERENCES
+##Contents
+1. RequirementS
+2. Preparing your data
+3. Training
+4. User-defined features
+5. Iterative viterbi training & inference
+6. Testing
+7. Other options
+8. Questions/comments
+9. References
 
-###1. REQUIREMENTS
+###1. Requirements
 Nile currently depends on a few packages for
 logging, ui, implementation, and parallelization:
 1. python-gflags: a commandline flags module for python
@@ -36,7 +36,7 @@ logging, ui, implementation, and parallelization:
      Installation instructions:
      http://www.boost.org/doc/libs/1_49_0/doc/html/mpi.html
 
-###2. PREPARING YOUR DATA
+###2. Preparing your data
 
 1.  To train an alignment model you will need some data.
     We use some simple canonical filenames below in describing each, but
@@ -116,7 +116,7 @@ We'll need to give the trainer (and aligner) some vocabulary files it will use t
     Use these files as input to nile.py with flags --evcb and --fvcb.
 
 ============================================
-III. TRAINING
+III. Training
 ============================================
 
 Training a new model with Nile involves (1) specifying your data files
@@ -162,7 +162,7 @@ E. Convergence
    <name>.weights-H
 
 =====================================================
-IV. USER-DEFINED FEATURES
+IV. User-defined features
 =====================================================
 You can add your own feature functions to Features.py
 or maintain several different Feature modules for different
@@ -182,7 +182,7 @@ nile.py --e train.e \
         --langpair ar_en
 
 =====================================================
-V. ITERATIVE VITERBI TRAINING & INFERENCE (optional)
+V. Iterative viterbi training & inference (optional)
 =====================================================
 This procedure is somewhat time-consuming because you will need to train several
 models, and align your data several times. However, if you have the time, the
@@ -243,7 +243,7 @@ Parse trees for both target and source text are required for this procedure.
       nile.py --e train.f --f train.e --a train.e.e-f --inverse train-tt.a.e-f ... etc.
 
 ============================================
-VI. TESTING
+VI. Testing
 ============================================
 At test time, it is important to use the same types of parameters and input data you used
 during training. If you trained a model with a beam of K=128, then keep that beam at test time.
@@ -284,7 +284,7 @@ data the same way you did for training and development data.
 
 
 ============================================
-VII. OTHER OPTIONS
+VII. Other options
 ============================================
   A. L1 Regularization (Feature Selection; experimental)
   Nile implements a parallelized version of L1 Regularization via projection after each epoch.
@@ -337,7 +337,7 @@ C. Advanced Perceptron Updates
      --learning_rate <new learning rate>
 
 ============================================
-VIII. QUESTIONS/COMMENTS
+VIII. Questions/comments
 ============================================
 
 Troubleshooting:
@@ -349,7 +349,7 @@ Technical correspondence also welcomed.
 If you are interested in contributing to this project please also let us know!
 
 ============================================
-IX. REFERENCES
+IX. References
 ============================================
 Peter F. Brown, Stephen A. Della Pietra, Vincent J. Della Pietra, Robert L. Mercer.
 The Mathematics of Statistical Machine Translation: Parameter Estimation.
