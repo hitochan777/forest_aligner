@@ -193,29 +193,29 @@ class Model(object):
       Incorporate the following combination-cost features into our model.
       """
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_dummy)
-      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_hminghkm)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_isPuncAndHasMoreThanOneLink)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
-      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance1)
+      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance1)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_crossb)
   
     def align(self):
-      """
-      Main wrapper for performing alignment.
-      """
-      ##############################################
-      # Do the alignment, traversing tree bottom up.
-      ##############################################
-      self.bottom_up_visit()
-      # *DONE* Now finalize everything; final bookkeeping.
+        """
+        Main wrapper for performing alignment.
+        """
+        ##############################################
+        # Do the alignment, traversing tree bottom up.
+        ##############################################
+        self.bottom_up_visit()
+        # *DONE* Now finalize everything; final bookkeeping.
   
-      self.hyp = self.etree.partialAlignments["hyp"][0]
-      if self.COMPUTE_HOPE:
-          self.oracle = self.etree.partialAlignments["oracle"][0]
-      else:
-          self.oracle = self.etree.partialAlignments["oracle"]
-  
+        self.hyp = self.etree.partialAlignments["hyp"][0]
+        if self.COMPUTE_HOPE:
+            self.oracle = self.etree.partialAlignments["oracle"][0]
+        else:
+            self.oracle = self.etree.partialAlignments["oracle"]
+        print "hoge", self.hyp, self.oracle
+      
     def bottom_up_visit(self):
         """
         Visit each node in the tree, bottom up, and in level-order.
@@ -288,14 +288,15 @@ class Model(object):
             oracleChildEdges = [c.oracle for c in hyperEdge.tail]
             oracleChildEdges.append(currentNode.oracle)
             oracleAlignment, boundingBox = self.createEdge(oracleChildEdges, currentNode, currentNode.span)
-            if oracleAlignment > currentNode.oracle:
+            print oracleAlignment.links
+            if oracleAlignment.fscore > currentNode.oracle.fscore:
                 currentNode.oracle = oracleAlignment
           # Oracle AFTER beam is applied.
           #oracleCandidates = list(currentNode.partialAlignments)
           #oracleCandidates.sort(key=attrgetter('fscore'),reverse=True)
           #oracleAlignment = oracleCandidates[0]
           # currentNode.oracle = oracleAlignment
-        else:
+        elif self.COMPUTE_HOPE:
             self.kbest(currentNode, "oracle")
              
     def createEdge(self, childEdges, currentNode, span):
@@ -333,7 +334,6 @@ class Model(object):
       (4) childEdges: the two (or more in case of general trees) nodes we are combining with a new hyperedge
       """
 
-      # print(srcSpan)
       if self.COMPUTE_ORACLE:
           edge.fscore = self.ff_fscore(edge, srcSpan)
   
@@ -420,7 +420,7 @@ class Model(object):
         srcWord = currentNode.data["surface"]
         srcTag = currentNode.data["pos"]
         tgtIndex = None
-        srcIndex = currentNode.eIndex
+        srcIndex = currentNode.i
   
         span = (srcIndex, srcIndex)
   
@@ -538,18 +538,18 @@ class Model(object):
               NLinkPartialAlignment.links = currentLinks
               self.addPartialAlignment(partialAlignments, NLinkPartialAlignment, self.BEAM_SIZE)
               if self.COMPUTE_ORACLE or self.COMPUTE_FEAR:
-                NLinkPartialAlignment.fscore = self.ff_fscore(NLinkPartialAlignment, span)
+                  NLinkPartialAlignment.fscore = self.ff_fscore(NLinkPartialAlignment, span)
   
-                if self.COMPUTE_ORACLE:
-                  if NLinkPartialAlignment.fscore > oracleAlignment.fscore:
-                    oracleAlignment = NLinkPartialAlignment
-                elif self.COMPUTE_HOPE:
-                  NLinkPartialAlignment.score = self.oracleScoreFunc(NLinkPartialAlignment)
-                  self.addPartialAlignment(oracleAlignment, NLinkPartialAlignment, self.BEAM_SIZE)
+                  if self.COMPUTE_ORACLE:
+                      if NLinkPartialAlignment.fscore > oracleAlignment.fscore:
+                          oracleAlignment = NLinkPartialAlignment
+                  elif self.COMPUTE_HOPE:
+                      NLinkPartialAlignment.score = self.oracleScoreFunc(NLinkPartialAlignment)
+                      self.addPartialAlignment(oracleAlignment, NLinkPartialAlignment, self.BEAM_SIZE)
   
-                if self.COMPUTE_FEAR:
-                  NLinkPartialAlignment.score = self.hypScoreFunc(NLinkPartialAlignment)
-                  self.addPartialAlignment(partialAlignments, NLinkPartialAlignment, self.BEAM_SIZE)
+                  if self.COMPUTE_FEAR:
+                      NLinkPartialAlignment.score = self.hypScoreFunc(NLinkPartialAlignment)
+                      self.addPartialAlignment(partialAlignments, NLinkPartialAlignment, self.BEAM_SIZE)
           alignmentList = newAlignmentList 
   
         ########################################################################
@@ -569,9 +569,8 @@ class Model(object):
         if self.COMPUTE_HOPE:
           currentNode.partialAlignments["oracle"] = sortedBestFirstPartialAlignments_oracle
         elif self.COMPUTE_ORACLE:
-          currentNode.oracle = None
           # Oracle BEFORE beam is applied
-          currentNode.oracle = oracleAlignment
+          currentNode.partialAlignments["oracle"] = currentNode.oracle = oracleAlignment
   
           # Oracle AFTER beam is applied
           #oracleCandidates = list(partialAlignments)
@@ -751,4 +750,3 @@ class Model(object):
         while(len(currentNode.partialAlignments[type]) > 0):
             sortedItems.insert(0, heappop(currentNode.partialAlignments[type]))
         currentNode.partialAlignments[type] = sortedItems
-

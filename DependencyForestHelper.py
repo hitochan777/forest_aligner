@@ -83,7 +83,7 @@ def parser(string):
         if node.i == 0 and node.j == sent_len + 1:
             node.addParent(root, 0) 
             root.addHyperEdge(root,[node], 0.0) # Since root is dummy, it is natural to think scores of incoming hyperedge is zero
-            # print len(root.hyperEdges)
+    root.unprocessedChildNum = root.childnum = len(root.hyperEdges) # Since the arity of every incoming hyperedge to root is 0, the number of childrent is equal to the number of the hyperedges. 
     return root
 
 if __name__ == "__main__":

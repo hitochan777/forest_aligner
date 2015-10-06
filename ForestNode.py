@@ -18,7 +18,7 @@ class ForestNode:
         self.childnum = -1
         self.unprocessedChildNum = -1 # the number of children whose k-best hasn't been calculated yet
         self.terminals = None
-        self.eIndex = -1
+        # self.eIndex = -1
         self.i = -1
         self.j = -1
         self.order = 0
@@ -37,16 +37,6 @@ class ForestNode:
         else:
             self.terminals = set([weakref.ref(self)])
         return self.terminals
-  
-    # def getAllNodes(self):
-    #     return self.nodeList
-  
-    def getNodeByIndex(self, index):
-        """
-        Return node with index i
-        Store only weak references to node
-        """
-        return self.nodeList[index]
   
     def getTerminals(self):
         """
