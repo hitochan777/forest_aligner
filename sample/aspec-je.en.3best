@@ -1,0 +1,10 @@
+; 1 -26.972356669201297
+(S (@S (NP (DT this)) (VP (VBZ is) (NP (DT a) (NN pen)))) (. .))
+; 2 -31.80493186237934
+(SBARQ (@SBARQ (WHNP (WDT which)) (SQ (VBZ is) (NP (DT a) (NN pen)))) (. ?))
+; 2 -32.758289302977886
+(SBARQ (@SBARQ (WHNP (WDT which)) (SQ (VP (VBZ is) (NP (DT a) (NN pen))))) (. ?))
+; 2 -35.86025591070116
+(SBARQ (@SBARQ (WHNP (WDT which)) (S (VP (VBZ is) (NP (DT a) (NN pen))))) (. ?))
+; 3 -45.904321354298645
+(S (@S (NP (FW i)) (VP (VBP write) (PP (IN with) (NP (DT a) (NN pen))))) (. .))

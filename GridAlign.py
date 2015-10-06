@@ -214,7 +214,6 @@ class Model(object):
             self.oracle = self.etree.partialAlignments["oracle"][0]
         else:
             self.oracle = self.etree.partialAlignments["oracle"]
-        print "hoge", self.hyp, self.oracle
       
     def bottom_up_visit(self):
         """
@@ -250,13 +249,11 @@ class Model(object):
           # We are guaranteed to have visited all of a node's children before we visit that node
             for edgeToParent in currentNode.parent:
                 edgeToParent["parent"].unprocessedChildNum -= 1
-                # print parent.unprocessedChildNum 
                 if edgeToParent["parent"].unprocessedChildNum == 0:
                     queue.append(edgeToParent["parent"])
       
           # Visit node here.
             self.terminal_operation(currentNode)
-            # print len(currentNode.hyperEdges)
             if len(currentNode.hyperEdges) > 0:
                 self.nonterminal_operation_cube(currentNode)
 
@@ -288,7 +285,6 @@ class Model(object):
             oracleChildEdges = [c.oracle for c in hyperEdge.tail]
             oracleChildEdges.append(currentNode.oracle)
             oracleAlignment, boundingBox = self.createEdge(oracleChildEdges, currentNode, currentNode.span)
-            print oracleAlignment.links
             if oracleAlignment.fscore > currentNode.oracle.fscore:
                 currentNode.oracle = oracleAlignment
           # Oracle AFTER beam is applied.
@@ -691,6 +687,7 @@ class Model(object):
         while(len(queue) > 0 and len(currentNode.partialAlignments[type]) < self.NT_BEAM):
             # Find current best
             (_, currentBestCombinedEdge) = heappop(queue)
+            arity = len(currentNode.hyperEdges[currentBestCombinedEdge.hyperEdgeNumber].tail)
             # Add to my cell
             self.addPartialAlignment(currentNode.partialAlignments[type], currentBestCombinedEdge, self.NT_BEAM)
             # Don't create and score more edges when we are already full.

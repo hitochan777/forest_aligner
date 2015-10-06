@@ -91,19 +91,19 @@ class LocalFeatures:
     return {name: sum}
 
   def ff_identity(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
-    """
-    Return 1 if fWord == eWord; 0 otherwise.
-    """
-    name = self.ff_identity.func_name
-    if len(links) == 1:
-      link = links[0]
-      CHECK_GT(len(info['f']), 0, "Length of f sentence is 0.")
-      CHECK_GT(len(info['e']), 0, "Length of e sentence is 0.")
-
-      if info['f'][link[0]] == info['e'][link[1]]:
-        return {name: 1.0}
-    return {name: 0.0}
-
+      """
+      Return 1 if fWord == eWord; 0 otherwise.
+      """
+      name = self.ff_identity.func_name
+      if len(links) == 1:
+          link = links[0]
+          CHECK_GT(len(info['f']), 0, "Length of f sentence is 0.")
+          CHECK_GT(len(info['e']), 0, "Length of e sentence is 0.")
+  
+          if info['f'][link[0]] == info['e'][link[1]]:
+              return {name: 1.0}
+      return {name: 0.0}
+  
   def ff_distToDiag(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
     """
     Average (Normalized) Distance from the point (fIndex,eIndex) to the grid diagonal
