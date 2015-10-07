@@ -32,7 +32,7 @@ def parser(string):
             break
         node = ForestNode()
         word_infos = line.split()
-        node.i, node.j = map(lambda x: int(x), word_infos[1].split(",")) # add span
+        node.i, node.j = map(int, word_infos[1].split(",")) # add span
         node.data = {
                 "id": int(word_infos[0]), # node ID which is unique
                 "word_id": int(word_infos[2]), 
@@ -85,14 +85,3 @@ def parser(string):
             root.addHyperEdge(root,[node], 0.0) # Since root is dummy, it is natural to think scores of incoming hyperedge is zero
     root.unprocessedChildNum = root.childnum = len(root.hyperEdges) # Since the arity of every incoming hyperedge to root is 0, the number of childrent is equal to the number of the hyperedges. 
     return root
-
-if __name__ == "__main__":
-    fname=sys.argv[1]
-    y = readDependencyFile(fname)
-    for d in y:
-        tree = parse(d)
-        # print(tree)
-        for node in tree.bottomup():
-            print(node.data["surface"],node.i, node.j)
-            # print(node.setTerminals())
-        # print(d.split("\n"))

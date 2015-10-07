@@ -27,6 +27,7 @@ from itertools import izip
 from operator import attrgetter
 from heapq import heappush, heapify, heappop, heappushpop
 from collections import defaultdict
+import collections
 
 from DependencyForestHelper import *
 from Alignment import readAlignmentString
@@ -211,7 +212,7 @@ class Model(object):
         self.hyp = self.etree.partialAlignments["hyp"][0]
         if self.COMPUTE_HOPE:
             self.oracle = self.etree.partialAlignments["oracle"][0]
-        else:
+        elif self.COMPUTE_ORACLE:
             self.oracle = self.etree.partialAlignments["oracle"]
       
     def bottom_up_visit(self):
@@ -252,7 +253,8 @@ class Model(object):
                     queue.append(edgeToParent["parent"])
       
           # Visit node here.
-            self.terminal_operation(currentNode)
+            if currentNode.data["pos"] != "TOP":
+                self.terminal_operation(currentNode)
             if len(currentNode.hyperEdges) > 0:
                 self.nonterminal_operation_cube(currentNode)
 
@@ -280,12 +282,15 @@ class Model(object):
         if self.COMPUTE_ORACLE:
           # Oracle BEFORE beam is applied.
           # Should just copy oracle up from terminal nodes.
+          best, _ = self.createEdge([], currentNode, currentNode.span)
           for hyperEdge in currentNode.hyperEdges:
-            oracleChildEdges = [c.oracle for c in hyperEdge.tail]
-            oracleChildEdges.append(currentNode.oracle)
-            oracleAlignment, boundingBox = self.createEdge(oracleChildEdges, currentNode, currentNode.span)
-            if oracleAlignment.fscore > currentNode.oracle.fscore:
-                currentNode.oracle = oracleAlignment
+              oracleChildEdges = [c.oracle for c in hyperEdge.tail]
+              if currentNode.oracle:
+                  oracleChildEdges.append(currentNode.oracle)
+              oracleAlignment, boundingBox = self.createEdge(oracleChildEdges, currentNode, currentNode.span)
+              if oracleAlignment.fscore > best.fscore:
+                  best = oracleAlignment
+          currentNode.partialAlignments["oracle"] = currentNode.oracle = best
           # Oracle AFTER beam is applied.
           #oracleCandidates = list(currentNode.partialAlignments)
           #oracleCandidates.sort(key=attrgetter('fscore'),reverse=True)
@@ -415,7 +420,7 @@ class Model(object):
         srcWord = currentNode.data["surface"]
         srcTag = currentNode.data["pos"]
         tgtIndex = None
-        srcIndex = currentNode.i
+        srcIndex = currentNode.data["word_id"]
   
         span = (srcIndex, srcIndex)
   
@@ -493,59 +498,59 @@ class Model(object):
         ##################################################
         # Get ready for N-link alignments(N>=2)
         for i in xrange(2,self.nto1+1): 
-          # Sort the fwords by score
-          alignmentList.sort(reverse=True)
-          newAlignmentList = []
-          LIMIT_1 = max(10, self.lenF/2)
-          LIMIT_N = max(10, self.lenF/i)
-          for (_,na) in alignmentList[0:LIMIT_N]:# na means n link alignment
-            for (_, sa) in singleBestAlignment[0:LIMIT_1]:#sa means single-link alignment
-              if(na[-1]>=sa[0]):#sa actually always have only one element
-                continue
-              # clear contents of twoLinkPartialAlignment
-              tgtIndex_a = na[-1]
-              tgtIndex_b = sa[0]
-              # Don't consider a pair (tgtIndex_a, tgtIndex_b) if distance between
-              # these indices > 1 (Arabic/English only).
-              # Need to debug feature that is supposed to deal with this naturally.
-              if self.LANG == "ar_en":
-                if (abs(tgtIndex_b - tgtIndex_a) > 1):
-                  continue
+            # Sort the fwords by score
+            alignmentList.sort(reverse=True)
+            newAlignmentList = []
+            LIMIT_1 = max(10, self.lenF/2)
+            LIMIT_N = max(10, self.lenF/i)
+            for (_,na) in alignmentList[0:LIMIT_N]:# na means n link alignment
+                for (_, sa) in singleBestAlignment[0:LIMIT_1]:#sa means single-link alignment
+                    if(na[-1]>=sa[0]):#sa actually always have only one element
+                        continue
+                    # clear contents of twoLinkPartialAlignment
+                    tgtIndex_a = na[-1]
+                    tgtIndex_b = sa[0]
+                    # Don't consider a pair (tgtIndex_a, tgtIndex_b) if distance between
+                    # these indices > 1 (Arabic/English only).
+                    # Need to debug feature that is supposed to deal with this naturally.
+                    if self.LANG == "ar_en":
+                        if (abs(tgtIndex_b - tgtIndex_a) > 1):
+                            continue
   
-              currentLinks = list(map(lambda x: (x,srcIndex),na+sa))
-                
-              scoreVector = svector.Vector()
-              for k, func in enumerate(self.featureTemplates):
-                value_dict = func(self.info, tgtWord, srcWord,
-                                  tgtIndex, srcIndex, currentLinks,
-                                  self.diagValues, currentNode)
-                for name, value in value_dict.iteritems():
-                  if value != 0:
-                    scoreVector[name] += value
+                    currentLinks = list(map(lambda x: (x,srcIndex),na+sa))
+                      
+                    scoreVector = svector.Vector()
+                    for k, func in enumerate(self.featureTemplates):
+                        value_dict = func(self.info, tgtWord, srcWord,
+                                          tgtIndex, srcIndex, currentLinks,
+                                          self.diagValues, currentNode)
+                        for name, value in value_dict.iteritems():
+                            if value != 0:
+                                scoreVector[name] += value
   
-              score = scoreVector.dot(self.weights)
-              newAlignmentList.append((score, na+sa))
+                    score = scoreVector.dot(self.weights)
+                    newAlignmentList.append((score, na+sa))
   
-              NLinkPartialAlignment = PartialGridAlignment()
-              NLinkPartialAlignment.score = score
-              NLinkPartialAlignment.scoreVector = scoreVector
-              NLinkPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
-              NLinkPartialAlignment.links = currentLinks
-              self.addPartialAlignment(partialAlignments, NLinkPartialAlignment, self.BEAM_SIZE)
-              if self.COMPUTE_ORACLE or self.COMPUTE_FEAR:
-                  NLinkPartialAlignment.fscore = self.ff_fscore(NLinkPartialAlignment, span)
+                    NLinkPartialAlignment = PartialGridAlignment()
+                    NLinkPartialAlignment.score = score
+                    NLinkPartialAlignment.scoreVector = scoreVector
+                    NLinkPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
+                    NLinkPartialAlignment.links = currentLinks
+                    self.addPartialAlignment(partialAlignments, NLinkPartialAlignment, self.BEAM_SIZE)
+                    if self.COMPUTE_ORACLE or self.COMPUTE_FEAR:
+                        NLinkPartialAlignment.fscore = self.ff_fscore(NLinkPartialAlignment, span)
   
-                  if self.COMPUTE_ORACLE:
-                      if NLinkPartialAlignment.fscore > oracleAlignment.fscore:
-                          oracleAlignment = NLinkPartialAlignment
-                  elif self.COMPUTE_HOPE:
-                      NLinkPartialAlignment.score = self.oracleScoreFunc(NLinkPartialAlignment)
-                      self.addPartialAlignment(oracleAlignment, NLinkPartialAlignment, self.BEAM_SIZE)
+                        if self.COMPUTE_ORACLE:
+                            if NLinkPartialAlignment.fscore > oracleAlignment.fscore:
+                                oracleAlignment = NLinkPartialAlignment
+                        elif self.COMPUTE_HOPE:
+                            NLinkPartialAlignment.score = self.oracleScoreFunc(NLinkPartialAlignment)
+                            self.addPartialAlignment(oracleAlignment, NLinkPartialAlignment, self.BEAM_SIZE)
   
-                  if self.COMPUTE_FEAR:
-                      NLinkPartialAlignment.score = self.hypScoreFunc(NLinkPartialAlignment)
-                      self.addPartialAlignment(partialAlignments, NLinkPartialAlignment, self.BEAM_SIZE)
-          alignmentList = newAlignmentList 
+                        if self.COMPUTE_FEAR:
+                            NLinkPartialAlignment.score = self.hypScoreFunc(NLinkPartialAlignment)
+                            self.addPartialAlignment(partialAlignments, NLinkPartialAlignment, self.BEAM_SIZE)
+            alignmentList = newAlignmentList 
   
         ########################################################################
         # Finalize. Sort model-score list and then hope list.
@@ -668,7 +673,8 @@ class Model(object):
                 currentChild = hyperEdge.tail[c]
                 edge = currentChild.partialAlignments[type][edgeNumber]
                 edges.append(edge)
-            edges.append(oneColumnAlignments[position[-1]])
+            if len(oneColumnAlignments) > 0:
+                edges.append(oneColumnAlignments[position[-1]])
             newEdge, boundingBox = self.createEdge(edges, currentNode, currentNode.span)
             if type == "hyp":
                 newEdge.score = self.hypScoreFunc(newEdge)
@@ -728,7 +734,10 @@ class Model(object):
                     edgeNumber = neighborPosition[cellNumber]
                     edge = cell.partialAlignments[type][edgeNumber]
                     neighbor.append(edge)
-                neighbor.append(oneColumnAlignments[neighborPosition[-1]])
+
+                if len(oneColumnAlignments) > 0:
+                    neighbor.append(oneColumnAlignments[neighborPosition[-1]])
+
                 neighborEdge, boundingBox = self.createEdge(neighbor, currentNode, currentNode.span)
                 neighborEdge.position = neighborPosition
                 neighborEdge.hyperEdgeNumber = currentBestCombinedEdge.hyperEdgeNumber

@@ -190,7 +190,7 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
                                 NONLOCAL_FEATURES=blob['nonlocalFeatures'],
                                 FLAGS=FLAGS)
         if FLAGS.train:
-          model.gold = gold
+            model.gold = gold
         # Initialize model with data tables
         model.pef = blob['pef']
         model.pfe = blob['pfe']
