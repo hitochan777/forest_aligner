@@ -38,7 +38,7 @@ import io_helper
 import mpi
 import svector
 from pyglog import *
-from DependencyParserHelper import *
+from DependencyForestHelper import *
 
 FLAGS = flags.FLAGS
 
@@ -190,7 +190,7 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
                                 NONLOCAL_FEATURES=blob['nonlocalFeatures'],
                                 FLAGS=FLAGS)
         if FLAGS.train:
-          model.gold = gold
+            model.gold = gold
         # Initialize model with data tables
         model.pef = blob['pef']
         model.pfe = blob['pfe']
@@ -199,10 +199,10 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
         model.align()
         # Dump intermediate chunk to disk. Reassemble later.
         if FLAGS.train:
-          cPickle.dump((model.modelBest.links, model.gold.links_dict), result_file, protocol=cPickle.HIGHEST_PROTOCOL)
+          cPickle.dump((model.hyp.links, model.gold.links_dict), result_file, protocol=cPickle.HIGHEST_PROTOCOL)
         elif FLAGS.align:
           # cPickle.dump(model.modelBest.links, result_file, protocol=cPickle.HIGHEST_PROTOCOL)
-          cPickle.dump((model.modelBest.links,model.modelBest.score), result_file, protocol=cPickle.HIGHEST_PROTOCOL)
+          cPickle.dump((model.hyp.links,model.hyp.score), result_file, protocol=cPickle.HIGHEST_PROTOCOL)
     result_file.close()
     done = mpi.gather(value=True, root=0)
   
@@ -357,19 +357,15 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
 
       # Set the oracle item
       oracle = None
-      if FLAGS.oracle == 'gold':
+      if FLAGS.oracle in ['gold','hope']:
         oracle = model.oracle
-      elif FLAGS.oracle == 'hope':
-        oracle = model.hope
       else:
         sys.stderr.write("ERROR: Unknown oracle class: %s\n" %(FLAGS.oracle))
 
       # Set the hypothesis item
       hyp = None
-      if FLAGS.hyp == '1best':
-        hyp = model.modelBest
-      elif FLAGS.hyp == 'fear':
-        hyp = model.fear
+      if FLAGS.hyp in ['1best', 'fear']:
+        hyp = model.hyp
       else:
         sys.stderr.write("ERROR: Unknown hyp class: %s\n" %(FLAGS.hyp))
       # Debiasing
@@ -573,7 +569,7 @@ def do_training(indices, training_blob, heldout_blob, weights, weights_out, debi
     ####################################
     if myRank == 0:
       cPickle.dump(newWeights_avg, weights_out, protocol=cPickle.HIGHEST_PROTOCOL)
- 	    # Need to flush output somehow here. Does weights_out.flush() work?
+      # Need to flush output somehow here. Does weights_out.flush() work?
       weights_out.flush()
 
     ##################################################
@@ -738,7 +734,7 @@ if __name__ == "__main__":
     # Load training examples
     ################################################
     count = 1
-    etree_file_handle = readDependencyFile(FLAGS.etrees)
+    etree_file_handle = readDependencyForestFile(FLAGS.etrees)
     for f, e, etree in izip(file_handles['f'], file_handles['e'], etree_file_handle):
         f_instances.append(f.strip())
         e_instances.append(e.strip())
@@ -750,7 +746,7 @@ if __name__ == "__main__":
     ################################################
     # Load held-out dev examples
     ################################################
-    etreedev_file_handle = readDependencyFile(FLAGS.etreesdev)
+    etreedev_file_handle = readDependencyForestFile(FLAGS.etreesdev)
     if FLAGS.train:
         for g in file_handles['gold']:
             gold_instances.append(g.strip())
@@ -768,10 +764,10 @@ if __name__ == "__main__":
     # LOAD OPTIONAL EXTRAS
     ################################################
     if FLAGS.ftrees is not None:
-        for ftree in readDependencyFile(FLAGS.ftrees):
+        for ftree in readDependencyForestFile(FLAGS.ftrees):
             ftree_instances.append(ftree.strip())
         if FLAGS.train:
-            for ftree in readDependencyFile(FLAGS.ftreesdev):
+            for ftree in readDependencyForestFile(FLAGS.ftreesdev):
                 ftree_dev_instances.append(ftree.strip())
 
     if FLAGS.inverse is not None:
@@ -821,7 +817,7 @@ if __name__ == "__main__":
         else:
             weights_out = open("weights."+pid, "w")
     ###########################################################
-    # Initialize blobs to pass to training and decoding methods
+    # Initialize blobs to pass to train and decoding methods
     # A Binary Large OBject (BLOB) is a collection of binary data stored as a single entity in a database management system.
     ###########################################################
     common_blob = {
