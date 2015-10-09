@@ -442,10 +442,13 @@ class Model(object):
         nullPartialAlignment.score = score = scoreVector.dot(self.weights)
         nullPartialAlignment.scoreVector = scoreVector
         nullPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
-        nullPartialAlignment.fscore = self.ff_fscore(nullPartialAlignment, span)
         nullPartialAlignment.score = self.hypScoreFunc(nullPartialAlignment)
         self.addPartialAlignment(partialAlignments, nullPartialAlignment, self.BEAM_SIZE)
         nullPartialAlignment.score = self.oracleScoreFunc(nullPartialAlignment)
+
+        if not self.COMPUTE_1BEST:
+            nullPartialAlignment.fscore = self.ff_fscore(nullPartialAlignment, span)
+
         if self.COMPUTE_ORACLE:
             oracleAlignment = nullPartialAlignment
         elif self.COMPUTE_HOPE:
@@ -478,19 +481,20 @@ class Model(object):
   
           self.addPartialAlignment(partialAlignments, singleLinkPartialAlignment, self.BEAM_SIZE)
   
-          if self.COMPUTE_ORACLE or self.COMPUTE_FEAR:
-            singleLinkPartialAlignment.fscore = self.ff_fscore(singleLinkPartialAlignment, span)
+          if not self.COMPUTE_1BEST:
+              singleLinkPartialAlignment.fscore = self.ff_fscore(singleLinkPartialAlignment, span)
   
-            if self.COMPUTE_ORACLE:
-              if singleLinkPartialAlignment.fscore > oracleAlignment.fscore:
-                oracleAlignment = singleLinkPartialAlignment
-              elif self.COMPUTE_HOPE:
-                singleLinkPartialAlignment.score = self.oracleScoreFunc(singleLinkPartialAlignment)
-                self.addPartialAlignment(oracleAlignment, singleLinkPartialAlignment, self.BEAM_SIZE)
+          if self.COMPUTE_ORACLE:
+            if singleLinkPartialAlignment.fscore > oracleAlignment.fscore:
+              oracleAlignment = singleLinkPartialAlignment
+          elif self.COMPUTE_HOPE:
+            singleLinkPartialAlignment.score = self.oracleScoreFunc(singleLinkPartialAlignment)
+            self.addPartialAlignment(oracleAlignment, singleLinkPartialAlignment, self.BEAM_SIZE)
   
-            if self.COMPUTE_FEAR:
-              singleLinkPartialAlignment.score = self.hypScoreFunc(singleLinkPartialAlignment)
-              self.addPartialAlignment(partialAlignments, singleLinkPartialAlignment, self.BEAM_SIZE)
+          if self.COMPUTE_FEAR:
+            singleLinkPartialAlignment.score = self.hypScoreFunc(singleLinkPartialAlignment)
+            self.addPartialAlignment(partialAlignments, singleLinkPartialAlignment, self.BEAM_SIZE)
+
         alignmentList = singleBestAlignment
         singleBestAlignment.sort(reverse=True)
         ##################################################
@@ -537,19 +541,20 @@ class Model(object):
                     NLinkPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
                     NLinkPartialAlignment.links = currentLinks
                     self.addPartialAlignment(partialAlignments, NLinkPartialAlignment, self.BEAM_SIZE)
-                    if self.COMPUTE_ORACLE or self.COMPUTE_FEAR:
+                   
+                    if not self.COMPUTE_1BEST:
                         NLinkPartialAlignment.fscore = self.ff_fscore(NLinkPartialAlignment, span)
   
-                        if self.COMPUTE_ORACLE:
-                            if NLinkPartialAlignment.fscore > oracleAlignment.fscore:
-                                oracleAlignment = NLinkPartialAlignment
-                        elif self.COMPUTE_HOPE:
-                            NLinkPartialAlignment.score = self.oracleScoreFunc(NLinkPartialAlignment)
-                            self.addPartialAlignment(oracleAlignment, NLinkPartialAlignment, self.BEAM_SIZE)
+                    if self.COMPUTE_ORACLE:
+                        if NLinkPartialAlignment.fscore > oracleAlignment.fscore:
+                            oracleAlignment = NLinkPartialAlignment
+                    elif self.COMPUTE_HOPE:
+                        NLinkPartialAlignment.score = self.oracleScoreFunc(NLinkPartialAlignment)
+                        self.addPartialAlignment(oracleAlignment, NLinkPartialAlignment, self.BEAM_SIZE)
   
-                        if self.COMPUTE_FEAR:
-                            NLinkPartialAlignment.score = self.hypScoreFunc(NLinkPartialAlignment)
-                            self.addPartialAlignment(partialAlignments, NLinkPartialAlignment, self.BEAM_SIZE)
+                    if self.COMPUTE_FEAR:
+                        NLinkPartialAlignment.score = self.hypScoreFunc(NLinkPartialAlignment)
+                        self.addPartialAlignment(partialAlignments, NLinkPartialAlignment, self.BEAM_SIZE)
             alignmentList = newAlignmentList 
   
         ########################################################################
