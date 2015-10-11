@@ -69,8 +69,10 @@ class Model(object):
       self.hypScoreFunc = ScoreFunctions.default
       self.oracleScoreFunc = ScoreFunctions.default
       self.DO_RESCORE = FLAGS.rescore
+      self.DECODING = False
       if DECODING:
         self.COMPUTE_1BEST = True
+        self.DECODING = True
       else:
         if FLAGS.oracle == "gold":
           self.COMPUTE_ORACLE = True
@@ -193,8 +195,8 @@ class Model(object):
       Incorporate the following combination-cost features into our model.
       """
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_dummy)
-      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_isPuncAndHasMoreThanOneLink)
-      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
+      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_isPuncAndHasMoreThanOneLink)
+      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance1)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_crossb)
@@ -446,7 +448,7 @@ class Model(object):
         self.addPartialAlignment(partialAlignments, nullPartialAlignment, self.BEAM_SIZE)
         nullPartialAlignment.score = self.oracleScoreFunc(nullPartialAlignment)
 
-        if not self.COMPUTE_1BEST:
+        if not self.DECODING:
             nullPartialAlignment.fscore = self.ff_fscore(nullPartialAlignment, span)
 
         if self.COMPUTE_ORACLE:
@@ -481,7 +483,7 @@ class Model(object):
   
           self.addPartialAlignment(partialAlignments, singleLinkPartialAlignment, self.BEAM_SIZE)
   
-          if not self.COMPUTE_1BEST:
+          if not self.DECODING:
               singleLinkPartialAlignment.fscore = self.ff_fscore(singleLinkPartialAlignment, span)
   
           if self.COMPUTE_ORACLE:
@@ -542,7 +544,7 @@ class Model(object):
                     NLinkPartialAlignment.links = currentLinks
                     self.addPartialAlignment(partialAlignments, NLinkPartialAlignment, self.BEAM_SIZE)
                    
-                    if not self.COMPUTE_1BEST:
+                    if not self.DECODING:
                         NLinkPartialAlignment.fscore = self.ff_fscore(NLinkPartialAlignment, span)
   
                     if self.COMPUTE_ORACLE:
