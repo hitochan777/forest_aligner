@@ -1,3 +1,6 @@
 [submodule "svector"]
 	path = svector
 	url = https://github.com/hitochan777/svector
+[submodule "python-gflags"]
+	path = python-gflags
+	url = https://github.com/gflags/python-gflags
