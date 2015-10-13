@@ -1,0 +1,3 @@
+[submodule "svector"]
+	path = svector
+	url = https://github.com/hitochan777/svector
