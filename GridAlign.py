@@ -216,8 +216,6 @@ class Model(object):
             self.oracle = self.etree.partialAlignments["oracle"][0]
         elif self.COMPUTE_ORACLE:
             self.oracle = self.etree.partialAlignments["oracle"]
-            # print "oracle", self.oracle
-            # print "hyp", self.hyp
       
     def bottom_up_visit(self):
         """
@@ -373,7 +371,6 @@ class Model(object):
           # Compute final score for this partial alignment
           ##################################################
           edge.score = edge.scoreVector.dot(self.weights)
-  
       return edge.score, boundingBox
   
     def boundingBox(self, links):
@@ -751,9 +748,9 @@ class Model(object):
                 neighborEdge.position = neighborPosition
                 neighborEdge.hyperEdgeNumber = currentBestCombinedEdge.hyperEdgeNumber
                 if type == "hyp":
-                    neighborEdge.score = self.hypScoreFunc(newEdge)
+                    neighborEdge.score = self.hypScoreFunc(neighborEdge)
                 else:
-                    neighborEdge.score = self.oracleScoreFunc(newEdge)
+                    neighborEdge.score = self.oracleScoreFunc(neighborEdge)
                 heappush(queue, (-1*neighborEdge.score, neighborEdge))
 
         ####################################################################
