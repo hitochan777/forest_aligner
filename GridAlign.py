@@ -195,8 +195,8 @@ class Model(object):
       Incorporate the following combination-cost features into our model.
       """
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_dummy)
-      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_isPuncAndHasMoreThanOneLink)
-      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
+      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_isPuncAndHasMoreThanOneLink)
+      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance1)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_crossb)
@@ -216,6 +216,8 @@ class Model(object):
             self.oracle = self.etree.partialAlignments["oracle"][0]
         elif self.COMPUTE_ORACLE:
             self.oracle = self.etree.partialAlignments["oracle"]
+            # print "oracle", self.oracle
+            # print "hyp", self.hyp
       
     def bottom_up_visit(self):
         """
@@ -753,7 +755,7 @@ class Model(object):
                 else:
                     neighborEdge.score = self.oracleScoreFunc(newEdge)
                 heappush(queue, (-1*neighborEdge.score, neighborEdge))
-  
+
         ####################################################################
         # Finalize.
         ####################################################################
