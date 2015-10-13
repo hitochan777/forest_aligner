@@ -46,6 +46,7 @@ nice -15 mpiexec -n $NUMCPUS $PYTHON $APP_DIR/aligner.py \
   --maxepochs $MAXEPOCH \
   --nto1 $LINK \
   --train \
+  --shuffle=False \
   --k $K 1> $NAME.out 2> $NAME.err
 
 # echo "nice -15 $NILE_DIR/weights.sh $NAME $H"
