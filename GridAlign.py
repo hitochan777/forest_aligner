@@ -69,8 +69,10 @@ class Model(object):
       self.hypScoreFunc = ScoreFunctions.default
       self.oracleScoreFunc = ScoreFunctions.default
       self.DO_RESCORE = FLAGS.rescore
+      self.DECODING = False
       if DECODING:
         self.COMPUTE_1BEST = True
+        self.DECODING = True
       else:
         if FLAGS.oracle == "gold":
           self.COMPUTE_ORACLE = True
@@ -369,7 +371,6 @@ class Model(object):
           # Compute final score for this partial alignment
           ##################################################
           edge.score = edge.scoreVector.dot(self.weights)
-  
       return edge.score, boundingBox
   
     def boundingBox(self, links):
@@ -442,10 +443,13 @@ class Model(object):
         nullPartialAlignment.score = score = scoreVector.dot(self.weights)
         nullPartialAlignment.scoreVector = scoreVector
         nullPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
-        nullPartialAlignment.fscore = self.ff_fscore(nullPartialAlignment, span)
         nullPartialAlignment.score = self.hypScoreFunc(nullPartialAlignment)
         self.addPartialAlignment(partialAlignments, nullPartialAlignment, self.BEAM_SIZE)
         nullPartialAlignment.score = self.oracleScoreFunc(nullPartialAlignment)
+
+        if not self.DECODING:
+            nullPartialAlignment.fscore = self.ff_fscore(nullPartialAlignment, span)
+
         if self.COMPUTE_ORACLE:
             oracleAlignment = nullPartialAlignment
         elif self.COMPUTE_HOPE:
@@ -478,19 +482,20 @@ class Model(object):
   
           self.addPartialAlignment(partialAlignments, singleLinkPartialAlignment, self.BEAM_SIZE)
   
-          if self.COMPUTE_ORACLE or self.COMPUTE_FEAR:
-            singleLinkPartialAlignment.fscore = self.ff_fscore(singleLinkPartialAlignment, span)
+          if not self.DECODING:
+              singleLinkPartialAlignment.fscore = self.ff_fscore(singleLinkPartialAlignment, span)
   
-            if self.COMPUTE_ORACLE:
-              if singleLinkPartialAlignment.fscore > oracleAlignment.fscore:
-                oracleAlignment = singleLinkPartialAlignment
-              elif self.COMPUTE_HOPE:
-                singleLinkPartialAlignment.score = self.oracleScoreFunc(singleLinkPartialAlignment)
-                self.addPartialAlignment(oracleAlignment, singleLinkPartialAlignment, self.BEAM_SIZE)
+          if self.COMPUTE_ORACLE:
+            if singleLinkPartialAlignment.fscore > oracleAlignment.fscore:
+              oracleAlignment = singleLinkPartialAlignment
+          elif self.COMPUTE_HOPE:
+            singleLinkPartialAlignment.score = self.oracleScoreFunc(singleLinkPartialAlignment)
+            self.addPartialAlignment(oracleAlignment, singleLinkPartialAlignment, self.BEAM_SIZE)
   
-            if self.COMPUTE_FEAR:
-              singleLinkPartialAlignment.score = self.hypScoreFunc(singleLinkPartialAlignment)
-              self.addPartialAlignment(partialAlignments, singleLinkPartialAlignment, self.BEAM_SIZE)
+          if self.COMPUTE_FEAR:
+            singleLinkPartialAlignment.score = self.hypScoreFunc(singleLinkPartialAlignment)
+            self.addPartialAlignment(partialAlignments, singleLinkPartialAlignment, self.BEAM_SIZE)
+
         alignmentList = singleBestAlignment
         singleBestAlignment.sort(reverse=True)
         ##################################################
@@ -537,19 +542,20 @@ class Model(object):
                     NLinkPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
                     NLinkPartialAlignment.links = currentLinks
                     self.addPartialAlignment(partialAlignments, NLinkPartialAlignment, self.BEAM_SIZE)
-                    if self.COMPUTE_ORACLE or self.COMPUTE_FEAR:
+                   
+                    if not self.DECODING:
                         NLinkPartialAlignment.fscore = self.ff_fscore(NLinkPartialAlignment, span)
   
-                        if self.COMPUTE_ORACLE:
-                            if NLinkPartialAlignment.fscore > oracleAlignment.fscore:
-                                oracleAlignment = NLinkPartialAlignment
-                        elif self.COMPUTE_HOPE:
-                            NLinkPartialAlignment.score = self.oracleScoreFunc(NLinkPartialAlignment)
-                            self.addPartialAlignment(oracleAlignment, NLinkPartialAlignment, self.BEAM_SIZE)
+                    if self.COMPUTE_ORACLE:
+                        if NLinkPartialAlignment.fscore > oracleAlignment.fscore:
+                            oracleAlignment = NLinkPartialAlignment
+                    elif self.COMPUTE_HOPE:
+                        NLinkPartialAlignment.score = self.oracleScoreFunc(NLinkPartialAlignment)
+                        self.addPartialAlignment(oracleAlignment, NLinkPartialAlignment, self.BEAM_SIZE)
   
-                        if self.COMPUTE_FEAR:
-                            NLinkPartialAlignment.score = self.hypScoreFunc(NLinkPartialAlignment)
-                            self.addPartialAlignment(partialAlignments, NLinkPartialAlignment, self.BEAM_SIZE)
+                    if self.COMPUTE_FEAR:
+                        NLinkPartialAlignment.score = self.hypScoreFunc(NLinkPartialAlignment)
+                        self.addPartialAlignment(partialAlignments, NLinkPartialAlignment, self.BEAM_SIZE)
             alignmentList = newAlignmentList 
   
         ########################################################################
@@ -742,11 +748,11 @@ class Model(object):
                 neighborEdge.position = neighborPosition
                 neighborEdge.hyperEdgeNumber = currentBestCombinedEdge.hyperEdgeNumber
                 if type == "hyp":
-                    neighborEdge.score = self.hypScoreFunc(newEdge)
+                    neighborEdge.score = self.hypScoreFunc(neighborEdge)
                 else:
-                    neighborEdge.score = self.oracleScoreFunc(newEdge)
+                    neighborEdge.score = self.oracleScoreFunc(neighborEdge)
                 heappush(queue, (-1*neighborEdge.score, neighborEdge))
-  
+
         ####################################################################
         # Finalize.
         ####################################################################
