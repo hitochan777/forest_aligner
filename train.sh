@@ -26,11 +26,11 @@ nice -15 mpiexec -n $NUMCPUS $PYTHON $APP_DIR/aligner.py \
   --f $DATA/train.f \
   --e $DATA/train.e \
   --gold $DATA/train.a.s \
-  --ftrees $DATA/train.f.forest \
+  --ftrees $DATA/forest/train.f.forest \
   --etrees $DATA/forest/1best/train.e.forest \
   --fdev $DATA/dev.f \
   --edev $DATA/dev.e \
-  --ftreesdev $DATA/dev.f.forest \
+  --ftreesdev $DATA/forest/dev.f.forest \
   --etreesdev $DATA/forest/1best/dev.e.forest \
   --golddev $DATA/dev.a.s \
   --evcb $DATA/e.vcb \
