@@ -33,14 +33,26 @@ def parser(string):
         node = ForestNode()
         word_infos = line.split()
         node.i, node.j = map(int, word_infos[1].split(",")) # add span
+        dict_form = word_infos[4].split("/")[0]
+        if "/" in word_infos[4]:
+            pronunciation = word_infos[4].split("/")[1]
+        else:
+            pronunciation = None
+        if ":" in word_infos[5]:
+            pos2 = word_infos[5].split(":")[1]
+        else:
+            pos2 = None
+        pos = word_infos[5].split(":")[0]
         node.data = {
                 "id": int(word_infos[0]), # node ID which is unique
                 "word_id": int(word_infos[2]), 
                 "surface": word_infos[3],
-                "dict_form": word_infos[4],
-                "pos": word_infos[5],
+                "pronunciation": pronunciation,
+                "dict_form": dict_form,
+                "pos": pos,
+                "pos2": pos2,
                 "isContent": word_infos[6]=="1",
-                "pos2": word_infos[7]
+                "pos2": pos2
         }
         nodeList.append(node)
         nodeChildrenSetList.append(set())

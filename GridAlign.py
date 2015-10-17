@@ -240,6 +240,7 @@ class Model(object):
             return
 
         # Add first-level nodes to the queue
+        # for terminal in sorted(list(self.etree.getTerminals()),key=lambda x: x.data["word_id"]):
         for terminal in self.etree.getTerminals():
             queue.append(terminal)
         # Visit each node in the queue and put parent
@@ -284,7 +285,8 @@ class Model(object):
         if self.COMPUTE_ORACLE:
           # Oracle BEFORE beam is applied.
           # Should just copy oracle up from terminal nodes.
-          best, _ = self.createEdge([], currentNode, currentNode.span)
+          best = PartialGridAlignment()
+          best.fscore = -1.0 # Any negative value suffices
           for hyperEdge in currentNode.hyperEdges:
               oracleChildEdges = [c.oracle for c in hyperEdge.tail]
               if currentNode.oracle:
@@ -593,7 +595,6 @@ class Model(object):
     def addPartialAlignment(self, list, partialAlignment, BEAM_SIZE):
         # Sort this heap with size limit self.BEAM_SIZE in worst-first order
         # A low score is worse than a higher score
-  
         if len(list) < BEAM_SIZE:
             heappush(list, partialAlignment)
         elif partialAlignment > list[0]:

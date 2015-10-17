@@ -15,7 +15,7 @@ class ForestNode:
         self.data = data
         self.parent = []
         self.hyperEdges = []
-        self.oracle = []
+        self.oracle = None
         self.childnum = -1
         self.unprocessedChildNum = -1 # the number of children whose k-best hasn't been calculated yet
         self.terminals = None
