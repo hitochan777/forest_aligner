@@ -1,24 +1,13 @@
 # Forest Aligner
 a hierarchical, forest-based discriminative alignment package
 
-This document describes how to use and run Nile.
-
-##Contents
-1. RequirementS
-2. Preparing your data
-3. Training
-4. User-defined features
-5. Iterative viterbi training & inference
-6. Testing
-7. Other options
-8. Questions/comments
-9. References
+This document describes how to use and run forest-aligner.
 
 ###1. Requirements
-Nile currently depends on a few packages for
+forest-aligner currently depends on a few packages for
 logging, ui, implementation, and parallelization:
-1. python-gflags: a commandline flags module for python
-     (http://code.google.com/p/python-gflags/)
+
+1. (python-gflags)[https://github.com/hitochan777/python-gflags]: a commandline flags module for python
 2. pyglog: a logging facility for python based on google-glog
      (http://www.isi.edu/~riesa/software/pyglog)
 3. svector: a python module for sparse vectors, by David Chiang
@@ -64,7 +53,7 @@ logging, ui, implementation, and parallelization:
     ADDITIONAL NOTES:
     1. Why use a heldout development (dev) and test set?
     
-        After every epoch of training Nile checks it's
+        After every epoch of training forest-aligner checks it's
         current performance on this dev set. When performance is no longer
         increasing on this dev set, we say that we've converged and we stop
         training. (Section III(D) and III(E))
@@ -91,7 +80,7 @@ logging, ui, implementation, and parallelization:
     3. In case of sentences that failed to parse:
          Use a blank line, a 0 on a line by itself,
          or the Berkeley parser default failure string: (())
-         to tell Nile to skip the affected sentence pair.
+         to tell forest-aligner to skip the affected sentence pair.
 
 ###3.  Tables from GIZA++ output (Brown et al., 1993; Och and Ney, 2003)
 We run GIZA++ Model-4 on a large corpus, and compute p(e|f) and p(f|w) word association tables from simply counting links in the final Viterbi alignment. If you don't have time to run Model-4, that's fine. We've seen benefits from using counts from just HMM or Model-1 training.
@@ -119,7 +108,7 @@ We'll need to give the trainer (and aligner) some vocabulary files it will use t
 III. Training
 ============================================
 
-Training a new model with Nile involves (1) specifying your data files
+Training a new model with forest-aligner involves (1) specifying your data files
 as commandline arguments, and (2) invoking training mode. We provide a
 sample training script, train.sh, in this distribution invoking only the
 flags required to get going.
@@ -173,7 +162,7 @@ Arabic-English and Chinese-English, name them:
 Features_ar_en.py and Features_zh_en.py respectively.
 
 Setting the --langpair flag with argument LANG1_LANG2 will
-tell Nile to use these modules. Nile will look for a file called:
+tell forest-aligner to use these modules. forest-aligner will look for a file called:
 Features_LANG1_LANG2.py.
 
 nile.py --e train.e \
@@ -197,7 +186,7 @@ Parse trees for both target and source text are required for this procedure.
         e-f format as opposed to f-e format.
         $ perl -pe 's/(\d+)-(\d+)/$2-$1/g' < train.a.f-e > train.e.e-f
 
-    (b) flip the argument flags for your e and f data when you run Nile. For example:
+    (b) flip the argument flags for your e and f data when you run forest-aligner. For example:
           python nile.py \
             --e train.f \
             --f train.e \
@@ -226,7 +215,7 @@ Parse trees for both target and source text are required for this procedure.
    outputs of the models learned in the first round. You do this
    with the --inverse and --inverse_dev flags.
 
-  (a) Run Nile in --align mode and align your training data and then dev data with the
+  (a) Run forest-aligner in --align mode and align your training data and then dev data with the
       source-tree model you've learned.
 
   (b) Flip the alignment links to f-e format and supply these to your next target-tree
@@ -234,11 +223,11 @@ Parse trees for both target and source text are required for this procedure.
 
       nile.py --e train.e --f train.f --a train.a.f-e --inverse train-st.a.f-e ... etc.
 
-      Nile will fire features to softly enforce agreement between the two models.
+      forest-aligner will fire features to softly enforce agreement between the two models.
 
   (c) Analogously, for your next source-tree model, flip the aligned 1-best alignments
       of your training and dev data from the target-tree model to e-f format, and supply
-      it to Nile with the --inverse and --inverse_dev flags:
+      it to forest-aligner with the --inverse and --inverse_dev flags:
 
       nile.py --e train.f --f train.e --a train.e.e-f --inverse train-tt.a.e-f ... etc.
 
@@ -262,7 +251,7 @@ data the same way you did for training and development data.
   B. Editing test.sh
      Edit the WEIGHTS= line in test.sh for your weights filename.
 
-  C. Set Nile to "align" mode.
+  C. Set forest-aligner to "align" mode.
      At test time, we replace the --train flag with the
      --align flag when running nile.py.
 
@@ -287,14 +276,14 @@ data the same way you did for training and development data.
 VII. Other options
 ============================================
   A. L1 Regularization (Feature Selection; experimental)
-  Nile implements a parallelized version of L1 Regularization via projection after each epoch.
+  forest-aligner implements a parallelized version of L1 Regularization via projection after each epoch.
   (Hastie 1996; Duchi et al., 2008; Martins et al. 2011)
 
   Enabling this feature will allow you to learn a much smaller model that, in our experiments,
   should achieve essentially the same accuracy or better. This is useful for scaling to very large
   training sets, and you may also see some generalization benefits.
 
-  To enable, set Nile's L1 Tau coefficient variable to 1 with commandline flag:
+  To enable, set forest-aligner's L1 Tau coefficient variable to 1 with commandline flag:
   --tau 1
 
  B. Debiasing (experimental)
@@ -305,10 +294,10 @@ VII. Other options
   To enable:
   1. Turn debiasing mode on:
     --debiasing
-  2. Tell Nile about the weight vector you learned during the L1 feature selection step,
+  2. Tell forest-aligner about the weight vector you learned during the L1 feature selection step,
   use --debiasing_weights and supply a weight vector in svector format:
     --debiasing_weights <sparse-model weights>
-  (Make sure you have removed the --tau flag from your Nile invocation.)
+  (Make sure you have removed the --tau flag from your forest-aligner invocation.)
 
 C. Advanced Perceptron Updates
   1. Changing the default Oracle.
