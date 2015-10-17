@@ -7,15 +7,13 @@ This document describes how to use and run forest-aligner.
 forest-aligner currently depends on a few packages for
 logging, ui, implementation, and parallelization:
 
-1. (python-gflags)[https://github.com/hitochan777/python-gflags]: a commandline flags module for python
-2. pyglog: a logging facility for python based on google-glog
-     (http://www.isi.edu/~riesa/software/pyglog)
-3. svector: a python module for sparse vectors, by David Chiang
+1. [python-gflags](https://github.com/hitochan777/python-gflags): a commandline flags module for python
+2. [pyglog](https://github.com/hitochan777/pyglog): a logging facility for python based on google-glog
+3. [svector](https://github.com/hitochan777/svector): a python module for sparse vectors, by David Chiang
      A version is included in this distribution under svector/
      You can download the latest version from:
      http://www.isi.edu/~chiang/software/svector.tgz
-4. An MPI Implementation. We use MPICH2.
-     (http://www.mcs.anl.gov/research/projects/mpich2/)
+4. An MPI Implementation. We use [MPICH2](http://www.mcs.anl.gov/research/projects/mpich2/).
      Download the latest stable release for your architecture.
      Then follow the Installer's Guide, available in the documentation
      section of the website.
@@ -113,35 +111,35 @@ as commandline arguments, and (2) invoking training mode. We provide a
 sample training script, train.sh, in this distribution invoking only the
 flags required to get going.
 
-A. Cluster computing
+1. Cluster computing
    The sample training script uses the Portable Batch System (PBS), a popular
    networked subsystem for controlling jobs on a computing cluster. You can
    remove the PBS directives at the top of the file if you are running locally
    on a single machine (we strongly recommend machines with multiple CPUs), or
    just modify the file to suit your architecture.
 
-B. MPI
+2. MPI
    Take note of where your MPI binaries, libraries,
    and MPI Python bindings live. Then modify the MPI Initialization section
    with the appropriate paths.
 
-C. Training Name
+3. Training Name
    Every training run has a name. Your run's default name is:
    d<date>.k<beam-size>.n<cpu-pool-size>.<langpair>.target-tree.0
 
-D. Running the program. On PBS, do:
+4. Running the program. On PBS, do:
    $ qsub train.sh
    Or, on a local machine with multiple CPUs, do:
    $ ./train.sh
 
-D. Inspecting accuracy on the held-out data:
+5. Inspecting accuracy on the held-out data:
    To inspect held-out F-scores, do:
    $ grep F-score-dev <name>.err
 
    To sort held-out F-scores in descending order do:
    $ grep F-score-dev <name>.err | awk '{print $2}' | cat -n | sort -nr -k 2
 
-E. Convergence
+6. Convergence
    If the highest-scoring epoch, H, is much earlier than your current
    epoch number, you have probably converged. Kill the training job
    and extract weights from epoch H:
@@ -181,13 +179,13 @@ Parse trees for both target and source text are required for this procedure.
 
 1. Train a target-tree model as in section III.
 2. Train a source-tree model by:
-    (a) Transform your gold-standard data to e-f format;
+    1. Transform your gold-standard data to e-f format;
         source-tree models will read and output alignments in
         e-f format as opposed to f-e format.
         $ perl -pe 's/(\d+)-(\d+)/$2-$1/g' < train.a.f-e > train.e.e-f
 
-    (b) flip the argument flags for your e and f data when you run forest-aligner. For example:
-          python nile.py \
+    2. flip the argument flags for your e and f data when you run forest-aligner. For example:
+          python aligner.py \
             --e train.f \
             --f train.e \
             --gold train.a.e-f \
@@ -215,22 +213,26 @@ Parse trees for both target and source text are required for this procedure.
    outputs of the models learned in the first round. You do this
    with the --inverse and --inverse_dev flags.
 
-  (a) Run forest-aligner in --align mode and align your training data and then dev data with the
+  1. Run forest-aligner in --align mode and align your training data and then dev data with the
       source-tree model you've learned.
 
-  (b) Flip the alignment links to f-e format and supply these to your next target-tree
+  2. Flip the alignment links to f-e format and supply these to your next target-tree
       training with --inverse and --inverse_dev, e.g.:
 
-      nile.py --e train.e --f train.f --a train.a.f-e --inverse train-st.a.f-e ... etc.
-
+      ```
+      python aligner.py --e train.e --f train.f --a train.a.f-e --inverse train-st.a.f-e ... etc.
+      ```
+      
       forest-aligner will fire features to softly enforce agreement between the two models.
 
-  (c) Analogously, for your next source-tree model, flip the aligned 1-best alignments
+  2. Analogously, for your next source-tree model, flip the aligned 1-best alignments
       of your training and dev data from the target-tree model to e-f format, and supply
       it to forest-aligner with the --inverse and --inverse_dev flags:
 
-      nile.py --e train.f --f train.e --a train.e.e-f --inverse train-tt.a.e-f ... etc.
-
+      ```
+      python aligner.py --e train.f --f train.e --a train.e.e-f --inverse train-tt.a.e-f ... etc.
+      ```
+      
 ============================================
 VI. Testing
 ============================================
@@ -240,37 +242,49 @@ If you used GIZA++ Model-4 alignments as input with flags --a1 and --a2, then si
 supply alignment predictions from GIZA++ at test time. Finally, binarize your trees on test
 data the same way you did for training and development data.
 
-  A. Preparing Vocabulary files:
+  1. Preparing Vocabulary files:
      As with the training and development data, prepare source and target vcb files.
+     
+     ```
      $ ./prepare-vocab.py < test.e > test.e.vcb
      $ ./prepare-vocab.py < test.f > test.f.vcb
-
+     ```
+     
      Use these files as arguments for the --evcb and --fvcb flags to nile.py
      in your testing script.
 
-  B. Editing test.sh
+  2. Editing test.sh
      Edit the WEIGHTS= line in test.sh for your weights filename.
 
-  C. Set forest-aligner to "align" mode.
-     At test time, we replace the --train flag with the
-     --align flag when running nile.py.
+  3. Set forest-aligner to "align" mode.
+     At test time, we replace the `--train` flag with the
+     `--align` flag when running aligner.py.
 
-  D. Running test.sh
+  4. Running test.sh
      Then, run test script test.sh. Using PBS, do:
+
+     ```
      $ qsub test.sh
+     ```
+     
      Or, on a local machine with multiple CPUs:
+     
+     ```
      $ ./test.sh
+     ```
 
      By default, alignment output is written in f-e format to:
      <name>.weights-H.test-output.a
 
-  E. Evaluation
+  5. Evaluation
      If you are aligning data for which you have gold-standard alignments,
      you can calculate F-measure using our provided scripts. Remember,
      alignments are output in f-e format and should be compared against
      data in the same format.
-     Usage: ./Fmeasure.py <your-file> <gold-file>
-
+     
+     ```
+     $ ./Fmeasure.py <your-file> <gold-file>`
+     ```
 
 ============================================
 VII. Other options
@@ -284,7 +298,7 @@ VII. Other options
   training sets, and you may also see some generalization benefits.
 
   To enable, set forest-aligner's L1 Tau coefficient variable to 1 with commandline flag:
-  --tau 1
+  `--tau 1`
 
  B. Debiasing (experimental)
  While L1 yields sparse solutions, these solutions are known to be biased in magnitude which may
@@ -293,11 +307,11 @@ VII. Other options
 
   To enable:
   1. Turn debiasing mode on:
-    --debiasing
+    `--debiasing`
   2. Tell forest-aligner about the weight vector you learned during the L1 feature selection step,
-  use --debiasing_weights and supply a weight vector in svector format:
-    --debiasing_weights <sparse-model weights>
-  (Make sure you have removed the --tau flag from your forest-aligner invocation.)
+  use `--debiasing_weights` and supply a weight vector in svector format:
+    `--debiasing_weights <sparse-model weights>`
+  (Make sure you have removed the `--tau` flag from your forest-aligner invocation.)
 
 C. Advanced Perceptron Updates
   1. Changing the default Oracle.
@@ -307,7 +321,7 @@ C. Advanced Perceptron Updates
      model score. We call this the "hope" oracle, because we have more
      of a chance to reach it; it has high model score and low loss.
      To use a "hope" oracle, use flag and argument:
-     --oracle hope
+     `--oracle hope`
   2. Changing the default hypothesis.
      In selecting the hypothesis that we update our model away from
      (and towards the oracle), we can select a hypothesis somewhat
@@ -318,12 +332,12 @@ C. Advanced Perceptron Updates
      it has the nefarious property of having both a high model score
      (our model likes it), but also very high loss (it is a bad alignment).
      To use a "fear" hypothesis, use flag and argument:
-     --hyp fear
+     `--hyp fear`
   3. Changing the default learning rate.
      There is a single learning rate parameter used in the standard perceptron
      update which affects the magnitude of each update. It is set to 1.0 by default.
      To use a different learning rate, use:
-     --learning_rate <new learning rate>
+     `--learning_rate <new learning rate>`
 
 ============================================
 VIII. Questions/comments
