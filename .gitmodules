@@ -4,3 +4,6 @@
 [submodule "pyglog"]
 	path = pyglog
 	url = https://github.com/hitochan777/pyglog
+[submodule "python-gflags"]
+	path = python-gflags
+	url = https://github.com/hitochan777/python-gflags
