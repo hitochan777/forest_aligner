@@ -32,9 +32,15 @@ logging, ui, implementation, and parallelization:
     1. train.f: a file of source-language sentences, one per line.
     2. train.e: a file of target-language sentences, one per line.
     3. train.a: a file of gold-standard alignments for each sentence pair in train.f and train.e; each line in the file should be a sequence of space-separated strings encoding a single link in f-e format as follows:
+            
+            ```
             0-1 1-2 2-2 2-3 4-5
+            ```
+            
     4. train.e-parse: a file of target-language parse trees, one for each line in train.e; trees should be in standard Penn Treebank format as follows:
-            (TOP (S (NP (DT the) (NN man)) (VP (VBD ate))))
+    
+            `(TOP (S (NP (DT the) (NN man)) (VP (VBD ate))))
+    
         We use tokens `-RRB-` and `-LRB-` to represent right and left parentheses, respectively (see below).
     5. train.f-parse: a file of source-language parse-trees, one for each line in train.f (OPTIONAL)
     
