@@ -33,22 +33,22 @@ logging, ui, implementation, and parallelization:
     2. train.e: a file of target-language sentences, one per line.
     3. train.a: a file of gold-standard alignments for each sentence pair in train.f and train.e; each line in the file should be a sequence of space-separated strings encoding a single link in f-e format as follows:
             
-            ```
+            
             0-1 1-2 2-2 2-3 4-5
-            ```
+            
             
     4. train.e-parse: a file of target-language parse trees, one for each line in train.e; trees should be in standard Penn Treebank format as follows:
     
-            `(TOP (S (NP (DT the) (NN man)) (VP (VBD ate))))
+           (TOP (S (NP (DT the) (NN man)) (VP (VBD ate))))
     
         We use tokens `-RRB-` and `-LRB-` to represent right and left parentheses, respectively (see below).
     5. train.f-parse: a file of source-language parse-trees, one for each line in train.f (OPTIONAL)
     
     Also prepare heldout development and test data in the same manner.
     Source-tree files are optional, but all others are required.
-
     Throughout the rest of this document we use the same filename extensions
     as above for our development and test data, e.g.:
+    
     dev.e <-- target-language sentences in heldout development data
     dev.f <-- source-language sentences in heldout development data
     test.e <-- target-language sentences in heldout test data
@@ -69,9 +69,11 @@ logging, ui, implementation, and parallelization:
         Section III(E), we align our test.* data and note the accuracy.
 
     2. We relabel parentheses tokens before parsing, i.e. "(" -> -LRB- and ")" -> -RRB-. For example:
+         
            $ sed -e 's/(/-LRB-/g' -e 's/)/-RRB-/g' < input > input.clean
 
-         And then we parse, by doing:
+       And then we parse, by doing:
+       
              java -Xmx2600m -Xms2600m -jar berkeleyParser.jar \
                  -gr eng_grammar.gr \
                  -binarize \
