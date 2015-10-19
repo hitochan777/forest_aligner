@@ -197,6 +197,7 @@ class Model(object):
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_dummy)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_isPuncAndHasMoreThanOneLink)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
+      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_hyperEdgeScore)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance1)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_crossb)
@@ -291,7 +292,7 @@ class Model(object):
               oracleChildEdges = [c.oracle for c in hyperEdge.tail]
               if currentNode.oracle:
                   oracleChildEdges.append(currentNode.oracle)
-              oracleAlignment, boundingBox = self.createEdge(oracleChildEdges, currentNode, currentNode.span)
+              oracleAlignment, boundingBox = self.createEdge(oracleChildEdges, currentNode, currentNode.span, hyperEdge)
               if oracleAlignment.fscore > best.fscore:
                   best = oracleAlignment
           currentNode.partialAlignments["oracle"] = currentNode.oracle = best
@@ -303,7 +304,7 @@ class Model(object):
         elif self.COMPUTE_HOPE:
             self.kbest(currentNode, "oracle")
              
-    def createEdge(self, childEdges, currentNode, span):
+    def createEdge(self, childEdges, currentNode, span, hyperEdge):
       """
       Create a new edge from the list of edges 'edge'.
       Creating an edge involves:
@@ -315,6 +316,7 @@ class Model(object):
       newEdge = PartialGridAlignment()
       newEdge.scoreVector_local = svector.Vector()
       newEdge.scoreVector = svector.Vector()
+      newEdge.hyperEdgeScore = hyperEdge.score
   
       for e in childEdges:
           newEdge.links += e.links
@@ -682,7 +684,7 @@ class Model(object):
                 edges.append(edge)
             if len(oneColumnAlignments) > 0:
                 edges.append(oneColumnAlignments[position[-1]])
-            newEdge, boundingBox = self.createEdge(edges, currentNode, currentNode.span)
+            newEdge, boundingBox = self.createEdge(edges, currentNode, currentNode.span, hyperEdge)
             if type == "hyp":
                 newEdge.score = self.hypScoreFunc(newEdge)
             else:
@@ -745,7 +747,7 @@ class Model(object):
                 if len(oneColumnAlignments) > 0:
                     neighbor.append(oneColumnAlignments[neighborPosition[-1]])
 
-                neighborEdge, boundingBox = self.createEdge(neighbor, currentNode, currentNode.span)
+                neighborEdge, boundingBox = self.createEdge(neighbor, currentNode, currentNode.span, hyperEdge)
                 neighborEdge.position = neighborPosition
                 neighborEdge.hyperEdgeNumber = currentBestCombinedEdge.hyperEdgeNumber
                 if type == "hyp":

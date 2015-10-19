@@ -827,3 +827,10 @@ class NonlocalFeatures:
         Return True if string is one of  , . ! ? ' " ( ) : ; - @ etc.
         """
         return self.punc.has_key(string)
+
+    def ff_nonlocal_hyperEdgeScore(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
+        """
+        Return hyperedge score
+        """
+        name = self.ff_nonlocal_hyperEdgeScore.func_name
+        return {name: edge.hyperEdgeScore}
