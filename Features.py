@@ -648,46 +648,6 @@ class NonlocalFeatures:
             value2 = '%s:%s(%s,%s)' % (tgtTag, srcTag, leftFTag, rightFTag)
             return {name+'___'+value1: 1, name+'___'+value2: 1}
   
-    def ff_nonlocal_hminghkm(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
-        """
-        Fire features for every translation rule extracted at the current node.
-        """
-        name = self.ff_nonlocal_hminghkm.func_name
-        if len(links) == 0:
-          return {}
-        features = defaultdict(int)
-  
-        start_span = treeNode.span_start()
-        end_span = treeNode.span_end()
-        l = [ ]
-        minf = len(info['f'])
-        maxf = 0
-  
-        for link in links:
-          if link[1] >= start_span and link[1] <= end_span:
-            l.append((link[0], link[1]-start_span))
-            if link[0] < minf:
-              minf = link[0]
-            if link[0] > maxf:
-              maxf = link[0]
-  
-        fsubset = info['f'][minf:maxf+1]
-        links_subset = [(link[0]-minf, link[1]) for link in l]
-  
-        if len(links_subset) > 0:
-          for rule in minghkm.extract(fsubset, treeNode, links_subset, start_span, hierarchical=True):
-            try:
-              ruleRoot = rule.e.data["pos"]
-            except:
-              # Probably a blank line or a bad rule?
-              continue
-  
-            rulestr = str(rule)
-            rulestr = rulestr.replace(" ","_")
-            features[name+'___'+rulestr] = 1
-  
-        return features
-  
     def ff_nonlocal_sameWordLinks(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
         """
         Fire feature when fWord linked to more than one eWord of the same type.
@@ -867,3 +827,10 @@ class NonlocalFeatures:
         Return True if string is one of  , . ! ? ' " ( ) : ; - @ etc.
         """
         return self.punc.has_key(string)
+
+    def ff_nonlocal_hyperEdgeScore(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
+        """
+        Return hyperedge score
+        """
+        name = self.ff_nonlocal_hyperEdgeScore.func_name
+        return {name: edge.hyperEdgeScore}

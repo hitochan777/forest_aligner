@@ -26,6 +26,7 @@ class PartialGridAlignment(object):
       self.links = [ ]
       self.score = 0
       self.fscore = 0
+      self.hyperEdgeScore = 0.0
       self.scoreVector = svector.Vector()
       self.scoreVector_nonlocal = svector.Vector()
       self.position = None
@@ -35,8 +36,7 @@ class PartialGridAlignment(object):
       self.links = []
       self.score = 0
       self.fscore = 0
-      self.hope = 0
-      self.fear = 0
+      self.hyperEdgeScore = 0.0
       self.scoreVector = svector.Vector()
       self.position = None
       self.boundingBox = None
