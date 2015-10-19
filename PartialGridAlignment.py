@@ -40,3 +40,7 @@ class PartialGridAlignment(object):
       self.scoreVector = svector.Vector()
       self.position = None
       self.boundingBox = None
+
+    def addDepthToLink(self, delta=1):
+        for link in self.links:
+            link.depth += delta

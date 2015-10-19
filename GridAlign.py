@@ -35,6 +35,7 @@ from PartialGridAlignment import PartialGridAlignment
 import Fmeasure
 import svector
 import ScoreFunctions
+from AlignmentLink import AlignmentLink
 
 class Model(object):
     """
@@ -198,7 +199,7 @@ class Model(object):
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_isPuncAndHasMoreThanOneLink)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_hyperEdgeScore)
-      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance1)
+      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_crossb)
   
@@ -290,6 +291,8 @@ class Model(object):
           best.fscore = -1.0 # Any negative value suffices
           for hyperEdge in currentNode.hyperEdges:
               oracleChildEdges = [c.oracle for c in hyperEdge.tail]
+              for edge in oracleChildEdges:
+                  edge.addDepthToLink()
               if currentNode.oracle:
                   oracleChildEdges.append(currentNode.oracle)
               oracleAlignment, boundingBox = self.createEdge(oracleChildEdges, currentNode, currentNode.span, hyperEdge)
@@ -359,7 +362,7 @@ class Model(object):
           for link in edge.links:
               fIndex = link[0]
               eIndex = link[1]
-              linkedIndices[fIndex].append(eIndex)
+              linkedIndices[fIndex].append((eIndex,link.depth))
   
           scoreVector = svector.Vector(edge.scoreVector)
   
@@ -465,7 +468,7 @@ class Model(object):
         singleBestAlignment = []
         alignmentList = []
         for tgtIndex, tgtWord in enumerate(tgtWordList):
-          currentLinks = [(tgtIndex, srcIndex)]
+          currentLinks = [AlignmentLink((tgtIndex, srcIndex))]
           scoreVector = svector.Vector()
   
           for k, func in enumerate(self.featureTemplates):
@@ -526,7 +529,7 @@ class Model(object):
                         if (abs(tgtIndex_b - tgtIndex_a) > 1):
                             continue
   
-                    currentLinks = list(map(lambda x: (x,srcIndex),na+sa))
+                    currentLinks = list(map(lambda x: AlignmentLink((x,srcIndex)),na+sa))
                       
                     scoreVector = svector.Vector()
                     for k, func in enumerate(self.featureTemplates):
@@ -641,7 +644,8 @@ class Model(object):
       inGold = self.gold.links_dict.has_key
       numCorrect = 0
       for link in edge.links:
-        numCorrect += inGold(link)
+          numCorrect += inGold(link.link)
+          print link.link
       numCorrect = float(numCorrect)
   
       precision = numCorrect / numModelLinks
@@ -682,6 +686,7 @@ class Model(object):
                 currentChild = hyperEdge.tail[c]
                 edge = currentChild.partialAlignments[type][edgeNumber]
                 edges.append(edge)
+                edges[-1].addDepthToLink()
             if len(oneColumnAlignments) > 0:
                 edges.append(oneColumnAlignments[position[-1]])
             newEdge, boundingBox = self.createEdge(edges, currentNode, currentNode.span, hyperEdge)
@@ -743,6 +748,7 @@ class Model(object):
                     edgeNumber = neighborPosition[cellNumber]
                     edge = cell.partialAlignments[type][edgeNumber]
                     neighbor.append(edge)
+                    neighbor[-1].addDepthToLink()
 
                 if len(oneColumnAlignments) > 0:
                     neighbor.append(oneColumnAlignments[neighborPosition[-1]])

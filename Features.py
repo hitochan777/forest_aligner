@@ -7,6 +7,7 @@
 from collections import defaultdict
 import sys
 from pyglog import *
+from AlignmentLink import AlignmentLink
 
 class LocalFeatures:
   def __init__(self, pef, pfe):
@@ -579,8 +580,8 @@ class NonlocalFeatures:
             continue
           else:   # fIndex is aligned to at least two different eIndices
                   # compute distance in pairs: if list = [1,2,3], compute dist(1,2), dist(2,3)
-            for i, eIndex1 in enumerate(linkedToWords[fIndex]):
-                for _, eIndex2 in enumerate(linkedToWords[fIndex][i+1:i+2]):
+            for i, (eIndex1, _ ) in enumerate(linkedToWords[fIndex]):
+                for _, (eIndex2, _ ) in enumerate(linkedToWords[fIndex][i+1:i+2]):
                   dist += max(0.0,abs(eIndex2 - eIndex1)-1)/spanLength
         dist /= len(linkedToWords)
         return {name: dist}
@@ -660,7 +661,7 @@ class NonlocalFeatures:
             if len(linkedToWords[fIndex]) < 2:
               continue
             eWords = defaultdict(int)
-            for eIndex in linkedToWords[fIndex]:
+            for (eIndex, _) in linkedToWords[fIndex]:
               eWord = info['e'][eIndex]
               eWords[eWord] += 1
             penalty += sum([count-1 for count in eWords.values()])
@@ -668,11 +669,11 @@ class NonlocalFeatures:
             penalty /= (tgtSpan[1] - tgtSpan[0] + 1)
         return {name: penalty}
   
-    def ff_nonlocal_treeDistance1(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
+    def ff_nonlocal_treeDistance(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
         """
         A distance metric quantifying "tree distance" between two links (f, i); (f, j)
         """
-        name = self.ff_nonlocal_treeDistance1.func_name + '_nb'
+        name = self.ff_nonlocal_treeDistance.func_name + '_nb'
   
         dist = 0.0
         linkedToWords_copy = dict(linkedToWords)
@@ -693,134 +694,13 @@ class NonlocalFeatures:
                 listlength = len(linkedToWords_copy[fIndex])
                 for i in xrange(listlength-1):
                     # eIndex1 and eIndex2 will always be the smallest, and second-smallest indices, respectively.
-                    eIndex1 = linkedToWords_copy[fIndex][0]
-                    eIndex2 = linkedToWords_copy[fIndex][1]
+                    _, depth1 = linkedToWords_copy[fIndex][0]
+                    _, depth2 = linkedToWords_copy[fIndex][1]
                     linkedToWords_copy[fIndex] = linkedToWords_copy[fIndex][1:]
-                    node1 = info['etree'].getNodeByIndex(eIndex1)
-                    node2 = info['etree'].getNodeByIndex(eIndex2)
-                    if treeDistValues.has_key((eIndex1, eIndex2)):
-                        dist += treeDistValues[(eIndex1,eIndex2)]
-                    else:
-                        val = self.treeDistance1(info['etree'], node1, node2)
-                        treeDistValues[(eIndex1,eIndex2)] = val
-                        dist += val
+                    dist += depth1 + depth2
   
             dist /= tgtSpanDist
         return {name: dist}
-  
-    def ff_nonlocal_treeDistance2(self, info, treeNode, edge, links, srcSpan, tgtSpan):
-        """
-        Another variant of tree-distance.
-        """
-        dist = 0.0
-        linkedToWords = { }
-        for link in links:
-            fIndex = link[0]
-            eIndex = link[1]
-  
-            if not linkedToWords.has_key(fIndex):
-                linkedToWords[fIndex] = [ ]
-            linkedToWords[fIndex].append(eIndex)
-  
-        for fIndex in linkedToWords:
-            if len(linkedToWords[fIndex]) < 2:
-              return 0.0
-            else:   # fIndex is aligned to at least two different eIndices
-                  # compute distance in pairs: if list = [1,2,3],
-                  # compute dist(1,2), dist(2,3)
-                for i, eIndex1 in enumerate(linkedToWords[fIndex]):
-                    for _, eIndex2 in enumerate(linkedToWords[fIndex][i+1:i+2]):
-                        node1 = info['etree'].getNodeByIndex(eIndex1)
-                        node2 = info['etree'].getNodeByIndex(eIndex2)
-                        dist += self.treeDistance2(info['etree'], node1, node2)
-        return dist
-  
-    ################################################################################
-    # treeDistance(self, node1, node2):
-    # Compute tree distance between two nodes in a tree
-    # distance = max_i(distance from node i to common ancestor)
-    # Variant 1: distance += 1 with each single move up the tree
-    # Variant 2: distance += (height(currentNode.parent) - height(currentNode))
-    # In the case of Variant 2, the distance is equivalent to height(commonAncestor)
-    ################################################################################
-  
-    def treeDistance1(self, etree, node1, node2):
-        units1 = 0
-        units2 = 0
-        distance = 0
-        skips1 = 0
-        skips2 = 0
-        # YCA =  "youngest common ancestor" i.e., the node with minimal height that
-        # dominates both node1 and node2
-  
-        # Compute number of hops from node 1 to the YCA and from node2 to the YCA
-        # Keep track of single-child non-perterminal nodes along each path and subtract the number
-        # we encounter from the total hops, e.g. in NPC(... NPB(NN(dog))) NPB is effectively skipped.
-  
-        while (node1 is not node2):
-            node1depth = node1.depth()
-            node2depth = node2.depth()
-            if node1depth == node2depth:
-                node1 = node1.getParent()
-                node2 = node2.getParent()
-                units1 += 1
-                units2 += 1
-                if len(node1.children) == 1:
-                    skips1 += 1
-                if len(node2.children) == 1:
-                    skips2 += 1
-            elif node1depth < node2depth:
-                node1 = node1.getParent()
-                units1 += 1
-                if len(node1.children) == 1:
-                    skips1 += 1
-            elif node1depth > node2depth:
-                node2 = node2.getParent()
-                units2 += 1
-                if len(node2.children) == 1:
-                    skips2 += 1
-  
-        # Both node1 and node2 both point to the YCA at this point.
-        # What is the depth of the YCA? Use this to normalize.
-        #youngestCommonAncestorDepth = node1.depth()
-        hops1 = units1 - skips1
-        hops2 = units2 - skips2
-        distance = hops1 + hops2
-        distance = max(0, distance-3)
-       # if hops1 == 1 and hops2 == 1:
-       #     distance = 0.0
-        #distance /= float(self.etree.root.depth())
-        #distance /= youngestCommonAncestorDepth
-        #distance *= -1.0
-        return distance
-  
-    def treeDistance2(self, etree, node1, node2):
-        units1 = 0
-        units2 = 0
-        distance = 0
-        pointer1 = node1
-        pointer2 = node2
-  
-        while (node1 is not node2):
-            node1depth = node1.depth()
-            node2depth = node2.depth()
-            if node1depth == node2depth:
-                node1 = node1.getParent()
-                node2 = node2.getParent()
-                units1 += (node1.depth() - node1depth)
-                units2 += (node2.depth() - node2depth)
-            elif node1depth < node2depth:
-                node1 = node1.getParent()
-                units1 += (node1.depth() - node1depth)
-            elif node1depth > node2depth:
-                node2 = node2.getParent()
-                units2 += (node2.depth() - node2depth)
-        distance = float(max(units1, units2))
-        if distance == 1:
-            distance = 0
-        distance /= etree.root.depth()
-        distance *= -1.0
-        return distance
   
     def isPunctuation(self, string):
         """
