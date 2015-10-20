@@ -1,32 +1,19 @@
-#choa
-a hierarchical, syntax-based discriminative alignment package
+# Forest Aligner
+a hierarchical, forest-based discriminative alignment package
 
-This document describes how to use and run Nile.
+This document describes how to use and run forest-aligner.
 
-##CONTENTS
-1. REQUIREMENTS
-2. PREPARING YOUR DATA
-3. TRAINING
-4. USER-DEFINED FEATURES
-5. ITERATIVE VITERBI TRAINING & INFERENCE
-6. TESTING
-7. OTHER OPTIONS
-8. QUESTIONS/COMMENTS
-9. REFERENCES
-
-###1. REQUIREMENTS
-Nile currently depends on a few packages for
+###1. Requirements
+forest-aligner currently depends on a few packages for
 logging, ui, implementation, and parallelization:
-1. python-gflags: a commandline flags module for python
-     (http://code.google.com/p/python-gflags/)
-2. pyglog: a logging facility for python based on google-glog
-     (http://www.isi.edu/~riesa/software/pyglog)
-3. svector: a python module for sparse vectors, by David Chiang
+
+1. [python-gflags](https://github.com/hitochan777/python-gflags): a commandline flags module for python
+2. [pyglog](https://github.com/hitochan777/pyglog): a logging facility for python based on google-glog
+3. [svector](https://github.com/hitochan777/svector): a python module for sparse vectors, by David Chiang
      A version is included in this distribution under svector/
      You can download the latest version from:
      http://www.isi.edu/~chiang/software/svector.tgz
-4. An MPI Implementation. We use MPICH2.
-     (http://www.mcs.anl.gov/research/projects/mpich2/)
+4. An MPI Implementation. We use [MPICH2](http://www.mcs.anl.gov/research/projects/mpich2/).
      Download the latest stable release for your architecture.
      Then follow the Installer's Guide, available in the documentation
      section of the website.
@@ -36,7 +23,7 @@ logging, ui, implementation, and parallelization:
      Installation instructions:
      http://www.boost.org/doc/libs/1_49_0/doc/html/mpi.html
 
-###2. PREPARING YOUR DATA
+###2. Preparing your data
 
 1.  To train an alignment model you will need some data.
     We use some simple canonical filenames below in describing each, but
@@ -45,17 +32,23 @@ logging, ui, implementation, and parallelization:
     1. train.f: a file of source-language sentences, one per line.
     2. train.e: a file of target-language sentences, one per line.
     3. train.a: a file of gold-standard alignments for each sentence pair in train.f and train.e; each line in the file should be a sequence of space-separated strings encoding a single link in f-e format as follows:
+            
+            
             0-1 1-2 2-2 2-3 4-5
+            
+            
     4. train.e-parse: a file of target-language parse trees, one for each line in train.e; trees should be in standard Penn Treebank format as follows:
-            (TOP (S (NP (DT the) (NN man)) (VP (VBD ate))))
+    
+           (TOP (S (NP (DT the) (NN man)) (VP (VBD ate))))
+    
         We use tokens `-RRB-` and `-LRB-` to represent right and left parentheses, respectively (see below).
     5. train.f-parse: a file of source-language parse-trees, one for each line in train.f (OPTIONAL)
     
     Also prepare heldout development and test data in the same manner.
     Source-tree files are optional, but all others are required.
-
     Throughout the rest of this document we use the same filename extensions
     as above for our development and test data, e.g.:
+    
     dev.e <-- target-language sentences in heldout development data
     dev.f <-- source-language sentences in heldout development data
     test.e <-- target-language sentences in heldout test data
@@ -64,7 +57,7 @@ logging, ui, implementation, and parallelization:
     ADDITIONAL NOTES:
     1. Why use a heldout development (dev) and test set?
     
-        After every epoch of training Nile checks it's
+        After every epoch of training forest-aligner checks it's
         current performance on this dev set. When performance is no longer
         increasing on this dev set, we say that we've converged and we stop
         training. (Section III(D) and III(E))
@@ -76,9 +69,11 @@ logging, ui, implementation, and parallelization:
         Section III(E), we align our test.* data and note the accuracy.
 
     2. We relabel parentheses tokens before parsing, i.e. "(" -> -LRB- and ")" -> -RRB-. For example:
+         
            $ sed -e 's/(/-LRB-/g' -e 's/)/-RRB-/g' < input > input.clean
 
-         And then we parse, by doing:
+       And then we parse, by doing:
+       
              java -Xmx2600m -Xms2600m -jar berkeleyParser.jar \
                  -gr eng_grammar.gr \
                  -binarize \
@@ -91,7 +86,7 @@ logging, ui, implementation, and parallelization:
     3. In case of sentences that failed to parse:
          Use a blank line, a 0 on a line by itself,
          or the Berkeley parser default failure string: (())
-         to tell Nile to skip the affected sentence pair.
+         to tell forest-aligner to skip the affected sentence pair.
 
 ###3.  Tables from GIZA++ output (Brown et al., 1993; Och and Ney, 2003)
 We run GIZA++ Model-4 on a large corpus, and compute p(e|f) and p(f|w) word association tables from simply counting links in the final Viterbi alignment. If you don't have time to run Model-4, that's fine. We've seen benefits from using counts from just HMM or Model-1 training.
@@ -116,43 +111,43 @@ We'll need to give the trainer (and aligner) some vocabulary files it will use t
     Use these files as input to nile.py with flags --evcb and --fvcb.
 
 ============================================
-III. TRAINING
+III. Training
 ============================================
 
-Training a new model with Nile involves (1) specifying your data files
+Training a new model with forest-aligner involves (1) specifying your data files
 as commandline arguments, and (2) invoking training mode. We provide a
 sample training script, train.sh, in this distribution invoking only the
 flags required to get going.
 
-A. Cluster computing
+1. Cluster computing
    The sample training script uses the Portable Batch System (PBS), a popular
    networked subsystem for controlling jobs on a computing cluster. You can
    remove the PBS directives at the top of the file if you are running locally
    on a single machine (we strongly recommend machines with multiple CPUs), or
    just modify the file to suit your architecture.
 
-B. MPI
+2. MPI
    Take note of where your MPI binaries, libraries,
    and MPI Python bindings live. Then modify the MPI Initialization section
    with the appropriate paths.
 
-C. Training Name
+3. Training Name
    Every training run has a name. Your run's default name is:
    d<date>.k<beam-size>.n<cpu-pool-size>.<langpair>.target-tree.0
 
-D. Running the program. On PBS, do:
+4. Running the program. On PBS, do:
    $ qsub train.sh
    Or, on a local machine with multiple CPUs, do:
    $ ./train.sh
 
-D. Inspecting accuracy on the held-out data:
+5. Inspecting accuracy on the held-out data:
    To inspect held-out F-scores, do:
    $ grep F-score-dev <name>.err
 
    To sort held-out F-scores in descending order do:
    $ grep F-score-dev <name>.err | awk '{print $2}' | cat -n | sort -nr -k 2
 
-E. Convergence
+6. Convergence
    If the highest-scoring epoch, H, is much earlier than your current
    epoch number, you have probably converged. Kill the training job
    and extract weights from epoch H:
@@ -162,7 +157,7 @@ E. Convergence
    <name>.weights-H
 
 =====================================================
-IV. USER-DEFINED FEATURES
+IV. User-defined features
 =====================================================
 You can add your own feature functions to Features.py
 or maintain several different Feature modules for different
@@ -173,7 +168,7 @@ Arabic-English and Chinese-English, name them:
 Features_ar_en.py and Features_zh_en.py respectively.
 
 Setting the --langpair flag with argument LANG1_LANG2 will
-tell Nile to use these modules. Nile will look for a file called:
+tell forest-aligner to use these modules. forest-aligner will look for a file called:
 Features_LANG1_LANG2.py.
 
 nile.py --e train.e \
@@ -182,7 +177,7 @@ nile.py --e train.e \
         --langpair ar_en
 
 =====================================================
-V. ITERATIVE VITERBI TRAINING & INFERENCE (optional)
+V. Iterative viterbi training & inference (optional)
 =====================================================
 This procedure is somewhat time-consuming because you will need to train several
 models, and align your data several times. However, if you have the time, the
@@ -192,13 +187,13 @@ Parse trees for both target and source text are required for this procedure.
 
 1. Train a target-tree model as in section III.
 2. Train a source-tree model by:
-    (a) Transform your gold-standard data to e-f format;
+    1. Transform your gold-standard data to e-f format;
         source-tree models will read and output alignments in
         e-f format as opposed to f-e format.
         $ perl -pe 's/(\d+)-(\d+)/$2-$1/g' < train.a.f-e > train.e.e-f
 
-    (b) flip the argument flags for your e and f data when you run Nile. For example:
-          python nile.py \
+    2. flip the argument flags for your e and f data when you run forest-aligner. For example:
+          python aligner.py \
             --e train.f \
             --f train.e \
             --gold train.a.e-f \
@@ -226,24 +221,28 @@ Parse trees for both target and source text are required for this procedure.
    outputs of the models learned in the first round. You do this
    with the --inverse and --inverse_dev flags.
 
-  (a) Run Nile in --align mode and align your training data and then dev data with the
+  1. Run forest-aligner in --align mode and align your training data and then dev data with the
       source-tree model you've learned.
 
-  (b) Flip the alignment links to f-e format and supply these to your next target-tree
+  2. Flip the alignment links to f-e format and supply these to your next target-tree
       training with --inverse and --inverse_dev, e.g.:
 
-      nile.py --e train.e --f train.f --a train.a.f-e --inverse train-st.a.f-e ... etc.
+      ```
+      python aligner.py --e train.e --f train.f --a train.a.f-e --inverse train-st.a.f-e ... etc.
+      ```
+      
+      forest-aligner will fire features to softly enforce agreement between the two models.
 
-      Nile will fire features to softly enforce agreement between the two models.
-
-  (c) Analogously, for your next source-tree model, flip the aligned 1-best alignments
+  2. Analogously, for your next source-tree model, flip the aligned 1-best alignments
       of your training and dev data from the target-tree model to e-f format, and supply
-      it to Nile with the --inverse and --inverse_dev flags:
+      it to forest-aligner with the --inverse and --inverse_dev flags:
 
-      nile.py --e train.f --f train.e --a train.e.e-f --inverse train-tt.a.e-f ... etc.
-
+      ```
+      python aligner.py --e train.f --f train.e --a train.e.e-f --inverse train-tt.a.e-f ... etc.
+      ```
+      
 ============================================
-VI. TESTING
+VI. Testing
 ============================================
 At test time, it is important to use the same types of parameters and input data you used
 during training. If you trained a model with a beam of K=128, then keep that beam at test time.
@@ -251,51 +250,63 @@ If you used GIZA++ Model-4 alignments as input with flags --a1 and --a2, then si
 supply alignment predictions from GIZA++ at test time. Finally, binarize your trees on test
 data the same way you did for training and development data.
 
-  A. Preparing Vocabulary files:
+  1. Preparing Vocabulary files:
      As with the training and development data, prepare source and target vcb files.
+     
+     ```
      $ ./prepare-vocab.py < test.e > test.e.vcb
      $ ./prepare-vocab.py < test.f > test.f.vcb
-
+     ```
+     
      Use these files as arguments for the --evcb and --fvcb flags to nile.py
      in your testing script.
 
-  B. Editing test.sh
+  2. Editing test.sh
      Edit the WEIGHTS= line in test.sh for your weights filename.
 
-  C. Set Nile to "align" mode.
-     At test time, we replace the --train flag with the
-     --align flag when running nile.py.
+  3. Set forest-aligner to "align" mode.
+     At test time, we replace the `--train` flag with the
+     `--align` flag when running aligner.py.
 
-  D. Running test.sh
+  4. Running test.sh
      Then, run test script test.sh. Using PBS, do:
+
+     ```
      $ qsub test.sh
+     ```
+     
      Or, on a local machine with multiple CPUs:
+     
+     ```
      $ ./test.sh
+     ```
 
      By default, alignment output is written in f-e format to:
      <name>.weights-H.test-output.a
 
-  E. Evaluation
+  5. Evaluation
      If you are aligning data for which you have gold-standard alignments,
      you can calculate F-measure using our provided scripts. Remember,
      alignments are output in f-e format and should be compared against
      data in the same format.
-     Usage: ./Fmeasure.py <your-file> <gold-file>
-
+     
+     ```
+     $ ./Fmeasure.py <your-file> <gold-file>`
+     ```
 
 ============================================
-VII. OTHER OPTIONS
+VII. Other options
 ============================================
   A. L1 Regularization (Feature Selection; experimental)
-  Nile implements a parallelized version of L1 Regularization via projection after each epoch.
+  forest-aligner implements a parallelized version of L1 Regularization via projection after each epoch.
   (Hastie 1996; Duchi et al., 2008; Martins et al. 2011)
 
   Enabling this feature will allow you to learn a much smaller model that, in our experiments,
   should achieve essentially the same accuracy or better. This is useful for scaling to very large
   training sets, and you may also see some generalization benefits.
 
-  To enable, set Nile's L1 Tau coefficient variable to 1 with commandline flag:
-  --tau 1
+  To enable, set forest-aligner's L1 Tau coefficient variable to 1 with commandline flag:
+  `--tau 1`
 
  B. Debiasing (experimental)
  While L1 yields sparse solutions, these solutions are known to be biased in magnitude which may
@@ -304,11 +315,11 @@ VII. OTHER OPTIONS
 
   To enable:
   1. Turn debiasing mode on:
-    --debiasing
-  2. Tell Nile about the weight vector you learned during the L1 feature selection step,
-  use --debiasing_weights and supply a weight vector in svector format:
-    --debiasing_weights <sparse-model weights>
-  (Make sure you have removed the --tau flag from your Nile invocation.)
+    `--debiasing`
+  2. Tell forest-aligner about the weight vector you learned during the L1 feature selection step,
+  use `--debiasing_weights` and supply a weight vector in svector format:
+    `--debiasing_weights <sparse-model weights>`
+  (Make sure you have removed the `--tau` flag from your forest-aligner invocation.)
 
 C. Advanced Perceptron Updates
   1. Changing the default Oracle.
@@ -318,7 +329,7 @@ C. Advanced Perceptron Updates
      model score. We call this the "hope" oracle, because we have more
      of a chance to reach it; it has high model score and low loss.
      To use a "hope" oracle, use flag and argument:
-     --oracle hope
+     `--oracle hope`
   2. Changing the default hypothesis.
      In selecting the hypothesis that we update our model away from
      (and towards the oracle), we can select a hypothesis somewhat
@@ -329,15 +340,15 @@ C. Advanced Perceptron Updates
      it has the nefarious property of having both a high model score
      (our model likes it), but also very high loss (it is a bad alignment).
      To use a "fear" hypothesis, use flag and argument:
-     --hyp fear
+     `--hyp fear`
   3. Changing the default learning rate.
      There is a single learning rate parameter used in the standard perceptron
      update which affects the magnitude of each update. It is set to 1.0 by default.
      To use a different learning rate, use:
-     --learning_rate <new learning rate>
+     `--learning_rate <new learning rate>`
 
 ============================================
-VIII. QUESTIONS/COMMENTS
+VIII. Questions/comments
 ============================================
 
 Troubleshooting:
@@ -349,7 +360,7 @@ Technical correspondence also welcomed.
 If you are interested in contributing to this project please also let us know!
 
 ============================================
-IX. REFERENCES
+IX. References
 ============================================
 Peter F. Brown, Stephen A. Della Pietra, Vincent J. Della Pietra, Robert L. Mercer.
 The Mathematics of Statistical Machine Translation: Parameter Estimation.

@@ -1,0 +1,36 @@
+# ID=1 SCORE=-26.972356669201297
+0	1	this	this	DT	0	NP		NP:DT/this/0
+1	-1	is	be	VBZ	1	S		S:@S:VP:VBZ/is/1
+2	3	a	a	DT	0	DT		DT/a/2
+3	1	pen	pen	NN	1	NP		NP:NN/pen/3
+4	1	.	.	.	-1	.		././4
+
+# ID=2 SCORE=-31.80493186237934
+0	-1	which	which	WDT	1	SBARQ		SBARQ:@SBARQ:WHNP:WDT/which/0
+1	0	is	be	VBZ	1	SQ		SQ:VBZ/is/1
+2	3	a	a	DT	0	DT		DT/a/2
+3	1	pen	pen	NN	1	NP		NP:NN/pen/3
+4	0	?	?	.	-1	.		./?/4
+
+# ID=2 SCORE=-32.758289302977886
+0	-1	which	which	WDT	1	SBARQ		SBARQ:@SBARQ:WHNP:WDT/which/0
+1	0	is	be	VBZ	1	SQ		SQ:VP:VBZ/is/1
+2	3	a	a	DT	0	DT		DT/a/2
+3	1	pen	pen	NN	1	NP		NP:NN/pen/3
+4	0	?	?	.	-1	.		./?/4
+
+# ID=2 SCORE=-35.86025591070116
+0	-1	which	which	WDT	1	SBARQ		SBARQ:@SBARQ:WHNP:WDT/which/0
+1	0	is	be	VBZ	1	S		S:VP:VBZ/is/1
+2	3	a	a	DT	0	DT		DT/a/2
+3	1	pen	pen	NN	1	NP		NP:NN/pen/3
+4	0	?	?	.	-1	.		./?/4
+
+# ID=3 SCORE=-45.904321354298645
+0	1	i	i	FW	1	NP		NP:FW/i/0
+1	-1	write	write	VBP	1	S		S:@S:VP:VBP/write/1
+2	1	with	with	IN	0	PP		PP:IN/with/2
+3	4	a	a	DT	0	DT		DT/a/3
+4	2	pen	pen	NN	1	NP		NP:NN/pen/4
+5	1	.	.	.	-1	.		././5
+

@@ -1,4 +1,5 @@
 from collections import defaultdict
+from AlignmentLink import AlignmentLink
 import svector
 
 class PartialGridAlignment(object):
@@ -9,9 +10,12 @@ class PartialGridAlignment(object):
       """
       Compare two PartialGridAlignment objects.
       """
-      if self.score < x.score:      return -1
-      elif self.score == x.score:   return 0
-      else:                         return 1
+      if self.score < x.score:
+          return -1
+      elif self.score == x.score:
+          return 0
+      else:
+          return 1
   
     def __str__(self):
       return str(self.score)+" "+str(self.links)
@@ -23,9 +27,7 @@ class PartialGridAlignment(object):
       self.links = [ ]
       self.score = 0
       self.fscore = 0
-      self.hope = 0
-      self.fear = 0
-      # local feature vector
+      self.hyperEdgeScore = 0.0
       self.scoreVector = svector.Vector()
       self.scoreVector_nonlocal = svector.Vector()
       self.position = None
@@ -35,8 +37,15 @@ class PartialGridAlignment(object):
       self.links = []
       self.score = 0
       self.fscore = 0
-      self.hope = 0
-      self.fear = 0
+      self.hyperEdgeScore = 0.0
       self.scoreVector = svector.Vector()
       self.position = None
       self.boundingBox = None
+
+    def getDepthAddedLink(self, delta=1):
+        newAlignmentLinks = []
+        for link in self.links:
+            newAlignment = AlignmentLink(link.link, link.depth + delta)
+            newAlignmentLinks.append(newAlignment)
+            # print newAlignment
+        return newAlignmentLinks

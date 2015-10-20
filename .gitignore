@@ -1,2 +1,7 @@
 data
 *.pyc
+*.out
+*.err
+weights.*
+.nfs*
+
