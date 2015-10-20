@@ -35,6 +35,7 @@ from PartialGridAlignment import PartialGridAlignment
 import Fmeasure
 import svector
 import ScoreFunctions
+from AlignmentLink import AlignmentLink
 
 class Model(object):
     """
@@ -198,7 +199,7 @@ class Model(object):
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_isPuncAndHasMoreThanOneLink)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_hyperEdgeScore)
-      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance1)
+      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_crossb)
   
@@ -318,8 +319,8 @@ class Model(object):
       newEdge.scoreVector = svector.Vector()
       newEdge.hyperEdgeScore = hyperEdge.score
   
-      for e in childEdges:
-          newEdge.links += e.links
+      for index, e in enumerate(childEdges):
+          newEdge.links += e.getDepthAddedLink()
           newEdge.scoreVector_local += e.scoreVector_local
           newEdge.scoreVector += e.scoreVector
   
@@ -359,7 +360,8 @@ class Model(object):
           for link in edge.links:
               fIndex = link[0]
               eIndex = link[1]
-              linkedIndices[fIndex].append(eIndex)
+              assert(type(fIndex)==int)
+              linkedIndices[fIndex].append((eIndex,link.depth))
   
           scoreVector = svector.Vector(edge.scoreVector)
   
@@ -394,6 +396,7 @@ class Model(object):
         for link in links:
             fIndex = link[0]
             eIndex = link[1]
+            assert(type(fIndex)==int)
             if fIndex > maxF:
                 maxF = fIndex
             if fIndex < minF:
@@ -465,7 +468,7 @@ class Model(object):
         singleBestAlignment = []
         alignmentList = []
         for tgtIndex, tgtWord in enumerate(tgtWordList):
-          currentLinks = [(tgtIndex, srcIndex)]
+          currentLinks = [AlignmentLink((tgtIndex, srcIndex))]
           scoreVector = svector.Vector()
   
           for k, func in enumerate(self.featureTemplates):
@@ -526,7 +529,7 @@ class Model(object):
                         if (abs(tgtIndex_b - tgtIndex_a) > 1):
                             continue
   
-                    currentLinks = list(map(lambda x: (x,srcIndex),na+sa))
+                    currentLinks = list(map(lambda x: AlignmentLink((x,srcIndex)),na+sa))
                       
                     scoreVector = svector.Vector()
                     for k, func in enumerate(self.featureTemplates):
@@ -640,8 +643,9 @@ class Model(object):
   
       inGold = self.gold.links_dict.has_key
       numCorrect = 0
+
       for link in edge.links:
-        numCorrect += inGold(link)
+          numCorrect += inGold(link.link)
       numCorrect = float(numCorrect)
   
       precision = numCorrect / numModelLinks

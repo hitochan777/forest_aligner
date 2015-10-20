@@ -9,7 +9,7 @@
 export PATH=/home/chu/mpich-install/bin:$PATH
 export PYTHONPATH=/home/chu/tools/boost_1_54_0/lib:$PYTHONPATH
 export LD_LIBRARY_PATH=/home/chu/tools/boost_1_54_0/lib:$LD_LIBRARY_PATH
-NUMCPUS=4
+NUMCPUS=15
 # NUMCPUS=`wc -l $PBS_NODEFILE | awk '{print $1}'`
 ###################################################################
 
@@ -26,10 +26,10 @@ nice -15 mpiexec -n $NUMCPUS $PYTHON $APP_DIR/aligner.py \
   --f $DATA/train.f \
   --e $DATA/train.e \
   --gold $DATA/train.a.s \
-  --etrees $DATA/forest/train.e.forest \
+  --etrees $DATA/forest/train.en.forest \
   --fdev $DATA/dev.f \
   --edev $DATA/dev.e \
-  --etreesdev $DATA/forest/dev.e.forest \
+  --etreesdev $DATA/forest/dev.en.forest \
   --golddev $DATA/dev.a.s \
   --evcb $DATA/e.vcb \
   --fvcb $DATA/f.vcb \

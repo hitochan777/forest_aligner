@@ -499,7 +499,7 @@ def f1accumulator(hyp, gold):
 
   numCorrect = 0.0
   for link in hyp:
-    numCorrect += link in gold
+    numCorrect += link.link in gold
   return numCorrect, numModelLinks, numGoldLinks
 
 def validate_features(weights, valid_feature_names):
