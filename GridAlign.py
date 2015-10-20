@@ -198,8 +198,8 @@ class Model(object):
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_dummy)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_isPuncAndHasMoreThanOneLink)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
-      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_hyperEdgeScore)
-      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
+      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_hyperEdgeScore)
+      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_crossb)
   
@@ -218,6 +218,8 @@ class Model(object):
             self.oracle = self.etree.partialAlignments["oracle"][0]
         elif self.COMPUTE_ORACLE:
             self.oracle = self.etree.partialAlignments["oracle"]
+        print "hyp", self.hyp
+        print "oracle", self.oracle
       
     def bottom_up_visit(self):
         """
@@ -362,6 +364,7 @@ class Model(object):
           for link in edge.links:
               fIndex = link[0]
               eIndex = link[1]
+              assert(type(fIndex)==int)
               linkedIndices[fIndex].append((eIndex,link.depth))
   
           scoreVector = svector.Vector(edge.scoreVector)
@@ -397,6 +400,7 @@ class Model(object):
         for link in links:
             fIndex = link[0]
             eIndex = link[1]
+            assert(type(fIndex)==int)
             if fIndex > maxF:
                 maxF = fIndex
             if fIndex < minF:
@@ -643,9 +647,9 @@ class Model(object):
   
       inGold = self.gold.links_dict.has_key
       numCorrect = 0
+
       for link in edge.links:
           numCorrect += inGold(link.link)
-          print link.link
       numCorrect = float(numCorrect)
   
       precision = numCorrect / numModelLinks

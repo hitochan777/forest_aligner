@@ -5,3 +5,6 @@ class AlignmentLink:
 
     def __getitem__(self, index):
         return self.link[index]
+
+    def __str__(self):
+        return "%s, %d" % (str(sekf.link), self.depth)

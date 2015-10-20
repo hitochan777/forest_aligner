@@ -9,7 +9,7 @@
 export PATH=/home/chu/mpich-install/bin:$PATH
 export PYTHONPATH=/home/chu/tools/boost_1_54_0/lib:$PYTHONPATH
 export LD_LIBRARY_PATH=/home/chu/tools/boost_1_54_0/lib:$LD_LIBRARY_PATH
-NUMCPUS=4
+NUMCPUS=15
 # NUMCPUS=`wc -l $PBS_NODEFILE | awk '{print $1}'`
 ###################################################################
 

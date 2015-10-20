@@ -48,11 +48,11 @@ class LocalFeatures:
     inverse = True
 
     for link in links:
-      if link not in info['a1']:
+      if link.link not in info['a1']:
         a1 = False
-      if link not in info['a2']:
+      if link.link not in info['a2']:
         a2 = False
-      if link not in info['inverse']:
+      if link.link not in info['inverse']:
         inverse = False
 
     # Encode results as features
@@ -674,7 +674,6 @@ class NonlocalFeatures:
         A distance metric quantifying "tree distance" between two links (f, i); (f, j)
         """
         name = self.ff_nonlocal_treeDistance.func_name + '_nb'
-  
         dist = 0.0
         linkedToWords_copy = dict(linkedToWords)
         if tgtSpan is None:
