@@ -3,4 +3,5 @@ data
 *.out
 *.err
 weights.*
+.nfs*
 
