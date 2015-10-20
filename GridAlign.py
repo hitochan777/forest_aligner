@@ -198,8 +198,8 @@ class Model(object):
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_dummy)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_isPuncAndHasMoreThanOneLink)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
-      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_hyperEdgeScore)
-      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
+      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_hyperEdgeScore)
+      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_crossb)
   
@@ -218,8 +218,6 @@ class Model(object):
             self.oracle = self.etree.partialAlignments["oracle"][0]
         elif self.COMPUTE_ORACLE:
             self.oracle = self.etree.partialAlignments["oracle"]
-        print "hyp", self.hyp
-        print "oracle", self.oracle
       
     def bottom_up_visit(self):
         """
@@ -293,8 +291,6 @@ class Model(object):
           best.fscore = -1.0 # Any negative value suffices
           for hyperEdge in currentNode.hyperEdges:
               oracleChildEdges = [c.oracle for c in hyperEdge.tail]
-              for edge in oracleChildEdges:
-                  edge.addDepthToLink()
               if currentNode.oracle:
                   oracleChildEdges.append(currentNode.oracle)
               oracleAlignment, boundingBox = self.createEdge(oracleChildEdges, currentNode, currentNode.span, hyperEdge)
@@ -323,8 +319,8 @@ class Model(object):
       newEdge.scoreVector = svector.Vector()
       newEdge.hyperEdgeScore = hyperEdge.score
   
-      for e in childEdges:
-          newEdge.links += e.links
+      for index, e in enumerate(childEdges):
+          newEdge.links += e.getDepthAddedLink()
           newEdge.scoreVector_local += e.scoreVector_local
           newEdge.scoreVector += e.scoreVector
   
@@ -690,7 +686,6 @@ class Model(object):
                 currentChild = hyperEdge.tail[c]
                 edge = currentChild.partialAlignments[type][edgeNumber]
                 edges.append(edge)
-                edges[-1].addDepthToLink()
             if len(oneColumnAlignments) > 0:
                 edges.append(oneColumnAlignments[position[-1]])
             newEdge, boundingBox = self.createEdge(edges, currentNode, currentNode.span, hyperEdge)
@@ -752,7 +747,6 @@ class Model(object):
                     edgeNumber = neighborPosition[cellNumber]
                     edge = cell.partialAlignments[type][edgeNumber]
                     neighbor.append(edge)
-                    neighbor[-1].addDepthToLink()
 
                 if len(oneColumnAlignments) > 0:
                     neighbor.append(oneColumnAlignments[neighborPosition[-1]])

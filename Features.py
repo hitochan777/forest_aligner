@@ -693,11 +693,11 @@ class NonlocalFeatures:
                 listlength = len(linkedToWords_copy[fIndex])
                 for i in xrange(listlength-1):
                     # eIndex1 and eIndex2 will always be the smallest, and second-smallest indices, respectively.
-                    _, depth1 = linkedToWords_copy[fIndex][0]
-                    _, depth2 = linkedToWords_copy[fIndex][1]
+                    eIndex1, depth1 = linkedToWords_copy[fIndex][0]
+                    eIndex2, depth2 = linkedToWords_copy[fIndex][1]
                     linkedToWords_copy[fIndex] = linkedToWords_copy[fIndex][1:]
                     dist += depth1 + depth2
-  
+                    # print ((eIndex1, depth1), (eIndex2, depth2))
             dist /= tgtSpanDist
         return {name: dist}
   
