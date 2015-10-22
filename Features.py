@@ -627,27 +627,24 @@ class NonlocalFeatures:
   
         minF = edge.boundingBox[0][0]
         maxF = edge.boundingBox[1][0]
-        # Catch exception due to bad parse tree.
-        # Ignore error and continue.
-        try:
-            minFNode = info['ftree'].getNodeByIndex(minF)
-            leftFTag = minFNode.data["pos"]
-            rightFTag = info['ftree'].getNodeByIndex(maxF).data["pos"]
-        except:
-          return {}
-  
-        if minF == maxF:
-          value = "%s:%s" % (tgtTag, leftFTag)
-          return {name+'___'+value: 1}
-        else:
-            fspan = (minF, maxF)
-            currentFNode = minFNode
-            while not containsSpan(currentFNode, fspan):
-                currentFNode = currentFNode.getParent()
-            srcTag = currentFNode.data["pos"]
-            value1 =  '%s:%s' % (tgtTag,srcTag)
-            value2 = '%s:%s(%s,%s)' % (tgtTag, srcTag, leftFTag, rightFTag)
-            return {name+'___'+value1: 1, name+'___'+value2: 1}
+        eWord = treeNode.data['surface']
+        eStartSpan, eEndSpan = treeNode.get_span()
+        eSpanLen = float(eEndSpan - eStartSpan)/len(info['e'])
+
+        fspan = (minF, maxF)
+        sourceNode = info['ftree'].getDeepestNodeConveringSpan(fspan)
+        fWord = sourceNode.data['surface']
+        fStartSpan, fEndSpan = sourceNode.get_span()
+        fSpanLen = float(fEndSpan - fStartSpan)/len(info['f'])
+        span_diff= abs(eSpanLen - fSpanLen)
+
+        fWord = sourceNode.data['surface']
+        fStartSpan, eEndSpan = sourceNode.get_span()
+        fSpanLen = float(fEndSpan - fStartSpan)/len(info['f'])
+        srcTag = sourceNode.data["pos"]
+        value1 =  '%s:%s' % (tgtTag,srcTag)
+        span_diff= abs(eSpanLen - fSpanLen)
+        return {name+'___'+value1: 1, name+'__'+'normalizedSpanLenDiff': span_diff, name+'__'+'pfe' : self.pef.get(fWord, {}).get(eWord, 0.0) }
   
     def ff_nonlocal_sameWordLinks(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
         """
@@ -697,7 +694,6 @@ class NonlocalFeatures:
                     eIndex2, depth2 = linkedToWords_copy[fIndex][1]
                     linkedToWords_copy[fIndex] = linkedToWords_copy[fIndex][1:]
                     dist += depth1 + depth2
-                    # print ((eIndex1, depth1), (eIndex2, depth2))
             dist /= tgtSpanDist
         return {name: dist}
   
