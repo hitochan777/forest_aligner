@@ -199,7 +199,7 @@ class Model(object):
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_isPuncAndHasMoreThanOneLink)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_hyperEdgeScore)
-      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
+      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_crossb)
   
@@ -360,7 +360,6 @@ class Model(object):
           for link in edge.links:
               fIndex = link[0]
               eIndex = link[1]
-              assert(type(fIndex)==int)
               linkedIndices[fIndex].append((eIndex,link.depth))
   
           scoreVector = svector.Vector(edge.scoreVector)
@@ -396,7 +395,6 @@ class Model(object):
         for link in links:
             fIndex = link[0]
             eIndex = link[1]
-            assert(type(fIndex)==int)
             if fIndex > maxF:
                 maxF = fIndex
             if fIndex < minF:
@@ -408,7 +406,7 @@ class Model(object):
         # This box is the top-left corner and the lower-right corner
         box = ((minF, minE), (maxF, maxE))
         return box
-  
+
     def terminal_operation(self, currentNode = None):
         """
         Fire features at (pre)terminal nodes of the tree.
