@@ -13,7 +13,7 @@ def readDependencyForestFile(filename):
             if line.startswith("#"):
                 if dep!="":
                     yield dep
-                    dep=""
+                dep=line
                 continue
             # if line.startswith("\n"):
             #     continue
@@ -28,6 +28,10 @@ def parser(string):
     nodeChildrenSetList = []
     sent_len = 0
     for line in buf:
+        if line.startswith("#"):
+            p = re.compile('#\s*ID=(\d+)') 
+            sentence_ID= int(p.match(line).group(1))
+            continue
         if not line.strip():
             break
         node = ForestNode()
@@ -58,6 +62,8 @@ def parser(string):
         nodeChildrenSetList.append(set())
         sent_len = max(sent_len, node.data["word_id"])
 
+    sent_len += 1
+
     for line in buf: # process hyperedge
         if not line.strip():
             break
@@ -87,12 +93,13 @@ def parser(string):
         "dict_form": None,
         "pos": "TOP",
         "isContent": False,
-        "pos2": "TOP"
+        "pos2": "TOP",
+        "sentence_ID": sentence_ID
     }
 
     for node in nodeList:
         node.unprocessedChildNum = node.childnum = len(nodeChildrenSetList[node.data["id"]])
-        if node.i == 0 and node.j == sent_len + 1:
+        if node.i == 0 and node.j == sent_len:
             node.addParent(root, 0) 
             root.addHyperEdge(root,[node], 0.0) # Since root is dummy, it is natural to think scores of incoming hyperedge is zero
     root.unprocessedChildNum = root.childnum = len(root.hyperEdges) # Since the arity of every incoming hyperedge to root is 0, the number of childrent is equal to the number of the hyperedges. 

@@ -60,8 +60,8 @@ class ForestNode:
     def get_span(self):
         if self.span is None:
             start = self.span_start()
-        end = self.span_end()
-        self.span = (start,end)
+            end = self.span_end()
+            self.span = (start,end)
         return self.span
   
     def addParent(self, parent, score):
@@ -81,16 +81,19 @@ class ForestNode:
         return span[0] <= fspan[0] and span[1] >= fspan[1]
 
     def getDeepestNodeConveringSpan(self, fspan):
-        minSpan = 10**10
+        minSpan = (0,self.j)
+        coveringNode = None
         queue = []
         for terminal in self.getTerminals():
             queue.append(terminal)
         while len(queue) > 0:
             currentNode = queue.pop(0)
-            if currentNode.containSpan(fspan) and fspan[1] - fspan[0] < minSpan[1] - minSpan[0]:
-                minSpan = currentNode.get_span()
-                for edgeToParent in currentNode.parent:
-                    queue.append(edgeToParent["parent"])
-        return minSpan
+            span = currentNode.get_span()
+            for edgeToParent in currentNode.parent:
+                queue.append(edgeToParent["parent"]) 
+            if span[1] - span[0] < minSpan[1] - minSpan[0] and currentNode.containsSpan(fspan):
+                minSpan = span
+                coveringNode = currentNode
+        return coveringNode
 
 

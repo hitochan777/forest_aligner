@@ -199,8 +199,8 @@ class Model(object):
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_isPuncAndHasMoreThanOneLink)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_hyperEdgeScore)
-      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
-      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
+      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
+      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_crossb)
   
     def align(self):
@@ -405,6 +405,7 @@ class Model(object):
                 minE = eIndex
         # This box is the top-left corner and the lower-right corner
         box = ((minF, minE), (maxF, maxE))
+        assert(minF>=0 and minE >=0 and maxF < len(self.info['f']) and maxE < len(self.info['e']))
         return box
 
     def terminal_operation(self, currentNode = None):

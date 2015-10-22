@@ -628,29 +628,23 @@ class NonlocalFeatures:
         minF = edge.boundingBox[0][0]
         maxF = edge.boundingBox[1][0]
         eWord = treeNode.data['surface']
-        eSpanLen = float(eEndSpan - eStartSpan)/len(info['e'])
         eStartSpan, eEndSpan = treeNode.get_span()
-        # Catch exception due to bad parse tree.
-        # Ignore error and continue.
-        try:
-            fspan = (minF, maxF)
-            sourceNode = info['ftree'].getDeepestNodeConveringSpan(fspan)
-            fWord = minFNode.data['surface']
-            fStartSpan, eEndSpan = minFNode.get_span()
-            fSpanLen = float(fEndSpan - fStartSpan)/len(info['f'])
-            span_diff= abs(eSpanLen - fSpanLen)
-            leftFTag = minFNode.data["pos"]
-        except:
-          return {}
-  
+        eSpanLen = float(eEndSpan - eStartSpan)/len(info['e'])
+
+        fspan = (minF, maxF)
+        sourceNode = info['ftree'].getDeepestNodeConveringSpan(fspan)
+        fWord = sourceNode.data['surface']
+        fStartSpan, fEndSpan = sourceNode.get_span()
+        fSpanLen = float(fEndSpan - fStartSpan)/len(info['f'])
+        span_diff= abs(eSpanLen - fSpanLen)
+
         fWord = sourceNode.data['surface']
         fStartSpan, eEndSpan = sourceNode.get_span()
         fSpanLen = float(fEndSpan - fStartSpan)/len(info['f'])
         srcTag = sourceNode.data["pos"]
         value1 =  '%s:%s' % (tgtTag,srcTag)
-        value2 = '%s:%s(%s,%s)' % (tgtTag, srcTag, leftFTag, rightFTag)
         span_diff= abs(eSpanLen - fSpanLen)
-        return {name+'___'+value1: 1, name+'___'+value2: 1, name+'__'+'normalizedSpanLenDiff': span_diff, name+'__'+'pfe' : self.pef.get(fWord, {}).get(eWord, 0.0) }
+        return {name+'___'+value1: 1, name+'__'+'normalizedSpanLenDiff': span_diff, name+'__'+'pfe' : self.pef.get(fWord, {}).get(eWord, 0.0) }
   
     def ff_nonlocal_sameWordLinks(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
         """
@@ -700,7 +694,6 @@ class NonlocalFeatures:
                     eIndex2, depth2 = linkedToWords_copy[fIndex][1]
                     linkedToWords_copy[fIndex] = linkedToWords_copy[fIndex][1:]
                     dist += depth1 + depth2
-                    # print ((eIndex1, depth1), (eIndex2, depth2))
             dist /= tgtSpanDist
         return {name: dist}
   
