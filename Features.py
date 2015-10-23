@@ -715,3 +715,9 @@ class NonlocalFeatures:
         """
         name = self.ff_nonlocal_hyperEdgeScore.func_name
         return {name: edge.hyperEdgeScore}
+
+    def ff_nonlocal_continuousAlignment(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
+
+        name = self.ff_nonlocal_continuousAlignment
+
+
