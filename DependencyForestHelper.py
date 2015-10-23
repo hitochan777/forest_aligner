@@ -26,6 +26,8 @@ def parser(string):
     buf = StringIO.StringIO(string)
     nodeList = []
     nodeChildrenSetList = []
+    nodeTable = []
+    curWordId = -1
     sent_len = 0
     for line in buf:
         if line.startswith("#"):
@@ -47,9 +49,13 @@ def parser(string):
         else:
             pos2 = None
         pos = word_infos[5].split(":")[0]
+        word_id = int(word_infos[2])
+        if curWordId != word_id:
+            nodeTable.append([])
+            curWordId = word_id
         node.data = {
                 "id": int(word_infos[0]), # node ID which is unique
-                "word_id": int(word_infos[2]), 
+                "word_id": word_id, 
                 "surface": word_infos[3],
                 "pronunciation": pronunciation,
                 "dict_form": dict_form,
@@ -59,10 +65,13 @@ def parser(string):
                 "pos2": pos2
         }
         nodeList.append(node)
+        nodeTable[-1].append(node)
         nodeChildrenSetList.append(set())
         sent_len = max(sent_len, node.data["word_id"])
 
     sent_len += 1
+
+    assert len(nodeTable)==sent_len, "The length of node table(%d) is not the same as the sentence length(%d). Make sure that forest input data is consistent with segmented sentence data." % (len(nodeTable), sent_len)
 
     for line in buf: # process hyperedge
         if not line.strip():
@@ -94,7 +103,8 @@ def parser(string):
         "pos": "TOP",
         "isContent": False,
         "pos2": "TOP",
-        "sentence_ID": sentence_ID
+        "sentence_ID": sentence_ID,
+        "nodeTable": nodeTable
     }
 
     for node in nodeList:
@@ -103,4 +113,5 @@ def parser(string):
             node.addParent(root, 0) 
             root.addHyperEdge(root,[node], 0.0) # Since root is dummy, it is natural to think scores of incoming hyperedge is zero
     root.unprocessedChildNum = root.childnum = len(root.hyperEdges) # Since the arity of every incoming hyperedge to root is 0, the number of childrent is equal to the number of the hyperedges. 
+
     return root

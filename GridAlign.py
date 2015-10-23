@@ -185,7 +185,7 @@ class Model(object):
       self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToComma)
       self.featureTemplates.append(localFeatures.ff_nonPeriodLinkedToPeriod)
       self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToFinalPeriod)
-      # self.featureTemplates.append(localFeatures.ff_tgtTag_srcTag)
+      self.featureTemplates.append(localFeatures.ff_tgtTag_srcTag)
       self.featureTemplates.append(localFeatures.ff_thirdParty)
   
     ##################################################

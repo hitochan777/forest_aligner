@@ -95,5 +95,10 @@ class ForestNode:
                 minSpan = span
                 coveringNode = currentNode
         return coveringNode
+    
+    def getNodesByIndex(self, index):
+        assert self.data["pos"] == "TOP", "%s can only be used at root node. " % self.getNodesByIndex.func_name
+        return self.nodeTable[index] 
+
 
 

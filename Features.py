@@ -149,26 +149,32 @@ class LocalFeatures:
     tgtTag = currentNode.data["pos"]
     srcTags = ""
 
-    if len(links) == 0:
-      srcTags = "*NULL*"
-    else:
-      for link in links:
-        findex = link[0]
-        try:
-          srcTags += (info['ftree'].getNodeByIndex(findex).data["pos"]+",")
-        except:
-          return {}
-
-    value1 = "%s:%s" %(tgtTag,srcTags)
-    value2 = "%s(%s):%s" %(tgtTag, eWord, srcTags)
-    # Uncomment to add feature lexicalized by fword
-    #value3 = "%s:%s(%s)" %(tgtTag, srcTags, fWord)
-
     values = {}
-    values[name+'___'+value1] = 1
-    values[name+'___'+value2] = 1
-    # Uncomment to add feature lexicalized by fword
-    #values[name+'___'+value3] = 1
+
+    if len(links) == 0:
+        srcTag = "*NULL*"
+        values["%s___%s:%s" % (name, tgtTag, srcTag)] = 1
+        values["%s___%s(%s):%s"% (name, tgtTag, eWord, srcTag)] = 1
+        # Uncomment to add feature lexicalized by fword
+        # values["%s___%s:%s(%s)"% (name, tgtTag, srcTag, fWord)] = 1
+    else:
+        for link in links:
+            findex = link[0]
+            try:
+                nodes =  info['ftree'].getNodesIndex(findex)
+                pos_count = defaultdict(int)
+                for node in nodes:
+                    pos_count[node.data["pos"]] += 1
+                sum = sum(pos_count.values())
+                # normalize count
+                for srcTag in pos_count:
+                    pos_count[pos] /= float(sum)
+                    values["%s___%s:%s" % (name, tgtTag, srcTag)] = pos_count[srcTag] 
+                    values["%s___%s(%s):%s"% (name, tgtTag, eWord, srcTag)] = pos_count[srcTag] 
+                    # Uncomment to add feature lexicalized by fword
+                    # values["%s___%s:%s(%s)"% (name, tgtTag, srcTag, fWord)] = pos_count[srcTag] 
+            except:
+                return {}
 
     return values
 
