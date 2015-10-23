@@ -70,9 +70,6 @@ class ForestNode:
     def addHyperEdge(self, head, tail, score):
         self.hyperEdges.append(HyperEdge(head, tail,score))
   
-    def depth(self,d = 0): #TODO: implement depth
-        return 1
-  
     def containsSpan(self, fspan):
         """
         Does span of node currentNode wholly contain span fspan?
@@ -98,7 +95,13 @@ class ForestNode:
     
     def getNodesByIndex(self, index):
         assert self.data["pos"] == "TOP", "%s can only be used at root node. " % self.getNodesByIndex.func_name
-        return self.nodeTable[index] 
+        return self.data["nodeTable"][index] 
+    
+    def getParentNodes(self):
+        return map(lambda d: d["parent"], self.parent)
 
-
-
+    def isConnectedTo(self, node):
+        assert self != node, "You cannot compare the same two nodes..."
+        if self in node.getParentNodes() or node in self.getParentNodes():
+            return 1
+        return 0
