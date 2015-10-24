@@ -1,11 +1,5 @@
 #!/bin/bash
-#PBS -l walltime=00:30:00,nodes=10:ppn=4
-#PBS -N nile-train
 
-# cd $PBS_O_WORKDIR  # Connect to working directory
-###################################################################
-# Initialize MPI
-###################################################################
 export PATH=/home/chu/mpich-install/bin:$PATH
 export PYTHONPATH=/home/chu/tools/boost_1_54_0/lib:$PYTHONPATH
 export LD_LIBRARY_PATH=/home/chu/tools/boost_1_54_0/lib:$LD_LIBRARY_PATH
