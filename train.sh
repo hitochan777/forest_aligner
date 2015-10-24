@@ -5,7 +5,7 @@ export PYTHONPATH=/home/chu/tools/boost_1_54_0/lib:$PYTHONPATH
 export LD_LIBRARY_PATH=/home/chu/tools/boost_1_54_0/lib:$LD_LIBRARY_PATH
 NUMCPUS=$CORES
 
-APP_DIR=$HOME/developer/forest_aligner
+APP_DIR=.
 K=128
 LINK=$1
 MAXEPOCH=$2
