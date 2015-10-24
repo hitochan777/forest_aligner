@@ -420,7 +420,7 @@ class LocalFeatures:
       return {name: 0.0}
 
   def ff_continuousAlignment(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
-      name = self.ff_continuousAlignment
+      name = self.ff_continuousAlignment.func_name
       links = sorted(links)
       nodes1 = None
       nodes2 = None
@@ -443,7 +443,7 @@ class LocalFeatures:
           value = count/denominator
       except:
           value = 0.0    
-      return {"%s": value}
+      return {name: value}
 
 
   def pointLineGridDistance(self, f, e, fIndex, eIndex):
