@@ -9,7 +9,7 @@
 export PATH=/home/chu/mpich-install/bin:$PATH
 export PYTHONPATH=/home/chu/tools/boost_1_54_0/lib:$PYTHONPATH
 export LD_LIBRARY_PATH=/home/chu/tools/boost_1_54_0/lib:$LD_LIBRARY_PATH
-NUMCPUS=15
+NUMCPUS=$CORES
 # NUMCPUS=`wc -l $PBS_NODEFILE | awk '{print $1}'`
 ###################################################################
 
@@ -27,11 +27,11 @@ nice -15 mpiexec -n $NUMCPUS $PYTHON $APP_DIR/aligner.py \
   --e $DATA/train.e \
   --gold $DATA/train.a.s \
   --ftrees $DATA/forest/train.f.forest \
-  --etrees $DATA/forest/train.en.forest \
+  --etrees $DATA/forest/1best/train.e.forest \
   --fdev $DATA/dev.f \
   --edev $DATA/dev.e \
   --ftreesdev $DATA/forest/dev.f.forest \
-  --etreesdev $DATA/forest/dev.en.forest \
+  --etreesdev $DATA/forest/1best/dev.e.forest \
   --golddev $DATA/dev.a.s \
   --evcb $DATA/e.vcb \
   --fvcb $DATA/f.vcb \
@@ -48,5 +48,6 @@ nice -15 mpiexec -n $NUMCPUS $PYTHON $APP_DIR/aligner.py \
   --train \
   --k $K 1> $NAME.out 2> $NAME.err
 
-# echo "nice -15 $NILE_DIR/weights.sh $NAME $H"
-# nice -15 $NILE_DIR/weights.sh $NAME $H
+ITER=`grep F-score-dev $NAME.err | awk '{print $2}' | cat -n | sort -nr -k 2 | head -1 | cut -f 1`
+WEIGHTS_FILE=weights.`head -1 $NAME.out`
+./extract-weights.py $WEIGHTS_FILE $ITER $NAME

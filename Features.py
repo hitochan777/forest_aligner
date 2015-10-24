@@ -150,6 +150,7 @@ class LocalFeatures:
     srcTags = ""
 
     values = {}
+    probDictList = [defaultdict(float)]*2
 
     if len(links) == 0:
         srcTag = "*NULL*"
@@ -158,24 +159,33 @@ class LocalFeatures:
         # Uncomment to add feature lexicalized by fword
         # values["%s___%s:%s(%s)"% (name, tgtTag, srcTag, fWord)] = 1
     else:
-        for link in links:
+        for i ,link in enumerate(links):
             findex = link[0]
-            try:
-                nodes =  info['ftree'].getNodesIndex(findex)
-                pos_count = defaultdict(int)
-                for node in nodes:
-                    pos_count[node.data["pos"]] += 1
-                sum = sum(pos_count.values())
-                # normalize count
-                for srcTag in pos_count:
-                    pos_count[pos] /= float(sum)
-                    values["%s___%s:%s" % (name, tgtTag, srcTag)] = pos_count[srcTag] 
-                    values["%s___%s(%s):%s"% (name, tgtTag, eWord, srcTag)] = pos_count[srcTag] 
-                    # Uncomment to add feature lexicalized by fword
-                    # values["%s___%s:%s(%s)"% (name, tgtTag, srcTag, fWord)] = pos_count[srcTag] 
-            except:
-                return {}
-
+            probDictList[(i+1)%2] = defaultdict(float)
+            nodes =  info['ftree'].getNodesByIndex(findex)
+            pos_count = defaultdict(float)
+            for node in nodes:
+                pos_count[node.data["pos"]] += 1
+            total = sum(pos_count.values())
+            # normalize count
+            for srcTag in pos_count:
+                pos_count[srcTag] /= float(total)
+            if len(probDictList[i%2])==0:
+                probDictList[(i+1)%2] = pos_count
+            else:
+                for srcTags, prob in probDictList[i%2].iteritems(): # In python3 iteritems is replaced with items
+                    for srcTag in pos_count:
+                        probDictList[(i+1)%2]["%s,%s" % (srcTags, srcTag)] = prob*pos_count[srcTag]
+        total = 0.0
+        for srcTags, prob in probDictList[len(links)%2].iteritems():
+            total += prob
+            values["%s___%s:%s" % (name, tgtTag, srcTags)] = prob
+            values["%s___%s(%s):%s"% (name, tgtTag, eWord, srcTags)] = prob
+            # Uncomment to add feature lexicalized by fword
+            # values["%s___%s:%s(%s)"% (name, tgtTag, srcTags, fWord)] = prob
+        assert total <= 1.0 + 1e-06 and total >= 1.0 - 1e-06, "The probability does not sum to 1!!"
+        # for key in values:
+            # print key, values[key]
     return values
 
   def ff_englishCommaLinkedToNonComma(self, info,  fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
