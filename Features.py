@@ -419,6 +419,33 @@ class LocalFeatures:
     else:
       return {name: 0.0}
 
+  def ff_continuousAlignment(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
+      name = self.ff_continuousAlignment.func_name
+      links = sorted(links)
+      nodes1 = None
+      nodes2 = None
+      count = 0 # the number of times two nodes are connected(meaning one node is a parent of the other node)
+      denominator = 0.0
+      for i in xrange(len(links)-1):
+          findex1 = links[i][0]
+          findex2 = links[i+1][0]
+          if not nodes2 == None:
+              nodes1 = nodes2
+          else:
+              nodes1  = info['ftree'].getNodesByIndex(findex1)
+          nodes2  = info['ftree'].getNodesByIndex(findex2)
+          for node1 in nodes1:
+              for node2 in nodes2:
+                  if node1.isConnectedTo(node2):
+                      count += 1
+          denominator += len(nodes1)*len(nodes2)
+      try:
+          value = count/denominator
+      except:
+          value = 0.0    
+      return {name: value}
+
+
   def pointLineGridDistance(self, f, e, fIndex, eIndex):
     """
     Compute distance to the diagonal of the alignment matrix.
