@@ -149,27 +149,43 @@ class LocalFeatures:
     tgtTag = currentNode.data["pos"]
     srcTags = ""
 
-    if len(links) == 0:
-      srcTags = "*NULL*"
-    else:
-      for link in links:
-        findex = link[0]
-        try:
-          srcTags += (info['ftree'].getNodeByIndex(findex).data["pos"]+",")
-        except:
-          return {}
-
-    value1 = "%s:%s" %(tgtTag,srcTags)
-    value2 = "%s(%s):%s" %(tgtTag, eWord, srcTags)
-    # Uncomment to add feature lexicalized by fword
-    #value3 = "%s:%s(%s)" %(tgtTag, srcTags, fWord)
-
     values = {}
-    values[name+'___'+value1] = 1
-    values[name+'___'+value2] = 1
-    # Uncomment to add feature lexicalized by fword
-    #values[name+'___'+value3] = 1
+    probDictList = [defaultdict(float)]*2
 
+    if len(links) == 0:
+        srcTag = "*NULL*"
+        values["%s___%s:%s" % (name, tgtTag, srcTag)] = 1
+        values["%s___%s(%s):%s"% (name, tgtTag, eWord, srcTag)] = 1
+        # Uncomment to add feature lexicalized by fword
+        # values["%s___%s:%s(%s)"% (name, tgtTag, srcTag, fWord)] = 1
+    else:
+        for i ,link in enumerate(links):
+            findex = link[0]
+            probDictList[(i+1)%2] = defaultdict(float)
+            nodes =  info['ftree'].getNodesByIndex(findex)
+            pos_count = defaultdict(float)
+            for node in nodes:
+                pos_count[node.data["pos"]] += 1
+            total = sum(pos_count.values())
+            # normalize count
+            for srcTag in pos_count:
+                pos_count[srcTag] /= float(total)
+            if len(probDictList[i%2])==0:
+                probDictList[(i+1)%2] = pos_count
+            else:
+                for srcTags, prob in probDictList[i%2].iteritems(): # In python3 iteritems is replaced with items
+                    for srcTag in pos_count:
+                        probDictList[(i+1)%2]["%s,%s" % (srcTags, srcTag)] = prob*pos_count[srcTag]
+        total = 0.0
+        for srcTags, prob in probDictList[len(links)%2].iteritems():
+            total += prob
+            values["%s___%s:%s" % (name, tgtTag, srcTags)] = prob
+            values["%s___%s(%s):%s"% (name, tgtTag, eWord, srcTags)] = prob
+            # Uncomment to add feature lexicalized by fword
+            # values["%s___%s:%s(%s)"% (name, tgtTag, srcTags, fWord)] = prob
+        assert total <= 1.0 + 1e-06 and total >= 1.0 - 1e-06, "The probability does not sum to 1!!"
+        # for key in values:
+            # print key, values[key]
     return values
 
   def ff_englishCommaLinkedToNonComma(self, info,  fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
@@ -413,6 +429,33 @@ class LocalFeatures:
     else:
       return {name: 0.0}
 
+  def ff_continuousAlignment(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
+      name = self.ff_continuousAlignment.func_name
+      links = sorted(links)
+      nodes1 = None
+      nodes2 = None
+      count = 0 # the number of times two nodes are connected(meaning one node is a parent of the other node)
+      denominator = 0.0
+      for i in xrange(len(links)-1):
+          findex1 = links[i][0]
+          findex2 = links[i+1][0]
+          if not nodes2 == None:
+              nodes1 = nodes2
+          else:
+              nodes1  = info['ftree'].getNodesByIndex(findex1)
+          nodes2  = info['ftree'].getNodesByIndex(findex2)
+          for node1 in nodes1:
+              for node2 in nodes2:
+                  if node1.isConnectedTo(node2):
+                      count += 1
+          denominator += len(nodes1)*len(nodes2)
+      try:
+          value = count/denominator
+      except:
+          value = 0.0    
+      return {name: value}
+
+
   def pointLineGridDistance(self, f, e, fIndex, eIndex):
     """
     Compute distance to the diagonal of the alignment matrix.
@@ -627,27 +670,24 @@ class NonlocalFeatures:
   
         minF = edge.boundingBox[0][0]
         maxF = edge.boundingBox[1][0]
-        # Catch exception due to bad parse tree.
-        # Ignore error and continue.
-        try:
-            minFNode = info['ftree'].getNodeByIndex(minF)
-            leftFTag = minFNode.data["pos"]
-            rightFTag = info['ftree'].getNodeByIndex(maxF).data["pos"]
-        except:
-          return {}
-  
-        if minF == maxF:
-          value = "%s:%s" % (tgtTag, leftFTag)
-          return {name+'___'+value: 1}
-        else:
-            fspan = (minF, maxF)
-            currentFNode = minFNode
-            while not containsSpan(currentFNode, fspan):
-                currentFNode = currentFNode.getParent()
-            srcTag = currentFNode.data["pos"]
-            value1 =  '%s:%s' % (tgtTag,srcTag)
-            value2 = '%s:%s(%s,%s)' % (tgtTag, srcTag, leftFTag, rightFTag)
-            return {name+'___'+value1: 1, name+'___'+value2: 1}
+        eWord = treeNode.data['surface']
+        eStartSpan, eEndSpan = treeNode.get_span()
+        eSpanLen = float(eEndSpan - eStartSpan)/len(info['e'])
+
+        fspan = (minF, maxF)
+        sourceNode = info['ftree'].getDeepestNodeConveringSpan(fspan)
+        fWord = sourceNode.data['surface']
+        fStartSpan, fEndSpan = sourceNode.get_span()
+        fSpanLen = float(fEndSpan - fStartSpan)/len(info['f'])
+        span_diff= abs(eSpanLen - fSpanLen)
+
+        fWord = sourceNode.data['surface']
+        fStartSpan, eEndSpan = sourceNode.get_span()
+        fSpanLen = float(fEndSpan - fStartSpan)/len(info['f'])
+        srcTag = sourceNode.data["pos"]
+        value1 =  '%s:%s' % (tgtTag,srcTag)
+        span_diff= abs(eSpanLen - fSpanLen)
+        return {name+'___'+value1: 1, name+'__'+'normalizedSpanLenDiff': span_diff, name+'__'+'pfe' : self.pef.get(fWord, {}).get(eWord, 0.0) }
   
     def ff_nonlocal_sameWordLinks(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
         """
@@ -697,7 +737,6 @@ class NonlocalFeatures:
                     eIndex2, depth2 = linkedToWords_copy[fIndex][1]
                     linkedToWords_copy[fIndex] = linkedToWords_copy[fIndex][1:]
                     dist += depth1 + depth2
-                    # print ((eIndex1, depth1), (eIndex2, depth2))
             dist /= tgtSpanDist
         return {name: dist}
   
