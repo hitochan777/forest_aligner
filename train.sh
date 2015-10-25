@@ -41,6 +41,6 @@ nice -15 mpiexec -n $NUMCPUS $PYTHON ./aligner.py \
 
 cat $NAME.out
 
-ITER=`grep F-score-dev $NAME.err | awk '{print $2}' | cat -n | sort -nr -k 2 | head -1 | cut -f 1`
+ITER=`grep F-score-dev $NAME.err | awk '{print $2}' | cat -n | sort -nr -k 2 | head -1 | cut -f 1 | tr -d '[[:space:]]'`
 WEIGHTS_FILE=weights.`head -1 $NAME.out`
 ./extract-weights.py $WEIGHTS_FILE $ITER $NAME
