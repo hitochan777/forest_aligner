@@ -1,10 +1,10 @@
 #!/usr/bin/env zsh
 
 CPU=`nproc`
-_CORES=`echo "$CPU * 0.5" | bc`
+_CORES=`echo "$CPU * 0.8" | bc`
 LINK=2
-ITER=10
-PARTIAL=50
+ITER=100
+PARTIAL=-1
 
 export CORES=${_CORES%.*}
 export PYTHONPATH=/usr/local/lib:$HOME/developer/pyglog:$HOME/developer/forest_aligner/pyglog:PYTHONPATH
