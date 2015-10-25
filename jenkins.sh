@@ -1,5 +1,4 @@
 #!/usr/bin/env zsh
-set -e
 
 CPU=`nproc`
 _CORES=`echo "$CPU * 0.5" | bc`
