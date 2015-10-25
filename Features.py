@@ -737,7 +737,7 @@ class NonlocalFeatures:
                     eIndex2, depth2 = linkedToWords_copy[fIndex][1]
                     linkedToWords_copy[fIndex] = linkedToWords_copy[fIndex][1:]
                     dist += depth1 + depth2
-            dist /= tgtSpanDist
+        dist /= tgtSpanDist
         return {name: dist}
   
     def isPunctuation(self, string):
