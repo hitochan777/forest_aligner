@@ -12,18 +12,17 @@ export LD_LIBRARY_PATH=/home/chu/tools/boost_1_54_0/lib:$LD_LIBRARY_PATH
 NUMCPUS=$CORE
 ###################################################################
 
-NILE_DIR=/home/otsuki/developer/forest_aligner
 K=128
 LINK=$1
 MAXEPOCH=$2
 PARTIAL=$3
-DATA=/home/otsuki/developer/forest_aligner/data
+DATA=./data
 LANGPAIR=ja_en
 H=`grep F-score-dev $NAME.err | awk '{print $2}' | cat -n | sort -nr -k 2 | head -1 | cut -f 1`
 WEIGHTS=k${K}.$LANGPAIR.$MAXEPOCH.$PARTIAL.$LINK.weights-$H
 NAME=$WEIGHTS.test-output.a
 
-nice -19 mpiexec -n $NUMCPUS $PYTHON $NILE_DIR/aligner.py \
+nice -19 mpiexec -n $NUMCPUS $PYTHON ./aligner.py \
   --f $DATA/test.f \
   --e $DATA/test.e \
   --ftrees $DATA/forest/1best/test.f.forest \
@@ -42,4 +41,4 @@ nice -19 mpiexec -n $NUMCPUS $PYTHON $NILE_DIR/aligner.py \
   --out $NAME \
   --k $K
 
-$NILE_DIR/Fmeasure.py $NAME $DATA/test.a.s
+./Fmeasure.py $NAME $DATA/test.a.s

@@ -5,7 +5,6 @@ export PYTHONPATH=/home/chu/tools/boost_1_54_0/lib:$PYTHONPATH
 export LD_LIBRARY_PATH=/home/chu/tools/boost_1_54_0/lib:$LD_LIBRARY_PATH
 NUMCPUS=$CORES
 
-APP_DIR=.
 K=128
 LINK=$1
 MAXEPOCH=$2
@@ -14,7 +13,7 @@ DATA=./data
 LANGPAIR=ja_en
 NAME=k${K}.$LANGPAIR.$MAXEPOCH.$PARTIAL.$LINK
 
-nice -15 mpiexec -n $NUMCPUS $PYTHON $APP_DIR/aligner.py \
+nice -15 mpiexec -n $NUMCPUS $PYTHON ./aligner.py \
   --f $DATA/train.f \
   --e $DATA/train.e \
   --gold $DATA/train.a.s \
