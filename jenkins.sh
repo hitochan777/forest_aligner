@@ -4,8 +4,8 @@ set -e
 CPU=`nproc`
 _CORES=`echo "$CPU * 0.5" | bc`
 LINK=2
-ITER=100
-PARTIAL=-1
+ITER=10
+PARTIAL=50
 
 export CORES=${_CORES%.*}
 export PYTHONPATH=/usr/local/lib:$HOME/developer/pyglog:$HOME/developer/forest_aligner/pyglog:PYTHONPATH
