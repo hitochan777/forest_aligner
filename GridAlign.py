@@ -185,9 +185,9 @@ class Model(object):
       self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToComma)
       self.featureTemplates.append(localFeatures.ff_nonPeriodLinkedToPeriod)
       self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToFinalPeriod)
-      # self.featureTemplates.append(localFeatures.ff_tgtTag_srcTag)
+      self.featureTemplates.append(localFeatures.ff_tgtTag_srcTag)
       self.featureTemplates.append(localFeatures.ff_thirdParty)
-      # self.featureTemplates.append(localFeatures.ff_continuousAlignment)
+      self.featureTemplates.append(localFeatures.ff_continuousAlignment)
   
     ##################################################
     # Inititalize feature function list
@@ -199,8 +199,8 @@ class Model(object):
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_dummy)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_isPuncAndHasMoreThanOneLink)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
-      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_hyperEdgeScore)
-      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
+      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_hyperEdgeScore)
+      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_crossb)
   
