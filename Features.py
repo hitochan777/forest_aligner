@@ -434,9 +434,9 @@ class LocalFeatures:
       links = sorted(links)
       nodes1 = None
       nodes2 = None
-      count = 0 # the number of times two nodes are connected(meaning one node is a parent of the other node)
-      denominator = 0.0
+      total = 0.0
       for i in xrange(len(links)-1):
+          count = 0.0 # the number of times two nodes are connected(meaning one node is a parent of the other node)
           findex1 = links[i][0]
           findex2 = links[i+1][0]
           if not nodes2 == None:
@@ -448,12 +448,9 @@ class LocalFeatures:
               for node2 in nodes2:
                   if node1.isConnectedTo(node2):
                       count += 1
-          denominator += len(nodes1)*len(nodes2)
-      try:
-          value = count/denominator
-      except:
-          value = 0.0    
-      return {name: value}
+          total += count / (len(nodes1)*len(nodes2))
+
+      return {name: total}
 
 
   def pointLineGridDistance(self, f, e, fIndex, eIndex):
