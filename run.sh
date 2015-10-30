@@ -8,7 +8,8 @@ LINK=2
 ITER=100
 PARTIAL=-1
 LANG="ja_zh"
-export DATA = /windroot/otsuki/data/ASPEC-JC # Absolute path to the base directory which has data
+export DATA=/windroot/otsuki/data/ASPEC-JC # Absolute path to the base directory which has data
+export FOREST_DATA=$DATA/1best
 ######################################################
 
 export CORES=${_CORES%.*}

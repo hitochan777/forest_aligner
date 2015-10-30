@@ -3,8 +3,8 @@
 export PATH=/home/chu/mpich-install/bin:$PATH
 export PYTHONPATH=/home/chu/tools/boost_1_54_0/lib:$PYTHONPATH
 export LD_LIBRARY_PATH=/home/chu/tools/boost_1_54_0/lib:$LD_LIBRARY_PATH
-NUMCPUS=$CORES
 
+NUMCPUS=$CORES
 K=128
 LINK=$1
 MAXEPOCH=$2
@@ -18,8 +18,8 @@ NAME=$WEIGHTS.test-output.a
 nice -19 mpiexec -n $NUMCPUS $PYTHON ./aligner.py \
   --f $DATA/test.f \
   --e $DATA/test.e \
-  --ftrees $DATA/forest/test.f.forest \
-  --etrees $DATA/forest/test.e.forest \
+  --ftrees $FOREST_DATA/test.f.forest \
+  --etrees $FOREST_DATA/test.e.forest \
   --evcb $DATA/test.e.vcb \
   --fvcb $DATA/test.f.vcb \
   --pef $DATA/GIZA++.m4.pef  \
