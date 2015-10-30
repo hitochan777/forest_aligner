@@ -434,9 +434,9 @@ class LocalFeatures:
       links = sorted(links)
       nodes1 = None
       nodes2 = None
-      count = 0 # the number of times two nodes are connected(meaning one node is a parent of the other node)
-      denominator = 0.0
+      total = 0.0
       for i in xrange(len(links)-1):
+          count = 0.0 # the number of times two nodes are connected(meaning one node is a parent of the other node)
           findex1 = links[i][0]
           findex2 = links[i+1][0]
           if not nodes2 == None:
@@ -448,12 +448,9 @@ class LocalFeatures:
               for node2 in nodes2:
                   if node1.isConnectedTo(node2):
                       count += 1
-          denominator += len(nodes1)*len(nodes2)
-      try:
-          value = count/denominator
-      except:
-          value = 0.0    
-      return {name: value}
+          total += count / (len(nodes1)*len(nodes2))
+
+      return {name: total}
 
 
   def pointLineGridDistance(self, f, e, fIndex, eIndex):
@@ -721,7 +718,8 @@ class NonlocalFeatures:
         tgtSpanDist = tgtSpan[1] - tgtSpan[0]
         if tgtSpanDist == 0:
             return {name: 0.}
-  
+
+        normalizer = 0.0  
         for fIndex in linkedToWords_copy:
             if len(linkedToWords_copy[fIndex]) < 2:
                 continue
@@ -731,13 +729,17 @@ class NonlocalFeatures:
   
                 linkedToWords_copy[fIndex].sort()
                 listlength = len(linkedToWords_copy[fIndex])
+                normalizer += listlength - 1
                 for i in xrange(listlength-1):
                     # eIndex1 and eIndex2 will always be the smallest, and second-smallest indices, respectively.
                     eIndex1, depth1 = linkedToWords_copy[fIndex][0]
                     eIndex2, depth2 = linkedToWords_copy[fIndex][1]
                     linkedToWords_copy[fIndex] = linkedToWords_copy[fIndex][1:]
                     dist += depth1 + depth2
-            dist /= tgtSpanDist
+        try:
+            dist /= normalizer
+        except:
+            dist = 0.0
         return {name: dist}
   
     def isPunctuation(self, string):
