@@ -18,8 +18,8 @@ NAME=$WEIGHTS.test-output.a
 nice -19 mpiexec -n $NUMCPUS $PYTHON ./aligner.py \
   --f $DATA/test.f \
   --e $DATA/test.e \
-  --ftrees $FOREST_DATA/test.f.forest \
-  --etrees $FOREST_DATA/test.e.forest \
+  --ftrees $SOURCE_FOREST_DATA/test.f.forest \
+  --etrees $TARGET_FOREST_DATA/test.e.forest \
   --evcb $DATA/test.e.vcb \
   --fvcb $DATA/test.f.vcb \
   --pef $DATA/GIZA++.m4.pef  \
