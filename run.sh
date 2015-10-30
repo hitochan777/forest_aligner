@@ -9,8 +9,8 @@ ITER=100
 PARTIAL=-1
 LANG="ja_zh"
 export DATA=/windroot/otsuki/data/ASPEC-JC # Absolute path to the base directory which has data
-export TARGET_FOREST_DATA=$DATA/1best
-export SOURCE_FOREST_DATA=$DATA
+export TARGET_FOREST_DATA=$DATA/forest/1best
+export SOURCE_FOREST_DATA=$DATA/forest
 ######################################################
 
 export CORES=${_CORES%.*}
