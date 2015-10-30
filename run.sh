@@ -2,9 +2,14 @@
 
 CPU=`nproc`
 _CORES=`echo "$CPU * 0.8" | bc`
+
+################### CUSTOMIZABLE #####################
 LINK=2
 ITER=100
 PARTIAL=-1
+LANG="ja_zh"
+export DATA = /windroot/otsuki/data/ASPEC-JC # Absolute path to the base directory which has data
+######################################################
 
 export CORES=${_CORES%.*}
 export PYTHONPATH=/usr/local/lib:$HOME/developer/pyglog:$HOME/developer/forest_aligner/pyglog:PYTHONPATH
@@ -13,10 +18,10 @@ export C_INCLUDE_PATH=/home/hitoshi/developer/boost_1_59_0:$C_INCLUDE_PATH
 export CPLUS_INCLUDE_PATH=/home/hitoshi/developer/boost_1_59_0:$CPLUS_INCLUDE_PATH
 export LD_LIBRARY_PATH=/home/hitoshi/developer/boost_1_59_0/stage/lib:$LD_LIBRARY_PATH
 
-rm -rf weights-* weights.*
+rm -rf weights-* 
+rm -rf weights.*
 rm -rf k*
 rm -rf *output*
 
-[ ! -d data ] && ln -s $ASPEC_JE data
-./train.sh $LINK $ITER $PARTIAL
-./test.sh $LINK $ITER $PARTIAL
+./train.sh $LINK $ITER $PARTIAL $LANG
+./test.sh $LINK $ITER $PARTIAL $LANG
