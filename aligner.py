@@ -635,7 +635,6 @@ if __name__ == "__main__":
     flags.DEFINE_string('score_out', None, 'output file for score')
     flags.DEFINE_integer('partial',-1,"Use first N sentences of the corpus")
     flags.DEFINE_integer('nto1',2,"To how many source words can a target word be aligned")
-    # flags.DEFINE_string("tree_type","dep","Type of tree structure to be used, dep: dependency tree, const: constituency tree")
     argv = FLAGS(sys.argv)
 
     if FLAGS.debiasing and FLAGS.debiasing_weights is None:
