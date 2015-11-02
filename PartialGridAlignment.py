@@ -18,7 +18,7 @@ class PartialGridAlignment(object):
           return 1
   
     def __str__(self):
-      return str(self.score)+" "+str(self.links)
+        return str(self.score)+" "+str(map(lambda x: x.link,self.links))
   
     def __init__(self, flen = 0, elen = 0):
       """

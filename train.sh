@@ -5,7 +5,7 @@ export PYTHONPATH=/home/chu/tools/boost_1_54_0/lib:$PYTHONPATH
 export LD_LIBRARY_PATH=/home/chu/tools/boost_1_54_0/lib:$LD_LIBRARY_PATH
 NUMCPUS=$CORES
 
-K=500
+K=128
 LINK=$1
 MAXEPOCH=$2
 PARTIAL=$3
@@ -42,4 +42,4 @@ cat $NAME.out
 
 ITER=`grep F-score-dev $NAME.err | awk '{print $2}' | cat -n | sort -nr -k 2 | head -1 | cut -f 1 | tr -d '[[:space:]]'`
 WEIGHTS_FILE=weights.`head -1 $NAME.out`
-./extract-weights.py $WEIGHTS_FILE $ITER $NAME
+./weight-extract.py $WEIGHTS_FILE $ITER $NAME

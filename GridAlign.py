@@ -215,6 +215,7 @@ class Model(object):
         # *DONE* Now finalize everything; final bookkeeping.
   
         self.hyp = self.etree.partialAlignments["hyp"][0]
+        # print self.hyp
         if self.COMPUTE_HOPE:
             self.oracle = self.etree.partialAlignments["oracle"][0]
         elif self.COMPUTE_ORACLE:
@@ -570,8 +571,10 @@ class Model(object):
         ########################################################################
         # Sort model score list.
         sortedBestFirstPartialAlignments = []
+        # print "#"*10, currentNode.data["surface"], "#"*10
         while len(partialAlignments) > 0:
           sortedBestFirstPartialAlignments.insert(0,heappop(partialAlignments))
+          # print sortedBestFirstPartialAlignments[0]
         # Sort hope score list.
         if self.COMPUTE_HOPE:
           sortedBestFirstPartialAlignments_oracle = []
@@ -765,6 +768,8 @@ class Model(object):
         ####################################################################
         # Sort model score list.
         sortedItems = []
+        # print "#"*10, currentNode.data["surface"], "#"*10
         while(len(currentNode.partialAlignments[type]) > 0):
             sortedItems.insert(0, heappop(currentNode.partialAlignments[type]))
+            # print sortedItems[0]
         currentNode.partialAlignments[type] = sortedItems

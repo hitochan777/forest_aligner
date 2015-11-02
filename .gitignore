@@ -4,4 +4,8 @@ data
 *.err
 weights.*
 .nfs*
-
+*.out
+*.err
+*.output.a
+*debug*
+*weights-*
