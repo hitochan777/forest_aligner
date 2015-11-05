@@ -298,10 +298,11 @@ class Model(object):
           best.fscore = -1.0 # Any negative value suffices
           for hyperEdge in currentNode.hyperEdges:
               if self.BINARIZE:
-                  queue = Queue()
+                  queue = Queue.Queue()
                   for child in hyperEdge.tail:
                       queue.put(child.oracle)
-                  queue.put(currentNode.oracle)
+                  if currentNode.oracle: # TOP node does not have local oracle
+                      queue.put(currentNode.oracle)
                   while queue.qsize() >= 2:
                       first = queue.get()
                       second = queue.get()
@@ -797,10 +798,11 @@ class Model(object):
             # print sortedItems[0]
         currentNode.partialAlignments[type] = sortedItems
 
-    def kbestWithDummyNode(self, currentNode, type = "hyp", dummyCurrentNode):
+    def kbestWithDummyNode(self, currentNode, dummyCurrentNode, type = "hyp" ):
         # Initialize
         queue = []
         heapify(queue)
+        arity = 2
         dummyCurrentNode.partialAlignments[type] = []
         # Before we push, check to see if object's position is in duplicates
         # i.e., we have already visited that position and added the resultant object to the queue
@@ -819,7 +821,10 @@ class Model(object):
             # Object number for current child
             edgeNumber = position[c]
             currentChild = hyperEdge.tail[c]
-            edge = dummyCurrentChild.partialAlignments[type][edgeNumber]
+            try:
+                edge = currentChild.partialAlignments[type][edgeNumber]
+            except:
+                print currentChild.data
             edges.append(edge)
         newEdge, boundingBox = self.createEdge(edges, currentNode, currentNode.span, hyperEdge)
         if type == "hyp":
@@ -828,62 +833,59 @@ class Model(object):
             newEdge.score = self.oracleScoreFunc(newEdge)
         # Where did this new edge come from?
         newEdge.position = list(position)
-        # Which hyper edge is newEdge created from?
-        newEdge.hyperEdgeNumber = hyperEdgeNumber
         # Add new edge to the queue/buffer
         heappush(queue, (newEdge.score*-1, newEdge))
   
         # Keep filling up my cell until self.BEAM_SIZE has been reached *or*
         # have exhausted all possible items in the queue
         while(len(queue) > 0 and len(dummyCurrentNode.partialAlignments[type]) < self.NT_BEAM):
-        # Find current best
-        (_, currentBestCombinedEdge) = heappop(queue)
-        # Add to my cell
-        self.addPartialAlignment(dummyCurrentNode.partialAlignments[type], currentBestCombinedEdge, self.NT_BEAM)
-        # Don't create and score more edges when we are already full.
-        if len(dummyCurrentNode.partialAlignments[type]) >= self.NT_BEAM:
-            break
-        # - Find neighbors
-        # - Rescore neighbors
-        # - Add neighbors to the queue to be explored
-        #   o For every child, there exists a neighbor
-        #   o numNeighbors = numChildren
-        for componentNumber in xrange(arity):
-            # Compute neighbor position
-            neighborPosition = list(currentBestCombinedEdge.position)
-            neighborPosition[componentNumber] += 1
-            # Is this neighbor out of range?
-            if neighborPosition[componentNumber] >= len(hyperEdge.tail[componentNumber].partialAlignments[type]):
-                continue
-            # Has this neighbor already been visited?
-            #if duplicates.has_key(tuple(neighborPosition)):
-            #    continue
-            # Lazy eval trick due to Matthias Buechse:
-            # Only evaluate after both a node's predecessors have been evaluated.
-            # Special case: if any component of neighborPosition is 0, it is on the border.
-            # In this case, it only has one predecessor (the one that led us to this position),
-            # and can be immediately evaluated.
-            # if 0 not in neighborPosition and count[tuple(neighborPosition)] < 1: # this only works when number of children is 2, I think
-            if count[tuple(neighborPosition)] < arity - 1 - neighborPosition.count(0): # arity - neighborPosition.count(0) - 1
-                count[tuple(neighborPosition)] += 1
-                continue
+            # Find current best
+            (_, currentBestCombinedEdge) = heappop(queue)
+            # Add to my cell
+            self.addPartialAlignment(dummyCurrentNode.partialAlignments[type], currentBestCombinedEdge, self.NT_BEAM)
+            # Don't create and score more edges when we are already full.
+            if len(dummyCurrentNode.partialAlignments[type]) >= self.NT_BEAM:
+                break
+            # - Find neighbors
+            # - Rescore neighbors
+            # - Add neighbors to the queue to be explored
+            #   o For every child, there exists a neighbor
+            #   o numNeighbors = numChildren
+            for componentNumber in xrange(arity):
+                # Compute neighbor position
+                neighborPosition = list(currentBestCombinedEdge.position)
+                neighborPosition[componentNumber] += 1
+                # Is this neighbor out of range?
+                if neighborPosition[componentNumber] >= len(hyperEdge.tail[componentNumber].partialAlignments[type]):
+                    continue
+                # Has this neighbor already been visited?
+                #if duplicates.has_key(tuple(neighborPosition)):
+                #    continue
+                # Lazy eval trick due to Matthias Buechse:
+                # Only evaluate after both a node's predecessors have been evaluated.
+                # Special case: if any component of neighborPosition is 0, it is on the border.
+                # In this case, it only has one predecessor (the one that led us to this position),
+                # and can be immediately evaluated.
+                # if 0 not in neighborPosition and count[tuple(neighborPosition)] < 1: # this only works when number of children is 2, I think
+                if count[tuple(neighborPosition)] < arity - 1 - neighborPosition.count(0): # arity - neighborPosition.count(0) - 1
+                    count[tuple(neighborPosition)] += 1
+                    continue
   
-            # Now build the neighbor edge
-            neighbor = []
-            for cellNumber in xrange(arity):
-                cell = hyperEdge.tail[cellNumber]
-                edgeNumber = neighborPosition[cellNumber]
-                edge = cell.partialAlignments[type][edgeNumber]
-                neighbor.append(edge)
+                # Now build the neighbor edge
+                neighbor = []
+                for cellNumber in xrange(arity):
+                    cell = hyperEdge.tail[cellNumber]
+                    edgeNumber = neighborPosition[cellNumber]
+                    edge = cell.partialAlignments[type][edgeNumber]
+                    neighbor.append(edge)
 
-            neighborEdge, boundingBox = self.createEdge(neighbor, currentNode, currentNode.span, hyperEdge)
-            neighborEdge.position = neighborPosition
-            neighborEdge.hyperEdgeNumber = currentBestCombinedEdge.hyperEdgeNumber
-            if type == "hyp":
-                neighborEdge.score = self.hypScoreFunc(neighborEdge)
-            else:
-                neighborEdge.score = self.oracleScoreFunc(neighborEdge)
-            heappush(queue, (-1*neighborEdge.score, neighborEdge))
+                neighborEdge, boundingBox = self.createEdge(neighbor, currentNode, currentNode.span, hyperEdge)
+                neighborEdge.position = neighborPosition
+                if type == "hyp":
+                    neighborEdge.score = self.hypScoreFunc(neighborEdge)
+                else:
+                    neighborEdge.score = self.oracleScoreFunc(neighborEdge)
+                heappush(queue, (-1*neighborEdge.score, neighborEdge))
 
         ####################################################################
         # Finalize.
@@ -897,20 +899,24 @@ class Model(object):
     def binarizeKbest(self, currentNode, type = "hyp"):
         oneColumnAlignments = currentNode
         for hyperEdgeNumber, hyperEdge in enumerate(currentNode.hyperEdges):
-            queue = Queue()
+            queue = Queue.Queue()
             for child in hyperEdge.tail:
                 queue.put(child)
-            queue.put(oneColumnAlignments)
+            if oneColumnAlignments.data["pos"] != "TOP":
+                queue.put(oneColumnAlignments)
             while queue.qsize() >= 2:
                 first = queue.get()
                 second = queue.get()
                 dummy = ForestNode(currentNode.data)
                 dummy.i, dummy.j = currentNode.i, currentNode.j
                 dummy.addHyperEdge(dummy, [first, second], hyperEdge.score)
-                self.kbestWithDummyNode(dummy, type, dummy)
+                self.kbestWithDummyNode(currentNode, dummy, type)
                 queue.put(dummy)
+
+            dummy = queue.get()
+            assert queue.empty(), "queue is not empty!" 
             while(len(dummy.partialAlignments[type]) > 0):
-                if not self.addPartialAlignment(currentNode.partialAlignments[type], heappop(dummy.partialAlignments[type])), self.NT_BEAM):
+                if not self.addPartialAlignment(currentNode.partialAlignments[type], heappop(dummy.partialAlignments[type]), self.NT_BEAM):
                     break
 
         sortedItems = []
