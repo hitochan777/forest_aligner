@@ -636,6 +636,7 @@ if __name__ == "__main__":
     flags.DEFINE_integer('partial',-1,"Use first N sentences of the corpus")
     flags.DEFINE_integer('nto1',2,"To how many source words can a target word be aligned")
     flags.DEFINE_boolean('binarize', True, "True: binarize dependency tree while decoding, False: do not binarize; default: True")
+    flags.DEFINE_boolean('show_decoding_path', False, "True: show which tree was chosen among n-best, False: do not show trees; default: False")
     argv = FLAGS(sys.argv)
 
     if FLAGS.debiasing and FLAGS.debiasing_weights is None:

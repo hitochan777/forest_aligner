@@ -9,3 +9,4 @@ weights.*
 *.output.a
 *debug*
 *weights-*
+*_debug.sh

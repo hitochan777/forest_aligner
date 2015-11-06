@@ -96,10 +96,10 @@ def parser(string):
     root = ForestNode() # Dummy root node which collects all root nodes(A forest has multiple roots) in the forest.
     root.i, root.j = 0, sent_len
     root.data = {
-        "id": None,
-        "word_id": None,
-        "surface": None,
-        "dict_form": None,
+        "id": -1,
+        "word_id": -1,
+        "surface": "__TOP__",
+        "dict_form": "__TOP__",
         "pos": "TOP",
         "isContent": False,
         "pos2": "TOP",
@@ -113,5 +113,4 @@ def parser(string):
             node.addParent(root, 0) 
             root.addHyperEdge(root,[node], 0.0) # Since root is dummy, it is natural to think scores of incoming hyperedge is zero
     root.unprocessedChildNum = root.childnum = len(root.hyperEdges) # Since the arity of every incoming hyperedge to root is 0, the number of childrent is equal to the number of the hyperedges. 
-
     return root

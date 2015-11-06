@@ -60,6 +60,7 @@ class Model(object):
       self.NONLOCAL_FEATURES = NONLOCAL_FEATURES
       self.LANG = FLAGS.langpair
       self.BINARIZE = FLAGS.binarize
+      self.SHOW_DECODING_PATH = FLAGS.show_decoding_path
       if FLAGS.init_k is not None:
         self.BEAM_SIZE = FLAGS.init_k
       else:
@@ -221,7 +222,10 @@ class Model(object):
             self.oracle = self.etree.partialAlignments["oracle"][0]
         elif self.COMPUTE_ORACLE:
             self.oracle = self.etree.partialAlignments["oracle"]
-      
+        if self.SHOW_DECODING_PATH:
+            print self.hyp.decodingPath.getDecodingPath()
+            print self.oracle.decodingPath.getDecodingPath()
+
     def bottom_up_visit(self):
         """
         Visit each node in the tree, bottom up, and in level-order.
@@ -337,6 +341,7 @@ class Model(object):
       In addition, set the score of the new edge.
       """
       newEdge = PartialGridAlignment()
+      newEdge.decodingPath.node = currentNode
       newEdge.scoreVector_local = svector.Vector()
       newEdge.scoreVector = svector.Vector()
       newEdge.hyperEdgeScore = hyperEdge.score
@@ -344,6 +349,9 @@ class Model(object):
       for index, e in enumerate(childEdges):
           newEdge.links += e.getDepthAddedLink()
           newEdge.scoreVector_local += e.scoreVector_local
+          if index != len(childEdges) - 1 or currentNode.data['pos'] == 'TOP':
+              e.decodingPath.parent = newEdge.decodingPath
+              newEdge.decodingPath.addChild(e.decodingPath)
           newEdge.scoreVector += e.scoreVector
   
           if e.boundingBox is None:
@@ -468,6 +476,7 @@ class Model(object):
                     scoreVector[name] += value
   
         nullPartialAlignment = PartialGridAlignment()
+        nullPartialAlignment.decodingPath.node = currentNode
         nullPartialAlignment.score = score = scoreVector.dot(self.weights)
         nullPartialAlignment.scoreVector = scoreVector
         nullPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
@@ -503,6 +512,7 @@ class Model(object):
           singleBestAlignment.append((score, [tgtIndex]))
   
           singleLinkPartialAlignment = PartialGridAlignment()
+          singleLinkPartialAlignment.decodingPath.node = currentNode
           singleLinkPartialAlignment.score = score
           singleLinkPartialAlignment.scoreVector = scoreVector
           singleLinkPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
@@ -565,6 +575,7 @@ class Model(object):
                     newAlignmentList.append((score, na+sa))
   
                     NLinkPartialAlignment = PartialGridAlignment()
+                    NLinkPartialAlignment.decodingPath.node = currentNode
                     NLinkPartialAlignment.score = score
                     NLinkPartialAlignment.scoreVector = scoreVector
                     NLinkPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
