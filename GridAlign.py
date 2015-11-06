@@ -217,7 +217,6 @@ class Model(object):
         # *DONE* Now finalize everything; final bookkeeping.
   
         self.hyp = self.etree.partialAlignments["hyp"][0]
-        # print self.hyp
         if self.COMPUTE_HOPE:
             self.oracle = self.etree.partialAlignments["oracle"][0]
         elif self.COMPUTE_ORACLE:
@@ -821,10 +820,7 @@ class Model(object):
             # Object number for current child
             edgeNumber = position[c]
             currentChild = hyperEdge.tail[c]
-            try:
-                edge = currentChild.partialAlignments[type][edgeNumber]
-            except:
-                print currentChild.data
+            edge = currentChild.partialAlignments[type][edgeNumber]
             edges.append(edge)
         newEdge, boundingBox = self.createEdge(edges, currentNode, currentNode.span, hyperEdge)
         if type == "hyp":
@@ -892,13 +888,13 @@ class Model(object):
         ####################################################################
         # Sort model score list.
         sortedItems = []
-        while(len(currentNode.partialAlignments[type]) > 0):
-            sortedItems.insert(0, heappop(currentNode.partialAlignments[type]))
-        currentNode.partialAlignments[type] = sortedItems
+        while(len(dummyCurrentNode.partialAlignments[type]) > 0):
+            sortedItems.insert(0, heappop(dummyCurrentNode.partialAlignments[type]))
+        dummyCurrentNode.partialAlignments[type] = sortedItems
 
     def binarizeKbest(self, currentNode, type = "hyp"):
         oneColumnAlignments = currentNode
-        for hyperEdgeNumber, hyperEdge in enumerate(currentNode.hyperEdges):
+        for hyperEdge in currentNode.hyperEdges:
             queue = Queue.Queue()
             for child in hyperEdge.tail:
                 queue.put(child)
@@ -908,7 +904,6 @@ class Model(object):
                 first = queue.get()
                 second = queue.get()
                 dummy = ForestNode(currentNode.data)
-                dummy.i, dummy.j = currentNode.i, currentNode.j
                 dummy.addHyperEdge(dummy, [first, second], hyperEdge.score)
                 self.kbestWithDummyNode(currentNode, dummy, type)
                 queue.put(dummy)
@@ -923,4 +918,3 @@ class Model(object):
         while(len(currentNode.partialAlignments[type]) > 0):
             sortedItems.insert(0, heappop(currentNode.partialAlignments[type]))
         currentNode.partialAlignments[type] = sortedItems
-
