@@ -223,8 +223,11 @@ class Model(object):
         elif self.COMPUTE_ORACLE:
             self.oracle = self.etree.partialAlignments["oracle"]
         if self.SHOW_DECODING_PATH:
+            print "=================Model Decoding Path==================="
             print self.hyp.decodingPath.getDecodingPath()
+            print "=================Oracle Decoding Path==================="
             print self.oracle.decodingPath.getDecodingPath()
+            print
 
     def bottom_up_visit(self):
         """
@@ -331,7 +334,7 @@ class Model(object):
             else:
                 self.kbest(currentNode, "oracle")
              
-    def createEdge(self, childEdges, currentNode, span, hyperEdge):
+    def createEdge(self, childEdges, currentNode, span, hyperEdge, binarized = False):
       """
       Create a new edge from the list of edges 'edge'.
       Creating an edge involves:
@@ -347,9 +350,12 @@ class Model(object):
       newEdge.hyperEdgeScore = hyperEdge.score
   
       for index, e in enumerate(childEdges):
-          newEdge.links += e.getDepthAddedLink()
+          if binarized:
+              newEdge.links += e.links
+          else:
+              newEdge.links += e.getDepthAddedLink()
           newEdge.scoreVector_local += e.scoreVector_local
-          if index != len(childEdges) - 1 or currentNode.data['pos'] == 'TOP':
+          if not binarized and (index != len(childEdges) - 1 or currentNode.data['pos'] == 'TOP'):
               e.decodingPath.parent = newEdge.decodingPath
               newEdge.decodingPath.addChild(e.decodingPath)
           newEdge.scoreVector += e.scoreVector
@@ -833,7 +839,7 @@ class Model(object):
             currentChild = hyperEdge.tail[c]
             edge = currentChild.partialAlignments[type][edgeNumber]
             edges.append(edge)
-        newEdge, boundingBox = self.createEdge(edges, currentNode, currentNode.span, hyperEdge)
+        newEdge, boundingBox = self.createEdge(edges, currentNode, currentNode.span, hyperEdge, binarized = True)
         if type == "hyp":
             newEdge.score = self.hypScoreFunc(newEdge)
         else:
@@ -886,7 +892,7 @@ class Model(object):
                     edge = cell.partialAlignments[type][edgeNumber]
                     neighbor.append(edge)
 
-                neighborEdge, boundingBox = self.createEdge(neighbor, currentNode, currentNode.span, hyperEdge)
+                neighborEdge, boundingBox = self.createEdge(neighbor, currentNode, currentNode.span, hyperEdge, binarized = True)
                 neighborEdge.position = neighborPosition
                 if type == "hyp":
                     neighborEdge.score = self.hypScoreFunc(neighborEdge)
@@ -905,6 +911,7 @@ class Model(object):
 
     def binarizeKbest(self, currentNode, type = "hyp"):
         oneColumnAlignments = currentNode
+        partialAlignments = [] # currentNode.partialAlignments[type] contains local alignments! So we cannot reset it to [] because we will use them later!
         for hyperEdge in currentNode.hyperEdges:
             queue = Queue.Queue()
             for child in hyperEdge.tail:
@@ -921,11 +928,11 @@ class Model(object):
 
             dummy = queue.get()
             assert queue.empty(), "queue is not empty!" 
-            while(len(dummy.partialAlignments[type]) > 0):
-                if not self.addPartialAlignment(currentNode.partialAlignments[type], heappop(dummy.partialAlignments[type]), self.NT_BEAM):
+            for partial_alignment in dummy.partialAlignments[type]:
+                if not self.addPartialAlignment(partialAlignments, partial_alignment, self.NT_BEAM):
                     break
-
+               
         sortedItems = []
-        while(len(currentNode.partialAlignments[type]) > 0):
-            sortedItems.insert(0, heappop(currentNode.partialAlignments[type]))
+        while len(partialAlignments) > 0:
+            sortedItems.insert(0, heappop(partialAlignments))
         currentNode.partialAlignments[type] = sortedItems
