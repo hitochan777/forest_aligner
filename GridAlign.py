@@ -26,6 +26,7 @@ import sys
 from itertools import izip
 from operator import attrgetter
 from heapq import heappush, heapify, heappop, heappushpop
+import Queue
 from collections import defaultdict
 import collections
 
@@ -58,6 +59,8 @@ class Model(object):
       self.LOCAL_FEATURES = LOCAL_FEATURES
       self.NONLOCAL_FEATURES = NONLOCAL_FEATURES
       self.LANG = FLAGS.langpair
+      self.BINARIZE = FLAGS.binarize
+      self.SHOW_DECODING_PATH = FLAGS.decoding_path_out
       if FLAGS.init_k is not None:
         self.BEAM_SIZE = FLAGS.init_k
       else:
@@ -97,7 +100,7 @@ class Model(object):
   
       # Extra info to pass to feature functions
       self.info = { }
-  
+      self.decodingPath = "" 
       self.f = f
       self.fstring = " ".join(f)
       self.e = e
@@ -185,8 +188,9 @@ class Model(object):
       self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToComma)
       self.featureTemplates.append(localFeatures.ff_nonPeriodLinkedToPeriod)
       self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToFinalPeriod)
-      # self.featureTemplates.append(localFeatures.ff_tgtTag_srcTag)
+      self.featureTemplates.append(localFeatures.ff_tgtTag_srcTag)
       self.featureTemplates.append(localFeatures.ff_thirdParty)
+      self.featureTemplates.append(localFeatures.ff_continuousAlignment)
   
     ##################################################
     # Inititalize feature function list
@@ -200,7 +204,7 @@ class Model(object):
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_hyperEdgeScore)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
-      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
+      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_crossb)
   
     def align(self):
@@ -218,7 +222,13 @@ class Model(object):
             self.oracle = self.etree.partialAlignments["oracle"][0]
         elif self.COMPUTE_ORACLE:
             self.oracle = self.etree.partialAlignments["oracle"]
-      
+        if self.SHOW_DECODING_PATH is not None:
+            self.decodingPath += "=================Model Decoding Path===================\n"
+            self.decodingPath += self.hyp.decodingPath.getDecodingPath()+"\n"
+            if self.COMPUTE_HOPE or self.COMPUTE_ORACLE:
+                self.decodingPath += "================Oracle Decoding Path===================\n"
+                self.decodingPath += self.oracle.decodingPath.getDecodingPath()+"\n"
+
     def bottom_up_visit(self):
         """
         Visit each node in the tree, bottom up, and in level-order.
@@ -280,7 +290,10 @@ class Model(object):
         currentNode.span = (currentNode.span_start(), currentNode.span_end())
 
     	############################# Start of hypothesis calculation ####################################
-        self.kbest(currentNode, "hyp")   
+        if self.BINARIZE:
+            self.binarizeKbest(currentNode, "hyp")
+        else: 
+            self.kbest(currentNode, "hyp")   
     	############################# End of hypothesis calculation ####################################
   
         ############################# Start of oracle calculation("oracle" or "hope") ######################################
@@ -290,10 +303,23 @@ class Model(object):
           best = PartialGridAlignment()
           best.fscore = -1.0 # Any negative value suffices
           for hyperEdge in currentNode.hyperEdges:
-              oracleChildEdges = [c.oracle for c in hyperEdge.tail]
-              if currentNode.oracle:
-                  oracleChildEdges.append(currentNode.oracle)
-              oracleAlignment, boundingBox = self.createEdge(oracleChildEdges, currentNode, currentNode.span, hyperEdge)
+              if self.BINARIZE:
+                  queue = Queue.Queue()
+                  for child in hyperEdge.tail:
+                      queue.put(child.oracle)
+                  if currentNode.oracle: # TOP node does not have local oracle
+                      queue.put(currentNode.oracle)
+                  while queue.qsize() >= 2:
+                      first = queue.get()
+                      second = queue.get()
+                      oracleAlignment, boundingBox = self.createEdge([first,second], currentNode, currentNode.span, hyperEdge)
+                      queue.put(oracleAlignment)
+                  oracleAlignment = queue.get()
+              else:
+                  oracleChildEdges = [c.oracle for c in hyperEdge.tail]
+                  if currentNode.oracle:
+                      oracleChildEdges.append(currentNode.oracle)
+                  oracleAlignment, boundingBox = self.createEdge(oracleChildEdges, currentNode, currentNode.span, hyperEdge)
               if oracleAlignment.fscore > best.fscore:
                   best = oracleAlignment
           currentNode.partialAlignments["oracle"] = currentNode.oracle = best
@@ -303,9 +329,12 @@ class Model(object):
           #oracleAlignment = oracleCandidates[0]
           # currentNode.oracle = oracleAlignment
         elif self.COMPUTE_HOPE:
-            self.kbest(currentNode, "oracle")
+            if self.BINARIZE:
+                self.binarizeKbest(currentNode, "hyp")
+            else:
+                self.kbest(currentNode, "oracle")
              
-    def createEdge(self, childEdges, currentNode, span, hyperEdge):
+    def createEdge(self, childEdges, currentNode, span, hyperEdge, binarized = False):
       """
       Create a new edge from the list of edges 'edge'.
       Creating an edge involves:
@@ -315,13 +344,20 @@ class Model(object):
       In addition, set the score of the new edge.
       """
       newEdge = PartialGridAlignment()
+      newEdge.decodingPath.node = currentNode
       newEdge.scoreVector_local = svector.Vector()
       newEdge.scoreVector = svector.Vector()
       newEdge.hyperEdgeScore = hyperEdge.score
   
       for index, e in enumerate(childEdges):
-          newEdge.links += e.getDepthAddedLink()
+          if binarized:
+              newEdge.links += e.links
+          else:
+              newEdge.links += e.getDepthAddedLink()
           newEdge.scoreVector_local += e.scoreVector_local
+          if not binarized and (index != len(childEdges) - 1 or currentNode.data['pos'] == 'TOP'):
+              e.decodingPath.parent = newEdge.decodingPath
+              newEdge.decodingPath.addChild(e.decodingPath)
           newEdge.scoreVector += e.scoreVector
   
           if e.boundingBox is None:
@@ -360,7 +396,6 @@ class Model(object):
           for link in edge.links:
               fIndex = link[0]
               eIndex = link[1]
-              assert(type(fIndex)==int)
               linkedIndices[fIndex].append((eIndex,link.depth))
   
           scoreVector = svector.Vector(edge.scoreVector)
@@ -396,7 +431,6 @@ class Model(object):
         for link in links:
             fIndex = link[0]
             eIndex = link[1]
-            assert(type(fIndex)==int)
             if fIndex > maxF:
                 maxF = fIndex
             if fIndex < minF:
@@ -407,8 +441,9 @@ class Model(object):
                 minE = eIndex
         # This box is the top-left corner and the lower-right corner
         box = ((minF, minE), (maxF, maxE))
+        assert(minF>=0 and minE >=0 and maxF < len(self.info['f']) and maxE < len(self.info['e']))
         return box
-  
+
     def terminal_operation(self, currentNode = None):
         """
         Fire features at (pre)terminal nodes of the tree.
@@ -447,6 +482,7 @@ class Model(object):
                     scoreVector[name] += value
   
         nullPartialAlignment = PartialGridAlignment()
+        nullPartialAlignment.decodingPath.node = currentNode
         nullPartialAlignment.score = score = scoreVector.dot(self.weights)
         nullPartialAlignment.scoreVector = scoreVector
         nullPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
@@ -482,6 +518,7 @@ class Model(object):
           singleBestAlignment.append((score, [tgtIndex]))
   
           singleLinkPartialAlignment = PartialGridAlignment()
+          singleLinkPartialAlignment.decodingPath.node = currentNode
           singleLinkPartialAlignment.score = score
           singleLinkPartialAlignment.scoreVector = scoreVector
           singleLinkPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
@@ -544,6 +581,7 @@ class Model(object):
                     newAlignmentList.append((score, na+sa))
   
                     NLinkPartialAlignment = PartialGridAlignment()
+                    NLinkPartialAlignment.decodingPath.node = currentNode
                     NLinkPartialAlignment.score = score
                     NLinkPartialAlignment.scoreVector = scoreVector
                     NLinkPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
@@ -570,8 +608,10 @@ class Model(object):
         ########################################################################
         # Sort model score list.
         sortedBestFirstPartialAlignments = []
+        # print "#"*10, currentNode.data["surface"], "#"*10
         while len(partialAlignments) > 0:
           sortedBestFirstPartialAlignments.insert(0,heappop(partialAlignments))
+          # print sortedBestFirstPartialAlignments[0]
         # Sort hope score list.
         if self.COMPUTE_HOPE:
           sortedBestFirstPartialAlignments_oracle = []
@@ -602,8 +642,11 @@ class Model(object):
         # A low score is worse than a higher score
         if len(list) < BEAM_SIZE:
             heappush(list, partialAlignment)
+            return True
         elif partialAlignment > list[0]:
             heappushpop(list, partialAlignment)
+            return True
+        return False
   
     ############################################################################
     # ff_fscore(self):
@@ -658,7 +701,7 @@ class Model(object):
       # f_recall = 1./((0.1/precision)+(0.9/recall))
       return f1
 
-    def kbest(self, currentNode, type = "hyp"):
+    def kbest(self, currentNode, type = "hyp", dummy = False, dummyCurrentNode = None):
         # Initialize
         queue = []
         heapify(queue)
@@ -674,7 +717,7 @@ class Model(object):
             # Number of components in position vector is the number of children in the current node
             # Position vector uniquely identifies a position in the cube
             # and identifies a unique alignment structure
-            position = [0]*(arity+1)
+            position = [0]*(arity+(not dummy))
   
             # Create structure of first object in position [0,0,0,...,0]
             # This path identifies the structure that is the best structure
@@ -716,7 +759,7 @@ class Model(object):
             # - Add neighbors to the queue to be explored
             #   o For every child, there exists a neighbor
             #   o numNeighbors = numChildren
-            for componentNumber in xrange(arity+1):
+            for componentNumber in xrange(arity+(not dummy)):
                 # Compute neighbor position
                 neighborPosition = list(currentBestCombinedEdge.position)
                 neighborPosition[componentNumber] += 1
@@ -736,7 +779,7 @@ class Model(object):
                 # In this case, it only has one predecessor (the one that led us to this position),
                 # and can be immediately evaluated.
                 # if 0 not in neighborPosition and count[tuple(neighborPosition)] < 1: # this only works when number of children is 2, I think
-                if count[currentBestCombinedEdge.hyperEdgeNumber][tuple(neighborPosition)] < arity - neighborPosition.count(0): # arity + 1 - neighborPosition.count(0) - 1
+                if count[currentBestCombinedEdge.hyperEdgeNumber][tuple(neighborPosition)] < arity - dummy - neighborPosition.count(0): # arity + 1 - neighborPosition.count(0) - 1
                     count[currentBestCombinedEdge.hyperEdgeNumber][tuple(neighborPosition)] += 1
                     continue
   
@@ -765,6 +808,131 @@ class Model(object):
         ####################################################################
         # Sort model score list.
         sortedItems = []
+        # print "#"*10, currentNode.data["surface"], "#"*10
         while(len(currentNode.partialAlignments[type]) > 0):
             sortedItems.insert(0, heappop(currentNode.partialAlignments[type]))
+            # print sortedItems[0]
+        currentNode.partialAlignments[type] = sortedItems
+
+    def kbestWithDummyNode(self, currentNode, dummyCurrentNode, type = "hyp" ):
+        # Initialize
+        queue = []
+        heapify(queue)
+        arity = 2
+        dummyCurrentNode.partialAlignments[type] = []
+        # Before we push, check to see if object's position is in duplicates
+        # i.e., we have already visited that position and added the resultant object to the queue
+        count = defaultdict(int)
+        hyperEdge = dummyCurrentNode.hyperEdges[0]
+        # Number of components in position vector is the number of children in the current node
+        # Position vector uniquely identifies a position in the cube
+        # and identifies a unique alignment structure
+        position = [0,0] # because we consider binarized tree
+  
+        # Create structure of first object in position [0,0,0,...,0]
+        # This path identifies the structure that is the best structure
+        # we know of before combination costs (rescoring).
+        edges = [ ]
+        for c in xrange(arity):
+            # Object number for current child
+            edgeNumber = position[c]
+            currentChild = hyperEdge.tail[c]
+            edge = currentChild.partialAlignments[type][edgeNumber]
+            edges.append(edge)
+        newEdge, boundingBox = self.createEdge(edges, currentNode, currentNode.span, hyperEdge, binarized = True)
+        if type == "hyp":
+            newEdge.score = self.hypScoreFunc(newEdge)
+        else:
+            newEdge.score = self.oracleScoreFunc(newEdge)
+        # Where did this new edge come from?
+        newEdge.position = list(position)
+        # Add new edge to the queue/buffer
+        heappush(queue, (newEdge.score*-1, newEdge))
+  
+        # Keep filling up my cell until self.BEAM_SIZE has been reached *or*
+        # have exhausted all possible items in the queue
+        while(len(queue) > 0 and len(dummyCurrentNode.partialAlignments[type]) < self.NT_BEAM):
+            # Find current best
+            (_, currentBestCombinedEdge) = heappop(queue)
+            # Add to my cell
+            self.addPartialAlignment(dummyCurrentNode.partialAlignments[type], currentBestCombinedEdge, self.NT_BEAM)
+            # Don't create and score more edges when we are already full.
+            if len(dummyCurrentNode.partialAlignments[type]) >= self.NT_BEAM:
+                break
+            # - Find neighbors
+            # - Rescore neighbors
+            # - Add neighbors to the queue to be explored
+            #   o For every child, there exists a neighbor
+            #   o numNeighbors = numChildren
+            for componentNumber in xrange(arity):
+                # Compute neighbor position
+                neighborPosition = list(currentBestCombinedEdge.position)
+                neighborPosition[componentNumber] += 1
+                # Is this neighbor out of range?
+                if neighborPosition[componentNumber] >= len(hyperEdge.tail[componentNumber].partialAlignments[type]):
+                    continue
+                # Has this neighbor already been visited?
+                #if duplicates.has_key(tuple(neighborPosition)):
+                #    continue
+                # Lazy eval trick due to Matthias Buechse:
+                # Only evaluate after both a node's predecessors have been evaluated.
+                # Special case: if any component of neighborPosition is 0, it is on the border.
+                # In this case, it only has one predecessor (the one that led us to this position),
+                # and can be immediately evaluated.
+                # if 0 not in neighborPosition and count[tuple(neighborPosition)] < 1: # this only works when number of children is 2, I think
+                if count[tuple(neighborPosition)] < arity - 1 - neighborPosition.count(0): # arity - neighborPosition.count(0) - 1
+                    count[tuple(neighborPosition)] += 1
+                    continue
+  
+                # Now build the neighbor edge
+                neighbor = []
+                for cellNumber in xrange(arity):
+                    cell = hyperEdge.tail[cellNumber]
+                    edgeNumber = neighborPosition[cellNumber]
+                    edge = cell.partialAlignments[type][edgeNumber]
+                    neighbor.append(edge)
+
+                neighborEdge, boundingBox = self.createEdge(neighbor, currentNode, currentNode.span, hyperEdge, binarized = True)
+                neighborEdge.position = neighborPosition
+                if type == "hyp":
+                    neighborEdge.score = self.hypScoreFunc(neighborEdge)
+                else:
+                    neighborEdge.score = self.oracleScoreFunc(neighborEdge)
+                heappush(queue, (-1*neighborEdge.score, neighborEdge))
+
+        ####################################################################
+        # Finalize.
+        ####################################################################
+        # Sort model score list.
+        sortedItems = []
+        while(len(dummyCurrentNode.partialAlignments[type]) > 0):
+            sortedItems.insert(0, heappop(dummyCurrentNode.partialAlignments[type]))
+        dummyCurrentNode.partialAlignments[type] = sortedItems
+
+    def binarizeKbest(self, currentNode, type = "hyp"):
+        oneColumnAlignments = currentNode
+        partialAlignments = [] # currentNode.partialAlignments[type] contains local alignments! So we cannot reset it to [] because we will use them later!
+        for hyperEdge in currentNode.hyperEdges:
+            queue = Queue.Queue()
+            for child in hyperEdge.tail:
+                queue.put(child)
+            if oneColumnAlignments.data["pos"] != "TOP":
+                queue.put(oneColumnAlignments)
+            while queue.qsize() >= 2:
+                first = queue.get()
+                second = queue.get()
+                dummy = ForestNode(currentNode.data)
+                dummy.addHyperEdge(dummy, [first, second], hyperEdge.score)
+                self.kbestWithDummyNode(currentNode, dummy, type)
+                queue.put(dummy)
+
+            dummy = queue.get()
+            assert queue.empty(), "queue is not empty!" 
+            for partial_alignment in dummy.partialAlignments[type]:
+                if not self.addPartialAlignment(partialAlignments, partial_alignment, self.NT_BEAM):
+                    break
+               
+        sortedItems = []
+        while len(partialAlignments) > 0:
+            sortedItems.insert(0, heappop(partialAlignments))
         currentNode.partialAlignments[type] = sortedItems

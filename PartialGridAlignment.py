@@ -1,6 +1,8 @@
 from collections import defaultdict
 from AlignmentLink import AlignmentLink
+from DecodingPath import DecodingPath
 import svector
+import sys
 
 class PartialGridAlignment(object):
     def __hash__(self):
@@ -18,7 +20,7 @@ class PartialGridAlignment(object):
           return 1
   
     def __str__(self):
-      return str(self.score)+" "+str(self.links)
+        return str(self.score)+" "+str(map(lambda x: x.link,self.links))
   
     def __init__(self, flen = 0, elen = 0):
       """
@@ -32,6 +34,7 @@ class PartialGridAlignment(object):
       self.scoreVector_nonlocal = svector.Vector()
       self.position = None
       self.boundingBox = None
+      self.decodingPath = DecodingPath()
   
     def clear(self):
       self.links = []
@@ -47,5 +50,5 @@ class PartialGridAlignment(object):
         for link in self.links:
             newAlignment = AlignmentLink(link.link, link.depth + delta)
             newAlignmentLinks.append(newAlignment)
-            # print newAlignment
         return newAlignmentLinks
+

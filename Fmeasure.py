@@ -22,11 +22,12 @@ class Fmeasure:
         
         self.numMeTotal += len(meLinks)
         self.numGoldTotal += len(goldLinks)
-        
+
         goldLinksDict = dict(izip_longest(goldLinks, [None]))
         for link in meLinks:
             if link in goldLinksDict:
                 self.correct += 1.0
+
                 
     def accumulate_o(self, edge, goldmatrix):
         
