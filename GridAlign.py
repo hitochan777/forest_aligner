@@ -60,7 +60,7 @@ class Model(object):
       self.NONLOCAL_FEATURES = NONLOCAL_FEATURES
       self.LANG = FLAGS.langpair
       self.BINARIZE = FLAGS.binarize
-      self.SHOW_DECODING_PATH = FLAGS.show_decoding_path
+      self.SHOW_DECODING_PATH = FLAGS.decoding_path_out
       if FLAGS.init_k is not None:
         self.BEAM_SIZE = FLAGS.init_k
       else:
@@ -100,7 +100,7 @@ class Model(object):
   
       # Extra info to pass to feature functions
       self.info = { }
-  
+      self.decodingPath = "" 
       self.f = f
       self.fstring = " ".join(f)
       self.e = e
@@ -222,13 +222,12 @@ class Model(object):
             self.oracle = self.etree.partialAlignments["oracle"][0]
         elif self.COMPUTE_ORACLE:
             self.oracle = self.etree.partialAlignments["oracle"]
-        if self.SHOW_DECODING_PATH:
-            print "=================Model Decoding Path==================="
-            print self.hyp.decodingPath.getDecodingPath()
+        if self.SHOW_DECODING_PATH is not None:
+            self.decodingPath += "=================Model Decoding Path===================\n"
+            self.decodingPath += self.hyp.decodingPath.getDecodingPath()+"\n"
             if self.COMPUTE_HOPE or self.COMPUTE_ORACLE:
-                print "=================Oracle Decoding Path==================="
-                print self.oracle.decodingPath.getDecodingPath()
-            print
+                self.decodingPath += "================Oracle Decoding Path===================\n"
+                self.decodingPath += self.oracle.decodingPath.getDecodingPath()+"\n"
 
     def bottom_up_visit(self):
         """
