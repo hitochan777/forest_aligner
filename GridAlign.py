@@ -225,8 +225,9 @@ class Model(object):
         if self.SHOW_DECODING_PATH:
             print "=================Model Decoding Path==================="
             print self.hyp.decodingPath.getDecodingPath()
-            print "=================Oracle Decoding Path==================="
-            print self.oracle.decodingPath.getDecodingPath()
+            if self.COMPUTE_HOPE or self.COMPUTE_ORACLE:
+                print "=================Oracle Decoding Path==================="
+                print self.oracle.decodingPath.getDecodingPath()
             print
 
     def bottom_up_visit(self):
