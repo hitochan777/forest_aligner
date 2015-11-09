@@ -67,17 +67,20 @@ def robustRead(filename):
         LOG(FATAL, "Could not open file %s for reading. Attempted 10 times." % (filename))
     return filehandle
 
-def robustWrite(filename):
+def robustWrite(filename, append=False):
     """
     A wrapper for more robust opening of files for writing.
     """
     success = False
     filehandle = None
     attempt_count = 0
+    mode = 'w'
+    if append:
+        mode = 'a'
     while (not success) and (attempt_count < 10):
         try:
             attempt_count += 1
-            filehandle = open(filename, 'w')
+            filehandle = open(filename, mode)
             success = True
         except:
             time.sleep(10)
@@ -138,6 +141,9 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
     Align some input data in blob with a given weight vector. Report accuracy.
     """
     myRank = mpi.rank
+
+    decodingPath = None
+    decodingPathFilename = robustWrite("%s/%s%s" % (tmpdir, FLAGS.decoding_path_out,str(myRank)))
     masterRank = 0
     # How many processors are there?
     nProcs = mpi.size
@@ -197,21 +203,29 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
         # Align the current training instance
         # FOR PROFILING: cProfile.run('model.align(1)','profile.out')
         model.align()
+        decodingPath = model.decodingPath
         # Dump intermediate chunk to disk. Reassemble later.
         if FLAGS.train:
           cPickle.dump((model.hyp.links, model.gold.links_dict), result_file, protocol=cPickle.HIGHEST_PROTOCOL)
         elif FLAGS.align:
           # cPickle.dump(model.modelBest.links, result_file, protocol=cPickle.HIGHEST_PROTOCOL)
           cPickle.dump((model.hyp.links,model.hyp.score), result_file, protocol=cPickle.HIGHEST_PROTOCOL)
+        
+        if FLAGS.decoding_path_out is not None:
+            cPickle.dump(decodingPath, decodingPathFilename, protocol=cPickle.HIGHEST_PROTOCOL)
+
     result_file.close()
+    decodingPathFilename.close()
     done = mpi.gather(value=True, root=0)
   
     # REDUCE HERE
     if myRank == masterRank:
       # Open result files for reading
       resultFiles = { }
+      decodePathFiles = {}
       for i in range(nProcs):
         resultFiles[i] = open(tmpdir+'/results.'+str(i),'r')
+        decodePathFiles[i] = robustRead("%s/%s%s" % (tmpdir, FLAGS.decoding_path_out, str(i)) )
   
       if FLAGS.train:
         ##########################################################################
@@ -263,6 +277,19 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
           out.write("%s\n" %(" ".join(map(lambda link: "%s-%s" %(link[0], link[1]), modelBestLinks))))
           if(score_out!=None):
               sout.write("%s\n" % (score))
+
+      # Write decoding path
+      if FLAGS.decoding_path_out is not None:
+          path_out = robustWrite(FLAGS.decoding_path_out, True)
+          for i, instanceID in enumerate(indices):
+              node = i % nProcs
+              result = cPickle.load(decodePathFiles[node])
+              path_out.write(result)
+          path_out.close()
+          # CLEAN UP
+          for i in range(nProcs):
+              decodePathFiles[i].close()
+
       # CLEAN UP
       for i in range(nProcs):
         resultFiles[i].close()
@@ -275,6 +302,11 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
   """
   # Which processor am I?
   myRank = mpi.rank
+
+  # Setting for output of decoding Path
+  decodingPath = None
+  decodingPathFile = robustWrite("%s/%s%s" % (tmpdir, FLAGS.decoding_path_out,str(myRank)))
+
   # Let processor 0 be the master.
   masterRank = 0
   # How many processors are there?
@@ -350,6 +382,9 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
       # Align the current training instance
       model.align()
 
+      if FLAGS.decoding_path_out is not None:
+          cPickle.dump(model.decodingPath, decodingPathFile, protocol=cPickle.HIGHEST_PROTOCOL)
+
       ######################################################################
       # Weight updating
       ######################################################################
@@ -416,6 +451,7 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
   cPickle.dump(weights, output_file_last_weights, protocol=cPickle.HIGHEST_PROTOCOL)
   output_file_last_weights.close()
 
+  decodingPathFile.close()
   #############################################
   # Gather "done" messages from workers
   #############################################
@@ -428,12 +464,16 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
   masterWeights = svector.Vector()
 
   if myRank == masterRank:
+    decodePathFiles = {}
+
     # Read pickled output
     for rank in range(nProcs):
       input_filename = tmpdir+'/training.'+str(rank)
       input_file = open(input_filename,'r')
       masterWeights += cPickle.load(input_file)
       input_file.close()
+      decodePathFiles[rank] = robustRead("%s/%s%s" % (tmpdir, FLAGS.decoding_path_out, str(rank)) )
+
     sys.stderr.write("Done reading data.\n")
     sys.stderr.write("len(masterWeights)= %d\n"%(len(masterWeights)))
     sys.stderr.flush()
@@ -449,6 +489,18 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
     mw = robustWrite(tmpdir+'/weights')
     cPickle.dump(masterWeights,mw,protocol=cPickle.HIGHEST_PROTOCOL)
     mw.close()
+
+    # Write decoding path
+    if FLAGS.decoding_path_out is not None:
+        path_out = robustWrite(FLAGS.decoding_path_out)
+        for i, instanceID in enumerate(indices[:FLAGS.subset]):
+            node = i % nProcs
+            result = cPickle.load(decodePathFiles[node])
+            path_out.write(result)
+        path_out.close()
+        # CLEAN UP
+        for i in range(nProcs):
+            decodePathFiles[i].close()
 
   ######################################################################
   # All processes read and load new averaged weights
@@ -636,7 +688,7 @@ if __name__ == "__main__":
     flags.DEFINE_integer('partial',-1,"Use first N sentences of the corpus")
     flags.DEFINE_integer('nto1',2,"To how many source words can a target word be aligned")
     flags.DEFINE_boolean('binarize', True, "True: binarize dependency tree while decoding, False: do not binarize; default: True")
-    flags.DEFINE_boolean('show_decoding_path', False, "True: show which tree was chosen among n-best, False: do not show trees; default: False")
+    flags.DEFINE_string('decoding_path_out', None, "Output filename for docoding path of of the best hypothesis; Default: None")
     argv = FLAGS(sys.argv)
 
     if FLAGS.debiasing and FLAGS.debiasing_weights is None:
