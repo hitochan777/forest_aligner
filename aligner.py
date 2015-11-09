@@ -280,7 +280,7 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
 
       # Write decoding path
       if FLAGS.decoding_path_out is not None:
-          path_out = robustWrite(FLAGS.decoding_path_out)
+          path_out = robustWrite(FLAGS.decoding_path_out, True)
           for i, instanceID in enumerate(indices):
               node = i % nProcs
               result = cPickle.load(decodePathFiles[node])
