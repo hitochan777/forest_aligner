@@ -334,7 +334,7 @@ class Model(object):
             else:
                 self.kbest(currentNode, "oracle")
              
-    def createEdge(self, childEdges, currentNode, span, hyperEdge, binarized = False):
+    def createEdge(self, childEdges, currentNode, span, hyperEdge, binarized = False, isLastMerge = True):
       """
       Create a new edge from the list of edges 'edge'.
       Creating an edge involves:
@@ -345,6 +345,7 @@ class Model(object):
       """
       newEdge = PartialGridAlignment()
       newEdge.decodingPath.node = currentNode
+      newEdge.decodingPath.isDummy = not isLastMerge
       newEdge.scoreVector_local = svector.Vector()
       newEdge.scoreVector = svector.Vector()
       newEdge.hyperEdgeScore = hyperEdge.score
@@ -355,8 +356,8 @@ class Model(object):
           else:
               newEdge.links += e.getDepthAddedLink()
           newEdge.scoreVector_local += e.scoreVector_local
-          if not binarized and (index != len(childEdges) - 1 or currentNode.data['pos'] == 'TOP'):
-              e.decodingPath.parent = newEdge.decodingPath
+          # TOP node does not have local hypothesis so there is only one childedge
+          if index != len(childEdges) - 1 or currentNode.data['pos'] == 'TOP':
               newEdge.decodingPath.addChild(e.decodingPath)
           newEdge.scoreVector += e.scoreVector
   
@@ -814,7 +815,7 @@ class Model(object):
             # print sortedItems[0]
         currentNode.partialAlignments[type] = sortedItems
 
-    def kbestWithDummyNode(self, currentNode, dummyCurrentNode, type = "hyp" ):
+    def kbestWithDummyNode(self, currentNode, dummyCurrentNode, type = "hyp", isLastMerge = True):
         # Initialize
         queue = []
         heapify(queue)
@@ -839,7 +840,7 @@ class Model(object):
             currentChild = hyperEdge.tail[c]
             edge = currentChild.partialAlignments[type][edgeNumber]
             edges.append(edge)
-        newEdge, boundingBox = self.createEdge(edges, currentNode, currentNode.span, hyperEdge, binarized = True)
+        newEdge, boundingBox = self.createEdge(edges, currentNode, currentNode.span, hyperEdge, True, isLastMerge)
         if type == "hyp":
             newEdge.score = self.hypScoreFunc(newEdge)
         else:
@@ -892,7 +893,7 @@ class Model(object):
                     edge = cell.partialAlignments[type][edgeNumber]
                     neighbor.append(edge)
 
-                neighborEdge, boundingBox = self.createEdge(neighbor, currentNode, currentNode.span, hyperEdge, binarized = True)
+                neighborEdge, boundingBox = self.createEdge(neighbor, currentNode, currentNode.span, hyperEdge, True, isLastMerge)
                 neighborEdge.position = neighborPosition
                 if type == "hyp":
                     neighborEdge.score = self.hypScoreFunc(neighborEdge)
@@ -923,7 +924,7 @@ class Model(object):
                 second = queue.get()
                 dummy = ForestNode(currentNode.data)
                 dummy.addHyperEdge(dummy, [first, second], hyperEdge.score)
-                self.kbestWithDummyNode(currentNode, dummy, type)
+                self.kbestWithDummyNode(currentNode, dummy, type, queue.empty())
                 queue.put(dummy)
 
             dummy = queue.get()
