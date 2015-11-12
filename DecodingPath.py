@@ -14,5 +14,8 @@ class DecodingPath:
         if not self.isDummy:
             path = "%s%s(%d:%s)" % (" "*2*depth, self.node.data['surface'], self.node.data['id'], self.node.data['pos'])
         for child in self.children:
-            path = path+"\n"+child.getDecodingPath(depth+(not self.isDummy))
+            if len(path)==0:
+                path = child.getDecodingPath(depth+(not self.isDummy))
+            else: 
+                path = path+"\n"+child.getDecodingPath(depth+(not self.isDummy))
         return path

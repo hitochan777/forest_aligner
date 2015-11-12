@@ -29,6 +29,7 @@ from heapq import heappush, heapify, heappop, heappushpop
 import Queue
 from collections import defaultdict
 import collections
+import copy
 
 from DependencyForestHelper import *
 from Alignment import readAlignmentString
@@ -312,7 +313,11 @@ class Model(object):
                   while queue.qsize() >= 2:
                       first = queue.get()
                       second = queue.get()
-                      oracleAlignment, boundingBox = self.createEdge([first,second], currentNode, currentNode.span, hyperEdge)
+                      dummy = ForestNode(copy.deepcopy(currentNode.data))
+                      if not queue.empty():
+                          dummy.data["surface"] = "__DUMMY__"
+                      dummy.addHyperEdge(dummy, [first, second], hyperEdge.score)
+                      oracleAlignment, boundingBox = self.createDummyEdge([first,second], currentNode, dummy,  currentNode.span, hyperEdge, queue.empty())
                       queue.put(oracleAlignment)
                   oracleAlignment = queue.get()
               else:
@@ -334,7 +339,33 @@ class Model(object):
             else:
                 self.kbest(currentNode, "oracle")
              
-    def createEdge(self, childEdges, currentNode, span, hyperEdge, binarized = False, isLastMerge = True):
+    def createDummyEdge(self, childEdges, currentNode, dummyCurrentNode, span, hyperEdge, isLastMerge = True):
+
+      newEdge = PartialGridAlignment()
+      newEdge.decodingPath.node = dummyCurrentNode
+      newEdge.decodingPath.isDummy = not isLastMerge
+      newEdge.scoreVector_local = svector.Vector()
+      newEdge.scoreVector = svector.Vector()
+      newEdge.hyperEdgeScore = hyperEdge.score
+  
+      for index, e in enumerate(childEdges):
+          if isLastMerge:
+              newEdge.links += e.getDepthAddedLink()
+          else:
+              newEdge.links += e.links
+
+          newEdge.scoreVector_local += e.scoreVector_local
+          # TOP node does not have local hypothesis so there is only one childedge
+          if currentNode.data["surface"] != e.decodingPath.node.data["surface"]:
+              newEdge.decodingPath.addChild(e.decodingPath)
+          newEdge.scoreVector += e.scoreVector
+  
+          if e.boundingBox is None:
+              e.boundingBox = self.boundingBox(e.links)
+      score, boundingBox = self.scoreEdge(newEdge, currentNode, span, childEdges)
+      return newEdge, boundingBox
+
+    def createEdge(self, childEdges, currentNode, span, hyperEdge):
       """
       Create a new edge from the list of edges 'edge'.
       Creating an edge involves:
@@ -345,19 +376,16 @@ class Model(object):
       """
       newEdge = PartialGridAlignment()
       newEdge.decodingPath.node = currentNode
-      newEdge.decodingPath.isDummy = not isLastMerge
+      newEdge.decodingPath.isDummy = False
       newEdge.scoreVector_local = svector.Vector()
       newEdge.scoreVector = svector.Vector()
       newEdge.hyperEdgeScore = hyperEdge.score
   
       for index, e in enumerate(childEdges):
-          if binarized:
-              newEdge.links += e.links
-          else:
-              newEdge.links += e.getDepthAddedLink()
+          newEdge.links += e.getDepthAddedLink()
           newEdge.scoreVector_local += e.scoreVector_local
           # TOP node does not have local hypothesis so there is only one childedge
-          if index != len(childEdges) - 1 or currentNode.data['pos'] == 'TOP':
+          if currentNode.data["surface"] != e.decodingPath.node.data["surface"]:
               newEdge.decodingPath.addChild(e.decodingPath)
           newEdge.scoreVector += e.scoreVector
   
@@ -609,10 +637,8 @@ class Model(object):
         ########################################################################
         # Sort model score list.
         sortedBestFirstPartialAlignments = []
-        # print "#"*10, currentNode.data["surface"], "#"*10
         while len(partialAlignments) > 0:
           sortedBestFirstPartialAlignments.insert(0,heappop(partialAlignments))
-          # print sortedBestFirstPartialAlignments[0]
         # Sort hope score list.
         if self.COMPUTE_HOPE:
           sortedBestFirstPartialAlignments_oracle = []
@@ -809,10 +835,8 @@ class Model(object):
         ####################################################################
         # Sort model score list.
         sortedItems = []
-        # print "#"*10, currentNode.data["surface"], "#"*10
         while(len(currentNode.partialAlignments[type]) > 0):
             sortedItems.insert(0, heappop(currentNode.partialAlignments[type]))
-            # print sortedItems[0]
         currentNode.partialAlignments[type] = sortedItems
 
     def kbestWithDummyNode(self, currentNode, dummyCurrentNode, type = "hyp", isLastMerge = True):
@@ -840,7 +864,7 @@ class Model(object):
             currentChild = hyperEdge.tail[c]
             edge = currentChild.partialAlignments[type][edgeNumber]
             edges.append(edge)
-        newEdge, boundingBox = self.createEdge(edges, currentNode, currentNode.span, hyperEdge, True, isLastMerge)
+        newEdge, boundingBox = self.createDummyEdge(edges, currentNode, dummyCurrentNode, currentNode.span, hyperEdge, isLastMerge)
         if type == "hyp":
             newEdge.score = self.hypScoreFunc(newEdge)
         else:
@@ -893,7 +917,7 @@ class Model(object):
                     edge = cell.partialAlignments[type][edgeNumber]
                     neighbor.append(edge)
 
-                neighborEdge, boundingBox = self.createEdge(neighbor, currentNode, currentNode.span, hyperEdge, True, isLastMerge)
+                neighborEdge, boundingBox = self.createDummyEdge(neighbor, currentNode, dummyCurrentNode, currentNode.span, hyperEdge, isLastMerge)
                 neighborEdge.position = neighborPosition
                 if type == "hyp":
                     neighborEdge.score = self.hypScoreFunc(neighborEdge)
@@ -922,7 +946,9 @@ class Model(object):
             while queue.qsize() >= 2:
                 first = queue.get()
                 second = queue.get()
-                dummy = ForestNode(currentNode.data)
+                dummy = ForestNode(copy.deepcopy(currentNode.data))
+                if not queue.empty():
+                    dummy.data["surface"] = "__DUMMY__"
                 dummy.addHyperEdge(dummy, [first, second], hyperEdge.score)
                 self.kbestWithDummyNode(currentNode, dummy, type, queue.empty())
                 queue.put(dummy)
