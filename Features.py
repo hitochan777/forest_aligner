@@ -667,8 +667,6 @@ class NonlocalFeatures:
   
         minF = edge.boundingBox[0][0]
         maxF = edge.boundingBox[1][0]
-        minEOrigin = edge.boundingBoxOrigins[0] # Which node generated minF?
-        maxEOrigin = edge.boundingBoxOrigins[1] # Which node generated maxF?
         eWord = treeNode.data['surface']
         eStartSpan, eEndSpan = treeNode.get_span()
         eSpanLen = float(eEndSpan - eStartSpan)
