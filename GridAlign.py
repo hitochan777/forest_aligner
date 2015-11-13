@@ -361,7 +361,7 @@ class Model(object):
           newEdge.scoreVector += e.scoreVector
   
           if e.boundingBox is None:
-              e.boundingBox, e.boundingBoxOrigins = self.boundingBox(e.links)
+              e.boundingBox = self.boundingBox(e.links)
       score, boundingBox = self.scoreEdge(newEdge, currentNode, span, childEdges)
       return newEdge, boundingBox
 
@@ -390,7 +390,7 @@ class Model(object):
           newEdge.scoreVector += e.scoreVector
   
           if e.boundingBox is None:
-              e.boundingBox, e.boundingBoxOrigins = self.boundingBox(e.links)
+              e.boundingBox = self.boundingBox(e.links)
       score, boundingBox = self.scoreEdge(newEdge, currentNode, span, childEdges)
       return newEdge, boundingBox
   
@@ -416,10 +416,9 @@ class Model(object):
           ##################################################################
           tgtSpan = None
           if len(edge.links) > 0:
-              boundingBox, boundingBoxOrigins = self.boundingBox(edge.links)
+              boundingBox = self.boundingBox(edge.links)
               tgtSpan = (boundingBox[0][0], boundingBox[1][0])
           edge.boundingBox = boundingBox
-          edge.boundingBoxOrigins = boundingBoxOrigins
   
           # TODO: This is an awful O(l) patch of code
           linkedIndices = defaultdict(list)
@@ -457,8 +456,6 @@ class Model(object):
         maxF = float('-inf')
         minE = float('inf')
         maxE = float('-inf')
-        minEOrigin = None
-        maxEOrigin = None
   
         for link in links:
             fIndex = link[0]
@@ -469,15 +466,12 @@ class Model(object):
                 minF = fIndex
             if eIndex > maxE:
                 maxE = eIndex
-                maxEOrigin = link.origin
             if eIndex < minE:
                 minE = eIndex
-                minEOrigin = link.origin
         # This box is the top-left corner and the lower-right corner
         box = ((minF, minE), (maxF, maxE))
-        origins = (minEOrigin, maxEOrigin)
         assert(minF>=0 and minE >=0 and maxF < len(self.info['f']) and maxE < len(self.info['e']))
-        return box, origins
+        return box
 
     def terminal_operation(self, currentNode = None):
         """
