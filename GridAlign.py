@@ -457,8 +457,6 @@ class Model(object):
         maxF = float('-inf')
         minE = float('inf')
         maxE = float('-inf')
-        minFOrigin = None
-        maxFOrigin = None
         minEOrigin = None
         maxEOrigin = None
   
@@ -467,10 +465,8 @@ class Model(object):
             eIndex = link[1]
             if fIndex > maxF:
                 maxF = fIndex
-                maxFOrigin = link.origin
             if fIndex < minF:
                 minF = fIndex
-                minFOrigin = link.origin
             if eIndex > maxE:
                 maxE = eIndex
                 maxEOrigin = link.origin
@@ -479,7 +475,7 @@ class Model(object):
                 minEOrigin = link.origin
         # This box is the top-left corner and the lower-right corner
         box = ((minF, minE), (maxF, maxE))
-        origins = ((minFOrigin, minEOrigin), (maxFOrigin, maxEOrigin))
+        origins = (minEOrigin, maxEOrigin)
         assert(minF>=0 and minE >=0 and maxF < len(self.info['f']) and maxE < len(self.info['e']))
         return box, origins
 

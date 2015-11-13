@@ -667,10 +667,10 @@ class NonlocalFeatures:
   
         minF = edge.boundingBox[0][0]
         maxF = edge.boundingBox[1][0]
-        minFOrigin = edge.boundingBoxOrigins[0][0] # Which node generated minF?
-        maxFOrigin = edge.boundingBoxOrigins[1][0] # Which node generated maxF?
-        leftFTag = minFOrigin.data['pos']
-        rightFTag = maxFOrigin.data['pos']
+        minEOrigin = edge.boundingBoxOrigins[0] # Which node generated minF?
+        maxEOrigin = edge.boundingBoxOrigins[1] # Which node generated maxF?
+        leftETag = minFOrigin.data['pos']
+        rightETag = maxFOrigin.data['pos']
         eWord = treeNode.data['surface']
         eStartSpan, eEndSpan = treeNode.get_span()
         eSpanLen = float(eEndSpan - eStartSpan)
@@ -683,9 +683,10 @@ class NonlocalFeatures:
         span_diff= abs(eSpanLen - fSpanLen)
         srcTag = sourceNode.data["pos"]
         value1 = '%s:%s' % (tgtTag, srcTag)
-        value2 = '%s:%s(%s,%s)' % (tgtTag, srcTag, leftFTag, rightFTag)
+        # value2 = '%s:%s(%s,%s)' % (tgtTag, srcTag, leftFTag, rightFTag)
+        value2 = 'hogege'
         span_diff= abs(eSpanLen - fSpanLen)
-        normalized_span_diff= abs(eSpanLen/len(info['e']) - fSpanLen/len(info['f']))
+        normalized_span_diff = abs(eSpanLen/len(info['e']) - fSpanLen/len(info['f']))
         return {name+'___'+value1: 1, name+'___'+value2: 1, name+'__'+'spanLenDiff': span_diff  ,name+'__'+'normalizedSpanLenDiff': normalized_span_diff, name+'__'+'pfe' : self.pef.get(fWord, {}).get(eWord, 0.0) }
   
     def ff_nonlocal_sameWordLinks(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
