@@ -679,11 +679,20 @@ class NonlocalFeatures:
         span_diff= abs(eSpanLen - fSpanLen)
         srcTag = sourceNode.data["pos"]
         value1 = '%s:%s' % (tgtTag, srcTag)
-        # value2 = '%s:%s(%s,%s)' % (tgtTag, srcTag, leftFTag, rightFTag)
-        value2 = 'hogege'
         span_diff= abs(eSpanLen - fSpanLen)
         normalized_span_diff = abs(eSpanLen/len(info['e']) - fSpanLen/len(info['f']))
-        return {name+'___'+value1: 1, name+'___'+value2: 1, name+'__'+'spanLenDiff': span_diff  ,name+'__'+'normalizedSpanLenDiff': normalized_span_diff, name+'__'+'pfe' : self.pef.get(fWord, {}).get(eWord, 0.0) }
+        features =  {name+'___'+value1: 1, name+'__'+'spanLenDiff': span_diff  ,name+'__'+'normalizedSpanLenDiff': normalized_span_diff, name+'__'+'pfe' : self.pef.get(fWord, {}).get(eWord, 0.0) }
+        if minF < maxF:
+            pos_count = defaultdict(int)
+            for node1 in info['ftree'].data['nodeTable'][minF]:
+                for node2 in info['ftree'].data['nodeTable'][maxF]:
+                    pos_count[(node1.data['pos'], node2.data['pos'])] += 1
+            for key in pos_count.keys():
+                pos_count[key] /= float(len(info['ftree'].data['nodeTable'][minF])*len(info['ftree'].data['nodeTable'][maxF]))
+                leftFTag = key[0]
+                rightFTag = key[1]
+                features[name+'___'+'%s:%s(%s,%s)' % (tgtTag, srcTag, leftFTag, rightFTag)] = pos_count[key]
+        return features
   
     def ff_nonlocal_sameWordLinks(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
         """
