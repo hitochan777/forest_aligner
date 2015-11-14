@@ -533,7 +533,7 @@ class Model(object):
         singleBestAlignment = []
         alignmentList = []
         for tgtIndex, tgtWord in enumerate(tgtWordList):
-          currentLinks = [AlignmentLink((tgtIndex, srcIndex), currentNode)]
+          currentLinks = [AlignmentLink((tgtIndex, srcIndex))]
           scoreVector = svector.Vector()
   
           for k, func in enumerate(self.featureTemplates):
@@ -595,7 +595,7 @@ class Model(object):
                         if (abs(tgtIndex_b - tgtIndex_a) > 1):
                             continue
   
-                    currentLinks = list(map(lambda x: AlignmentLink((x,srcIndex), currentNode),na+sa))
+                    currentLinks = list(map(lambda x: AlignmentLink((x,srcIndex) ),na+sa))
                       
                     scoreVector = svector.Vector()
                     for k, func in enumerate(self.featureTemplates):
