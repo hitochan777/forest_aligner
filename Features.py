@@ -676,13 +676,10 @@ class NonlocalFeatures:
         fWord = sourceNode.data['surface']
         fStartSpan, fEndSpan = sourceNode.get_span()
         fSpanLen = float(fEndSpan - fStartSpan)
-        span_diff= abs(eSpanLen - fSpanLen)
         srcTag = sourceNode.data["pos"]
         value1 = '%s:%s' % (tgtTag, srcTag)
-        # span_diff= abs(eSpanLen - fSpanLen) # this is not effective
         normalized_span_diff = abs(eSpanLen/len(info['e']) - fSpanLen/len(info['f']))
-        span_diff = normalized_span_diff * (len(info['e']) + len(info['f']))/2.0
-        features =  {name+'___'+value1: 1, name+'__'+'spanLenDiff': span_diff  ,name+'__'+'normalizedSpanLenDiff': normalized_span_diff, name+'__'+'pfe' : self.pef.get(fWord, {}).get(eWord, 0.0) }
+        features =  {name+'___'+value1: 1, name+'__'+'normalizedSpanLenDiff': normalized_span_diff, name+'__'+'pfe' : self.pef.get(fWord, {}).get(eWord, 0.0) }
         if minF < maxF:
             pos_count = defaultdict(int)
             for node1 in info['ftree'].data['nodeTable'][minF]:
