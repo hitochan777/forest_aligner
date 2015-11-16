@@ -58,13 +58,19 @@ class LocalFeatures:
     # Encode results as features
     if inverse:
       values[name+'_inv'] = 1
-      values[name+'_inv_%s' %(currentNode.data["pos"])] = 1
+      values[name+'_inv_%s' % (currentNode.data["pos"])] = 1
+      values[name+'_inv_(%s)' % (currentNode.data["surface"])] = 1
+      values[name+'_inv_%s(%s)' % (currentNode.data["pos"], currentNode.data["surface"])] = 1
     if a1:
       values[name+'_a1'] = 1
-      values[name+'_a1_%s' %(currentNode.data["pos"])] = 1
+      values[name+'_a1_%s' % (currentNode.data["pos"])] = 1
+      values[name+'_a1_(%s)' % (currentNode.data["surface"])] = 1
+      values[name+'_a1_%s(%s)' % (currentNode.data["pos"], currentNode.data["surface"])] = 1
     if a2:
       values[name+'_a2'] = 1
       values[name+'_a2_%s' %(currentNode.data["pos"])] = 1
+      values[name+'_a2_(%s)' % (currentNode.data["surface"])] = 1
+      values[name+'_a2_%s(%s)' % (currentNode.data["pos"], currentNode.data["surface"])] = 1
 
     return values
 
