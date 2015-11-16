@@ -595,7 +595,7 @@ class Model(object):
                         if (abs(tgtIndex_b - tgtIndex_a) > 1):
                             continue
   
-                    currentLinks = list(map(lambda x: AlignmentLink((x,srcIndex)),na+sa))
+                    currentLinks = list(map(lambda x: AlignmentLink((x,srcIndex) ),na+sa))
                       
                     scoreVector = svector.Vector()
                     for k, func in enumerate(self.featureTemplates):

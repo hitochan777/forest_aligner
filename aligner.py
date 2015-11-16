@@ -206,10 +206,10 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
         decodingPath = model.decodingPath
         # Dump intermediate chunk to disk. Reassemble later.
         if FLAGS.train:
-          cPickle.dump((model.hyp.links, model.gold.links_dict), result_file, protocol=cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump((model.hyp.links, model.gold.links_dict), result_file, protocol=cPickle.HIGHEST_PROTOCOL)
         elif FLAGS.align:
           # cPickle.dump(model.modelBest.links, result_file, protocol=cPickle.HIGHEST_PROTOCOL)
-          cPickle.dump((model.hyp.links,model.hyp.score), result_file, protocol=cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump((model.hyp.links, model.hyp.score), result_file, protocol=cPickle.HIGHEST_PROTOCOL)
         
         if FLAGS.decoding_path_out is not None:
             cPickle.dump(decodingPath, decodingPathFilename, protocol=cPickle.HIGHEST_PROTOCOL)
