@@ -34,6 +34,7 @@ class PartialGridAlignment(object):
       self.scoreVector_nonlocal = svector.Vector()
       self.position = None
       self.boundingBox = None
+      self.boundingBoxOrigins = None
       self.decodingPath = DecodingPath()
   
     def clear(self):

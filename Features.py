@@ -58,13 +58,19 @@ class LocalFeatures:
     # Encode results as features
     if inverse:
       values[name+'_inv'] = 1
-      values[name+'_inv_%s' %(currentNode.data["pos"])] = 1
+      values[name+'_inv_%s' % (currentNode.data["pos"])] = 1
+      values[name+'_inv_(%s)' % (currentNode.data["surface"])] = 1
+      values[name+'_inv_%s(%s)' % (currentNode.data["pos"], currentNode.data["surface"])] = 1
     if a1:
       values[name+'_a1'] = 1
-      values[name+'_a1_%s' %(currentNode.data["pos"])] = 1
+      values[name+'_a1_%s' % (currentNode.data["pos"])] = 1
+      values[name+'_a1_(%s)' % (currentNode.data["surface"])] = 1
+      values[name+'_a1_%s(%s)' % (currentNode.data["pos"], currentNode.data["surface"])] = 1
     if a2:
       values[name+'_a2'] = 1
       values[name+'_a2_%s' %(currentNode.data["pos"])] = 1
+      values[name+'_a2_(%s)' % (currentNode.data["surface"])] = 1
+      values[name+'_a2_%s(%s)' % (currentNode.data["pos"], currentNode.data["surface"])] = 1
 
     return values
 
@@ -669,22 +675,28 @@ class NonlocalFeatures:
         maxF = edge.boundingBox[1][0]
         eWord = treeNode.data['surface']
         eStartSpan, eEndSpan = treeNode.get_span()
-        eSpanLen = float(eEndSpan - eStartSpan)/len(info['e'])
+        eSpanLen = float(eEndSpan - eStartSpan)
 
         fspan = (minF, maxF)
         sourceNode = info['ftree'].getDeepestNodeConveringSpan(fspan)
         fWord = sourceNode.data['surface']
         fStartSpan, fEndSpan = sourceNode.get_span()
-        fSpanLen = float(fEndSpan - fStartSpan)/len(info['f'])
-        span_diff= abs(eSpanLen - fSpanLen)
-
-        fWord = sourceNode.data['surface']
-        fStartSpan, eEndSpan = sourceNode.get_span()
-        fSpanLen = float(fEndSpan - fStartSpan)/len(info['f'])
+        fSpanLen = float(fEndSpan - fStartSpan)
         srcTag = sourceNode.data["pos"]
-        value1 =  '%s:%s' % (tgtTag,srcTag)
-        span_diff= abs(eSpanLen - fSpanLen)
-        return {name+'___'+value1: 1, name+'__'+'normalizedSpanLenDiff': span_diff, name+'__'+'pfe' : self.pef.get(fWord, {}).get(eWord, 0.0) }
+        value1 = '%s:%s' % (tgtTag, srcTag)
+        normalized_span_diff = abs(eSpanLen/len(info['e']) - fSpanLen/len(info['f']))
+        features =  {name+'___'+value1: 1, name+'__'+'normalizedSpanLenDiff': normalized_span_diff, name+'__'+'pfe' : self.pef.get(fWord, {}).get(eWord, 0.0) }
+        if minF < maxF:
+            pos_count = defaultdict(int)
+            for node1 in info['ftree'].data['nodeTable'][minF]:
+                for node2 in info['ftree'].data['nodeTable'][maxF]:
+                    pos_count[(node1.data['pos'], node2.data['pos'])] += 1
+            for key in pos_count.keys():
+                pos_count[key] /= float(len(info['ftree'].data['nodeTable'][minF])*len(info['ftree'].data['nodeTable'][maxF]))
+                leftFTag = key[0]
+                rightFTag = key[1]
+                features[name+'___'+'%s:%s(%s,%s)' % (tgtTag, srcTag, leftFTag, rightFTag)] = pos_count[key]
+        return features
   
     def ff_nonlocal_sameWordLinks(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
         """
