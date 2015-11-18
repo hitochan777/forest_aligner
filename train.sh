@@ -34,7 +34,7 @@ nice -15 mpiexec -n $NUMCPUS $PYTHON ./aligner.py \
   --langpair $LANGPAIR \
   --partial $PARTIAL \
   --maxepochs $MAXEPOCH \
-  --binarize \
+  --binarize=False \
   --decoding_path_out path_out_train \
   --nto1 $LINK \
   --train \
