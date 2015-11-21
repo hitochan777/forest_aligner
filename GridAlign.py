@@ -113,12 +113,12 @@ class Model(object):
       self.a1 = { }		# intersection
       self.a2 = { }		# grow-diag-final
       self.inverse = { }      # ivi-inverse
-      if FLAGS.inverse is not None:
-        self.inverse = readAlignmentString(inverse)
+      if FLAGS.inverse_a is not None:
+        self.inverse = readAlignmentString(inverse, FLAGS.inverse)
       if FLAGS.a1 is not None:
-        self.a1 = readAlignmentString(a1)
+        self.a1 = readAlignmentString(a1, FLAGS.inverse)
       if FLAGS.a2 is not None:
-        self.a2 = readAlignmentString(a2)
+        self.a2 = readAlignmentString(a2, FLAGS.inverse)
   
       self.hyp = None
       self.oracle = None
@@ -160,9 +160,9 @@ class Model(object):
       self.treeDistValues = { }
   
       # Populate info
-      self.info['a1']=self.a1
-      self.info['a2']=self.a2
-      self.info['inverse']=self.inverse
+      self.info['a1'] = self.a1
+      self.info['a2'] = self.a2
+      self.info['inverse'] = self.inverse
       self.info['f'] = self.f
       self.info['e'] = self.e
       self.info['etree'] = self.etree

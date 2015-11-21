@@ -3,7 +3,7 @@
 from collections import defaultdict
 import sys
 
-def readAlignmentString(str):
+def readAlignmentString(str, inverse = False):
   """
   Read a string of f-e links an return a dictionary
   of link tuples (f,e)
@@ -12,7 +12,10 @@ def readAlignmentString(str):
   for link in str.split():
     try:
       f, e = link.split('-')
-      d[(int(f), int(e))] = True
+      if inverse:
+          d[(int(e), int(f))] = True       
+      else:
+          d[(int(f), int(e))] = True
     except:
       sys.stderr.write("Couldn't process link '%s'\n" %(link))
       sys.stderr.write("Alignment: %s\n" %(str))
@@ -31,13 +34,16 @@ class Alignment(object):
     self.linksInSpan = { }
     self.read(str)
 
-  def read(self, links_str, delim = '-'):
+  def read(self, links_str, delim = '-', inverse = False):
     """
     Reads and records a string encoded sequence of links, f-e f-e f-e ...
     """
     for linkstr in links_str.strip().split():
       f, e = map(int, linkstr.split(delim))
-      link = (f,e)
+      if inverse:
+          link = (e,f)
+      else:
+          link = (f,e)
       self.eLinks[e].append(link)
       self.links_dict[link] = True
 
