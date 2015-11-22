@@ -24,6 +24,7 @@ class ForestNode:
         self.j = -1
         self.order = 0
         self.span = None
+        self.root = None # pointer to root node
         # self.nodeList = None # list including weakref to each node; sorted by id
   
     def setTerminals(self):
@@ -95,8 +96,12 @@ class ForestNode:
     
     def getNodesByIndex(self, index):
         assert self.data["pos"] == "TOP", "%s can only be used at root node. " % self.getNodesByIndex.func_name
-        return self.data["nodeTable"][index] 
-    
+        try:
+            return self.data["nodeTable"][index] 
+        except:
+            print self.root.data["sentence_ID"], len(self.data["nodeTable"]), index
+            sys.exit()
+
     def getParentNodes(self):
         return map(lambda d: d["parent"], self.parent)
 

@@ -23,7 +23,7 @@ def readAlignmentString(str, inverse = False):
   return d
 
 class Alignment(object):
-  def __init__(self, str):
+  def __init__(self, str, inverse = False):
     self.score = 0
     self.scoreVector = []
     self.links_dict = { }
@@ -32,9 +32,9 @@ class Alignment(object):
     # Index links also by row, or f index
     self.numLinksInSpan = { }
     self.linksInSpan = { }
-    self.read(str)
+    self.read(str, inverse)
 
-  def read(self, links_str, delim = '-', inverse = False):
+  def read(self, links_str, inverse = False, delim = '-'):
     """
     Reads and records a string encoded sequence of links, f-e f-e f-e ...
     """

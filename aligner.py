@@ -166,7 +166,7 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
         etree = blob['etree_instances'][instanceID]
         if FLAGS.train:
           gold_str = blob['gold_instances'][instanceID]
-          gold = Alignment.Alignment(gold_str)
+          gold = Alignment.Alignment(gold_str, FLAGS.inverse)
   
         ftree = None
         if FLAGS.ftrees is not None:
@@ -370,7 +370,7 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
       f = f.split() ; e = e.split()
 
       # gold is a sequence of f-e link pairs
-      gold = Alignment.Alignment(gold_str)
+      gold = Alignment.Alignment(gold_str, FLAGS.inverse)
 
       # Initialize model for this instance
       model = GridAlign.Model(f, e, etree, ftree, instanceID, weights, a1, a2,

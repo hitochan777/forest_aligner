@@ -22,7 +22,6 @@ def readDependencyForestFile(filename):
             yield dep
 
 def parser(string):
-    # keys = ["id","span","word_id", "surface", "base", "pos", "is_content", "pos2","type", "other"]
     buf = StringIO.StringIO(string)
     nodeList = []
     nodeChildrenSetList = []
@@ -104,10 +103,12 @@ def parser(string):
         "isContent": False,
         "pos2": "TOP",
         "sentence_ID": sentence_ID,
-        "nodeTable": nodeTable
+        "nodeTable": nodeTable,
+        "root": root
     }
 
     for node in nodeList:
+        node.root = root
         node.unprocessedChildNum = node.childnum = len(nodeChildrenSetList[node.data["id"]])
         if node.i == 0 and node.j == sent_len:
             node.addParent(root, 0) 
