@@ -22,7 +22,6 @@ def readDependencyForestFile(filename):
             yield dep
 
 def parser(string):
-    # keys = ["id","span","word_id", "surface", "base", "pos", "is_content", "pos2","type", "other"]
     buf = StringIO.StringIO(string)
     nodeList = []
     nodeChildrenSetList = []
@@ -95,6 +94,7 @@ def parser(string):
 
     root = ForestNode() # Dummy root node which collects all root nodes(A forest has multiple roots) in the forest.
     root.i, root.j = 0, sent_len
+    root.root = root
     root.data = {
         "id": -1,
         "word_id": -1,
@@ -104,10 +104,11 @@ def parser(string):
         "isContent": False,
         "pos2": "TOP",
         "sentence_ID": sentence_ID,
-        "nodeTable": nodeTable
+        "nodeTable": nodeTable,
     }
 
     for node in nodeList:
+        node.root = root
         node.unprocessedChildNum = node.childnum = len(nodeChildrenSetList[node.data["id"]])
         if node.i == 0 and node.j == sent_len:
             node.addParent(root, 0) 

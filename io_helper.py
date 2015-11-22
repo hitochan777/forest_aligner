@@ -19,17 +19,17 @@ def open_files(FLAGS):
         Try to open files read from arguments for reading '''
     file_handles = { }
 
-    if FLAGS.inverse_dev is not None:
+    if FLAGS.inverse_dev_a is not None:
         try:
-            file_handles['inverse_dev'] = open(FLAGS.inverse_dev, 'r')
+            file_handles['inverse_dev_a'] = open(FLAGS.inverse_dev_a, 'r')
         except:
-            write_master("Could not open output file %s for writing\n" %(FLAGS.inverse_dev))
+            write_master("Could not open output file %s for writing\n" %(FLAGS.inverse_dev_a))
             sys.exit(3)
-    if FLAGS.inverse is not None:
+    if FLAGS.inverse_a is not None:
         try:
-            file_handles['inverse'] = open(FLAGS.inverse, 'r')
+            file_handles['inverse_a'] = open(FLAGS.inverse_a, 'r')
         except:
-            write_master("Could not open output file %s for writing\n" %(FLAGS.inverse))
+            write_master("Could not open output file %s for writing\n" %(FLAGS.inverse_a))
             sys.exit(3)
 
     if FLAGS.out is not None:

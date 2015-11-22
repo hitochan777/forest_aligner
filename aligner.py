@@ -166,14 +166,14 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
         etree = blob['etree_instances'][instanceID]
         if FLAGS.train:
           gold_str = blob['gold_instances'][instanceID]
-          gold = Alignment.Alignment(gold_str)
+          gold = Alignment.Alignment(gold_str, FLAGS.inverse)
   
         ftree = None
         if FLAGS.ftrees is not None:
           ftree = blob['ftree_instances'][instanceID]
   
         inverse = None
-        if FLAGS.inverse is not None:
+        if FLAGS.inverse_a is not None:
           inverse = blob['inverse_instances'][instanceID]
   
         a1 = None
@@ -274,7 +274,10 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
           resultTuple = cPickle.load(resultFiles[node])
           modelBestLinks = resultTuple[0]
           score = resultTuple[1]
-          out.write("%s\n" %(" ".join(map(lambda link: "%s-%s" %(link[0], link[1]), modelBestLinks))))
+          if FLAGS.inverse:
+              out.write("%s\n" %(" ".join(map(lambda link: "%s-%s" %(link[1], link[0]), modelBestLinks))))
+          else:
+              out.write("%s\n" %(" ".join(map(lambda link: "%s-%s" %(link[0], link[1]), modelBestLinks))))
           if(score_out!=None):
               sout.write("%s\n" % (score))
 
@@ -347,7 +350,7 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
       gold_str = blob['gold_instances'][instanceID]
 
       inverse = None
-      if FLAGS.inverse is not None:
+      if FLAGS.inverse_a is not None:
         inverse = blob['inverse_instances'][instanceID]
 
       a1 = None
@@ -367,7 +370,7 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
       f = f.split() ; e = e.split()
 
       # gold is a sequence of f-e link pairs
-      gold = Alignment.Alignment(gold_str)
+      gold = Alignment.Alignment(gold_str, FLAGS.inverse)
 
       # Initialize model for this instance
       model = GridAlign.Model(f, e, etree, ftree, instanceID, weights, a1, a2,
@@ -647,7 +650,7 @@ if __name__ == "__main__":
     flags.DEFINE_string('evcb',None,'e vocab file')
     flags.DEFINE_string('a1',None,'Third-party alignments in f-e format.')
     flags.DEFINE_string('a2',None,'Third-party alignments in f-e format.')
-    flags.DEFINE_string('inverse',None,'f-e inverse alignments (from bottom-up search on foreign tree)')
+    flags.DEFINE_string('inverse_a',None,'f-e inverse alignments (from bottom-up search on foreign tree)')
     flags.DEFINE_integer('init_k',None,'k = initialization beam size')
     flags.DEFINE_integer('k',1,'k = standard beam size')
     flags.DEFINE_integer('maxepochs',100,'maximum number of epochs to run training')
@@ -658,7 +661,7 @@ if __name__ == "__main__":
     flags.DEFINE_string('ftreesdev',None,'ftrees dev file')
     flags.DEFINE_string('a1_dev',None,'Third-party alignments in f-e format for heldout data')
     flags.DEFINE_string('a2_dev',None,'Third-party alignments in f-e format for heldout data')
-    flags.DEFINE_string('inverse_dev',None,'f-e inverse alignments (from bottom-up search on foreign tree)')
+    flags.DEFINE_string('inverse_dev_a',None,'f-e inverse alignments (from bottom-up search on foreign tree)')
     flags.DEFINE_string('srctags',None,'srctags file')
     flags.DEFINE_string('langpair',None,'tell Nile what language-pair it is working on (mostly for importing specific feature sets); default: None')
     flags.DEFINE_string('pef',None,'p(e|f) file')
@@ -689,7 +692,19 @@ if __name__ == "__main__":
     flags.DEFINE_integer('nto1',2,"To how many source words can a target word be aligned")
     flags.DEFINE_boolean('binarize', True, "True: binarize dependency tree while decoding, False: do not binarize; default: True")
     flags.DEFINE_string('decoding_path_out', None, "Output filename for docoding path of of the best hypothesis; Default: None")
+    flags.DEFINE_boolean('inverse', False, "If set to True, input data for source and target language are exchanged")
     argv = FLAGS(sys.argv)
+
+    if FLAGS.inverse:
+        FLAGS.f, FLAGS.e = FLAGS.e, FLAGS.f 
+        FLAGS.ftrees, FLAGS.etrees = FLAGS.etrees, FLAGS.ftrees 
+        FLAGS.fvcb, FLAGS.evcb = FLAGS.evcb, FLAGS.fvcb
+        FLAGS.fdev, FLAGS.edev = FLAGS.edev, FLAGS.fdev
+        FLAGS.ftreesdev, FLAGS.etreesdev = FLAGS.etreesdev, FLAGS.ftreesdev
+        if FLAGS.langpair is not None:
+            langs = FLAGS.langpair.split("_")
+            FLAGS.langpair = "%s_%s" % (langs[1], langs[0])
+        FLAGS.pef, FLAGS.pfe = FLAGS.pfe, FLAGS.pef
 
     if FLAGS.debiasing and FLAGS.debiasing_weights is None:
       LOG(FATAL, "Must provide weight vector to use when debiasing mode enabled.")
@@ -823,11 +838,11 @@ if __name__ == "__main__":
             for ftree in readDependencyForestFile(FLAGS.ftreesdev):
                 ftree_dev_instances.append(ftree.strip())
 
-    if FLAGS.inverse is not None:
-        for inverse in file_handles['inverse']:
+    if FLAGS.inverse_a is not None:
+        for inverse in file_handles['inverse_a']:
             inverse_instances.append(inverse.strip())
         if FLAGS.train:
-            for inverse in file_handles['inverse_dev']:
+            for inverse in file_handles['inverse_dev_a']:
                 inverse_dev_instances.append(inverse.strip())
 
     if FLAGS.a1 is not None:
