@@ -13,9 +13,8 @@ def readAlignmentString(str, inverse = False):
     try:
       f, e = link.split('-')
       if inverse:
-          d[(int(e), int(f))] = True       
-      else:
-          d[(int(f), int(e))] = True
+          f, e = e, f
+      d[(int(f), int(e))] = True
     except:
       sys.stderr.write("Couldn't process link '%s'\n" %(link))
       sys.stderr.write("Alignment: %s\n" %(str))
@@ -41,9 +40,8 @@ class Alignment(object):
     for linkstr in links_str.strip().split():
       f, e = map(int, linkstr.split(delim))
       if inverse:
-          link = (e,f)
-      else:
-          link = (f,e)
+          f, e = e, f
+      link = (f,e)
       self.eLinks[e].append(link)
       self.links_dict[link] = True
 

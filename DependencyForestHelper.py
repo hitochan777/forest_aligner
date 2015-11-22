@@ -94,6 +94,7 @@ def parser(string):
 
     root = ForestNode() # Dummy root node which collects all root nodes(A forest has multiple roots) in the forest.
     root.i, root.j = 0, sent_len
+    root.root = root
     root.data = {
         "id": -1,
         "word_id": -1,
@@ -104,7 +105,6 @@ def parser(string):
         "pos2": "TOP",
         "sentence_ID": sentence_ID,
         "nodeTable": nodeTable,
-        "root": root
     }
 
     for node in nodeList:

@@ -96,11 +96,7 @@ class ForestNode:
     
     def getNodesByIndex(self, index):
         assert self.data["pos"] == "TOP", "%s can only be used at root node. " % self.getNodesByIndex.func_name
-        try:
-            return self.data["nodeTable"][index] 
-        except:
-            print self.root.data["sentence_ID"], len(self.data["nodeTable"]), index
-            sys.exit()
+        return self.data["nodeTable"][index] 
 
     def getParentNodes(self):
         return map(lambda d: d["parent"], self.parent)
