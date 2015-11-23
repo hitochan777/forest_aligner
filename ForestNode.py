@@ -106,3 +106,8 @@ class ForestNode:
         if self in node.getParentNodes() or node in self.getParentNodes():
             return 1
         return 0
+    
+    def getDetailedPOS():
+        if self.data["pos2"] is not None:
+            return self.data["pos2"]
+        return self.data["pos"]
