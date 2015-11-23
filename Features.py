@@ -58,17 +58,17 @@ class LocalFeatures:
     # Encode results as features
     if inverse:
       values[name+'_inv'] = 1
-      values[name+'_inv_%s' % (currentNode.getDetailedPOS()] = 1
+      values[name+'_inv_%s' % (currentNode.getDetailedPOS())] = 1
       values[name+'_inv_(%s)' % (currentNode.data["surface"])] = 1
       values[name+'_inv_%s(%s)' % (currentNode.getDetailedPOS(), currentNode.data["surface"])] = 1
     if a1:
       values[name+'_a1'] = 1
-      values[name+'_a1_%s' % (currentNode.getDetailedPOS()] = 1
+      values[name+'_a1_%s' % (currentNode.getDetailedPOS())] = 1
       values[name+'_a1_(%s)' % (currentNode.data["surface"])] = 1
       values[name+'_a1_%s(%s)' % (currentNode.getDetailedPOS(), currentNode.data["surface"])] = 1
     if a2:
       values[name+'_a2'] = 1
-      values[name+'_a2_%s' %(currentNode.getDetailedPOS()] = 1
+      values[name+'_a2_%s' %(currentNode.getDetailedPOS())] = 1
       values[name+'_a2_(%s)' % (currentNode.data["surface"])] = 1
       values[name+'_a2_%s(%s)' % (currentNode.getDetailedPOS(), currentNode.data["surface"])] = 1
 
@@ -150,7 +150,7 @@ class LocalFeatures:
     if len(info['ftree'].terminals) == 0:
       return {}
 
-    tgtTag = currentNode.getPOS()
+    tgtTag = currentNode.getDetailedPOS()
     srcTags = ""
 
     values = {}
@@ -169,7 +169,7 @@ class LocalFeatures:
             nodes =  info['ftree'].getNodesByIndex(findex)
             pos_count = defaultdict(float)
             for node in nodes:
-                pos_count[node.getPOS()] += 1
+                pos_count[node.getDetailedPOS()] += 1
             total = sum(pos_count.values())
             # normalize count
             for srcTag in pos_count:
@@ -686,7 +686,7 @@ class NonlocalFeatures:
             pos_count = defaultdict(int)
             for node1 in info['ftree'].data['nodeTable'][minF]:
                 for node2 in info['ftree'].data['nodeTable'][maxF]:
-                    pos_count[(node1.getDetailedPOS(), node2.getDetailedPOS()] += 1
+                    pos_count[(node1.getDetailedPOS(), node2.getDetailedPOS())] += 1
             for key in pos_count.keys():
                 pos_count[key] /= float(len(info['ftree'].data['nodeTable'][minF])*len(info['ftree'].data['nodeTable'][maxF]))
                 leftFTag = key[0]
