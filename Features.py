@@ -58,19 +58,19 @@ class LocalFeatures:
     # Encode results as features
     if inverse:
       values[name+'_inv'] = 1
-      values[name+'_inv_%s' % (currentNode.data["pos"])] = 1
+      values[name+'_inv_%s' % (currentNode.getDetailedPOS())] = 1
       values[name+'_inv_(%s)' % (currentNode.data["surface"])] = 1
-      values[name+'_inv_%s(%s)' % (currentNode.data["pos"], currentNode.data["surface"])] = 1
+      values[name+'_inv_%s(%s)' % (currentNode.getDetailedPOS(), currentNode.data["surface"])] = 1
     if a1:
       values[name+'_a1'] = 1
-      values[name+'_a1_%s' % (currentNode.data["pos"])] = 1
+      values[name+'_a1_%s' % (currentNode.getDetailedPOS())] = 1
       values[name+'_a1_(%s)' % (currentNode.data["surface"])] = 1
-      values[name+'_a1_%s(%s)' % (currentNode.data["pos"], currentNode.data["surface"])] = 1
+      values[name+'_a1_%s(%s)' % (currentNode.getDetailedPOS(), currentNode.data["surface"])] = 1
     if a2:
       values[name+'_a2'] = 1
-      values[name+'_a2_%s' %(currentNode.data["pos"])] = 1
+      values[name+'_a2_%s' %(currentNode.getDetailedPOS())] = 1
       values[name+'_a2_(%s)' % (currentNode.data["surface"])] = 1
-      values[name+'_a2_%s(%s)' % (currentNode.data["pos"], currentNode.data["surface"])] = 1
+      values[name+'_a2_%s(%s)' % (currentNode.getDetailedPOS(), currentNode.data["surface"])] = 1
 
     return values
 
@@ -79,7 +79,7 @@ class LocalFeatures:
     Return average p(e|f)
     """
     if currentNode is not None:
-      pos = currentNode.data["pos"]
+      pos = currentNode.getDetailedPOS()
     name = self.ff_probEgivenF.func_name + '___' + pos + '_nb'
 
     # Calculate feature function value
@@ -116,7 +116,7 @@ class LocalFeatures:
     Average (Normalized) Distance from the point (fIndex,eIndex) to the grid diagonal
     """
     if currentNode is not None:
-        pos = currentNode.data["pos"]
+        pos = currentNode.getDetailedPOS()
     name = self.ff_distToDiag.func_name + '___' + pos + '_nb'
 
     val = 0.0
@@ -145,14 +145,12 @@ class LocalFeatures:
     """
     name = self.ff_tgtTag_srcTag.func_name
 
-    if currentNode.data["pos"] == '_XXX_':
-      return {}
     if info['ftree'] is None:
       return {}
     if len(info['ftree'].terminals) == 0:
       return {}
 
-    tgtTag = currentNode.data["pos"]
+    tgtTag = currentNode.getDetailedPOS()
     srcTags = ""
 
     values = {}
@@ -171,7 +169,7 @@ class LocalFeatures:
             nodes =  info['ftree'].getNodesByIndex(findex)
             pos_count = defaultdict(float)
             for node in nodes:
-                pos_count[node.data["pos"]] += 1
+                pos_count[node.getDetailedPOS()] += 1
             total = sum(pos_count.values())
             # normalize count
             for srcTag in pos_count:
@@ -233,7 +231,7 @@ class LocalFeatures:
     Binary feature fires if eWord is aligned to nothing.
     """
     if currentNode is not None:
-      pos = currentNode.data["pos"]
+        pos = currentNode.getDetailedPOS()
     name = self.ff_isLinkedToNullWord.func_name + '___' + pos
 
     if len(links) == 0:
@@ -266,7 +264,7 @@ class LocalFeatures:
     # Only the fIndex will vary.
 
     if currentNode is not None:
-        pos = currentNode.data["pos"]
+        pos = currentNode.getDetailedPOS()
     name = self.ff_jumpDistance.func_name + '___' + pos + '_nb'
 
     maxdiff = 0
@@ -295,7 +293,7 @@ class LocalFeatures:
     function words, e.g. (TO, WP$, CC, ").
     """
     if currentNode is not None:
-        pos = currentNode.data["pos"]
+        pos = currentNode.getDetailedPOS()
     name = self.ff_lexprob_zero.func_name + '___' + pos + '_nb'
 
     # Calculate feature function value
@@ -353,7 +351,7 @@ class LocalFeatures:
     Return p(e|f)
     """
     if currentNode is not None:
-        pos = currentNode.data["pos"]
+        pos = currentNode.getDetailedPOS()
     name = self.ff_probEgivenF.func_name + '___' + pos + '_nb'
 
     # Calculate feature function value
@@ -376,7 +374,7 @@ class LocalFeatures:
     Return p(f|e)
     """
     if currentNode is not None:
-        pos = currentNode.data["pos"]
+        pos = currentNode.getDetailedPOS()
     name = self.ff_probFgivenE.func_name + '___' + pos + '_nb'
 
     # Calculate feature function value
@@ -531,7 +529,7 @@ class NonlocalFeatures:
           # [    ] [    ]
           # [    ] [    ]
           if edge1_maxF == edge2_maxF and edge1_minF == edge2_minF:
-              value = "%s(%s,%s)" %(treeNode.data["pos"],treeNode.children[0].data["pos"],treeNode.children[1].data["pos"])
+              value = "%s(%s,%s)" %(treeNode.getDetailedPOS(),treeNode.children[0].getDetailedPOS(),treeNode.children[1].getDetailedPOS())
               values[name+'0___'+value] = 1
           # Case 1 (monotonic)
           # [    ]
@@ -539,7 +537,7 @@ class NonlocalFeatures:
           #        [    ]
           #        [    ]
           elif edge1_maxF < edge2_minF:
-              value = "%s(%s,%s)" %(treeNode.data["pos"],treeNode.children[0].data["pos"],treeNode.children[1].data["pos"])
+              value = "%s(%s,%s)" %(treeNode.getDetailedPOS(),treeNode.children[0].getDetailedPOS(),treeNode.children[1].getDetailedPOS())
               values[name+'1___'+value] = 1
           # Case 2 (reordered)
           #        [    ]
@@ -547,14 +545,14 @@ class NonlocalFeatures:
           # [    ]
           # [    ]
           elif edge1_minF > edge2_maxF:
-              value = "%s(%s,%s)" %(treeNode.data["pos"],treeNode.children[0].data["pos"],treeNode.children[1].data["pos"])
+              value = "%s(%s,%s)" %(treeNode.getDetailedPOS(),treeNode.children[0].getDetailedPOS(),treeNode.children[1].getDetailedPOS())
               values[name+'2___'+value] = 1
           # Case 3
           # [    ]
           # [    ] [    ]
           #        [    ]
           elif edge1_maxF >= edge2_minF and edge1_maxF < edge2_maxF and edge1_minF < edge2_minF:
-              value = "%s(%s,%s)" %(treeNode.data["pos"],treeNode.children[0].data["pos"],treeNode.children[1].data["pos"])
+              value = "%s(%s,%s)" %(treeNode.getDetailedPOS(),treeNode.children[0].getDetailedPOS(),treeNode.children[1].getDetailedPOS())
               values[name+'3___'+value] = 1
           # Case 4
           #        [    ]
@@ -563,45 +561,45 @@ class NonlocalFeatures:
           # [    ]
   
           elif edge1_minF >= edge2_minF and edge1_minF < edge2_maxF and edge1_maxF > edge2_maxF:
-              value = "%s(%s,%s)" %(treeNode.data["pos"],treeNode.children[0].data["pos"],treeNode.children[1].data["pos"])
+              value = "%s(%s,%s)" %(treeNode.getDetailedPOS(),treeNode.children[0].getDetailedPOS(),treeNode.children[1].getDetailedPOS())
               values[name+'4___'+value] = 1
           # Case 5 (1 shares top of 2)
           # [    ] [    ]
           #        [    ]
           elif edge1_minF == edge2_minF and edge1_maxF < edge2_maxF:
-              value = "%s(%s,%s)" %(treeNode.data["pos"],treeNode.children[0].data["pos"],treeNode.children[1].data["pos"])
+              value = "%s(%s,%s)" %(treeNode.getDetailedPOS(),treeNode.children[0].getDetailedPOS(),treeNode.children[1].getDetailedPOS())
               values[name+'5___'+value] = 1
           # Case 6 (1 shares bot of 2)
           #        [    ]
           # [    ] [    ]
           elif edge1_maxF == edge2_maxF and edge1_minF > edge2_minF:
-              value = "%s(%s,%s)" %(treeNode.data["pos"],treeNode.children[0].data["pos"],treeNode.children[1].data["pos"])
+              value = "%s(%s,%s)" %(treeNode.getDetailedPOS(),treeNode.children[0].getDetailedPOS(),treeNode.children[1].getDetailedPOS())
               values[name+'6___'+value] = 1
           # Case 7 (2 shares top of 1; same as 5 but diff bracketing)
           # [    ] [    ]
           # [    ]
           elif edge2_minF == edge1_minF and edge2_maxF < edge1_maxF:
-              value = "%s(%s,%s)" %(treeNode.data["pos"],treeNode.children[0].data["pos"],treeNode.children[1].data["pos"])
+              value = "%s(%s,%s)" %(treeNode.getDetailedPOS(),treeNode.children[0].getDetailedPOS(),treeNode.children[1].getDetailedPOS())
               values[name+'7___'+value] = 1
           # Case 8 (2 shares bot of 1; same as 6 but diff bracketing)
           # [    ]
           # [    ] [    ]
           elif edge2_maxF == edge1_maxF and edge2_minF > edge1_minF:
-              value = "%s(%s,%s)" %(treeNode.data["pos"],treeNode.children[0].data["pos"],treeNode.children[1].data["pos"])
+              value = "%s(%s,%s)" %(treeNode.getDetailedPOS(),treeNode.children[0].getDetailedPOS(),treeNode.children[1].getDetailedPOS())
               values[name+'8___'+value] = 1
           # Case 9 (1 wholly contained in 2)
           #        [    ]
           # [    ] [    ]
           #        [    ]
           elif edge1_minF > edge2_minF and edge1_maxF < edge2_maxF:
-              value = "%s(%s,%s)" %(treeNode.data["pos"],treeNode.children[0].data["pos"],treeNode.children[1].data["pos"])
+              value = "%s(%s,%s)" %(treeNode.getDetailedPOS(),treeNode.children[0].getDetailedPOS(),treeNode.children[1].getDetailedPOS())
               values[name+'9___'+value] = 1
           # Case 10 (2 wholly contained in 1)
           # [    ]
           # [    ] [    ]
           # [    ]
           elif edge2_minF > edge1_minF and edge2_maxF < edge1_maxF:
-              value = "%s(%s,%s)" %(treeNode.data["pos"],treeNode.children[0].data["pos"],treeNode.children[1].data["pos"])
+              value = "%s(%s,%s)" %(treeNode.getDetailedPOS(),treeNode.children[0].getDetailedPOS(),treeNode.children[1].getDetailedPOS())
               values[name+'10___'+value] = 1
           # else: dump links here to find out what cases we missed, if any
         except:
@@ -657,14 +655,12 @@ class NonlocalFeatures:
         """
         name = self.ff_nonlocal_tgtTag_srcTag.func_name
   
-        if treeNode.data["pos"] == '_XXX_':
-          return {}
         if info['ftree'] is None:
           return {}
         if len(info['ftree'].terminals) == 0:
           return {}
   
-        tgtTag = treeNode.data["pos"]
+        tgtTag = treeNode.getDetailedPOS()
         srcTag = ""
         # Account for the null alignment case
         if len(links) == 0:
@@ -682,7 +678,7 @@ class NonlocalFeatures:
         fWord = sourceNode.data['surface']
         fStartSpan, fEndSpan = sourceNode.get_span()
         fSpanLen = float(fEndSpan - fStartSpan)
-        srcTag = sourceNode.data["pos"]
+        srcTag = sourceNode.getDetailedPOS()
         value1 = '%s:%s' % (tgtTag, srcTag)
         normalized_span_diff = abs(eSpanLen/len(info['e']) - fSpanLen/len(info['f']))
         features =  {name+'___'+value1: 1, name+'__'+'normalizedSpanLenDiff': normalized_span_diff, name+'__'+'pfe' : self.pef.get(fWord, {}).get(eWord, 0.0) }
@@ -690,7 +686,7 @@ class NonlocalFeatures:
             pos_count = defaultdict(int)
             for node1 in info['ftree'].data['nodeTable'][minF]:
                 for node2 in info['ftree'].data['nodeTable'][maxF]:
-                    pos_count[(node1.data['pos'], node2.data['pos'])] += 1
+                    pos_count[(node1.getDetailedPOS(), node2.getDetailedPOS())] += 1
             for key in pos_count.keys():
                 pos_count[key] /= float(len(info['ftree'].data['nodeTable'][minF])*len(info['ftree'].data['nodeTable'][maxF]))
                 leftFTag = key[0]
