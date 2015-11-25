@@ -107,6 +107,9 @@ class ForestNode:
             return 1
         return 0
     
+    def getPOS(self):
+        return self.data["pos"]
+
     def getDetailedPOS(self):
         if self.data["pos2"] is not None:
             return self.data["pos2"]
