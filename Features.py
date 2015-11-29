@@ -714,6 +714,40 @@ class NonlocalFeatures:
             penalty /= (tgtSpan[1] - tgtSpan[0] + 1)
         return {name: penalty}
   
+    def ff_nonlocal_stringDistance(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
+        name = self.ff_nonlocal_stringDistance.func_name + '_nb'
+        dist = 0.0
+
+        linkedToWords_copy = dict(linkedToWords)
+        if tgtSpan is None:
+            return {name: 0.}
+        tgtSpanDist = tgtSpan[1] - tgtSpan[0]
+        if tgtSpanDist == 0:
+            return {name: 0.}
+
+        normalizer = 0.0  
+        for fIndex in linkedToWords_copy:
+            if len(linkedToWords_copy[fIndex]) < 2:
+                continue
+            else:   # fIndex is aligned to at least two different eIndices
+                  # compute distance in pairs: if list = [1,2,3], compute dist(1,2), dist(2,3)
+                  # if list has length n, we will have n-1 distance computations
+  
+                linkedToWords_copy[fIndex].sort()
+                listlength = len(linkedToWords_copy[fIndex])
+                normalizer += listlength - 1
+                for i in xrange(listlength-1):
+                    # eIndex1 and eIndex2 will always be the smallest, and second-smallest indices, respectively.
+                    eIndex1, _ = linkedToWords_copy[fIndex][0]
+                    eIndex2, _ = linkedToWords_copy[fIndex][1]
+                    linkedToWords_copy[fIndex] = linkedToWords_copy[fIndex][1:]
+                    dist += eIndex2 - eIndex1
+        try:
+            dist /= normalizer
+        except:
+            dist = 0.0
+        return {name: dist}
+
     def ff_nonlocal_treeDistance(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
         """
         A distance metric quantifying "tree distance" between two links (f, i); (f, j)
