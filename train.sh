@@ -38,7 +38,7 @@ nice -15 mpiexec -n $NUMCPUS $PYTHON ./aligner.py \
   --decoding_path_out path_out_train \
   --nto1 $LINK \
   --train \
-  --k $K 1> $NAME.out 2> $NAME.err
+  --k $K 3>&1 2>&3 >$NAME.out | tee $NAME.err
 
 ITER=`grep F-score-dev $NAME.err | awk '{print $2}' | cat -n | sort -nr -k 2 | head -1 | cut -f 1 | tr -d '[[:space:]]'`
 WEIGHTS_FILE=weights.`head -1 $NAME.out`
