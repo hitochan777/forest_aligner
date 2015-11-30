@@ -1,4 +1,4 @@
 # Change Log
 
-## 1.1.5 (2015/11/39)
-- Output log to screen also
+## 1.1.6 (2015/12/1)
+- Non local String Distance Feature is added
