@@ -715,24 +715,28 @@ class NonlocalFeatures:
         return {name: penalty}
   
     def ff_nonlocal_stringDistance(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
-        name = self.ff_nonlocal_stringDistance.func_name + '_nb'
-        dist = 0.0
+        dist = defaultdict(float)
 
         linkedToWords_copy = dict(linkedToWords)
         if tgtSpan is None:
-            return {name: 0.}
+            return {}
         tgtSpanDist = tgtSpan[1] - tgtSpan[0]
         if tgtSpanDist == 0:
-            return {name: 0.}
+            return {}
 
         normalizer = 0.0  
         for fIndex in linkedToWords_copy:
             if len(linkedToWords_copy[fIndex]) < 2:
                 continue
-            else:   # fIndex is aligned to at least two different eIndices
-                  # compute distance in pairs: if list = [1,2,3], compute dist(1,2), dist(2,3)
-                  # if list has length n, we will have n-1 distance computations
-  
+            else:   
+                # fIndex is aligned to at least two different eIndices
+                # compute distance in pairs: if list = [1,2,3], compute dist(1,2), dist(2,3)
+                # if list has length n, we will have n-1 distance computations
+                nodes =  info['ftree'].getNodesByIndex(fIndex)
+                pos_count = defaultdict(float)
+                for node in nodes:
+                    pos_count[node.getPOS()] += 1.0/len(nodes)
+
                 linkedToWords_copy[fIndex].sort()
                 listlength = len(linkedToWords_copy[fIndex])
                 normalizer += listlength - 1
@@ -741,12 +745,17 @@ class NonlocalFeatures:
                     eIndex1, _ = linkedToWords_copy[fIndex][0]
                     eIndex2, _ = linkedToWords_copy[fIndex][1]
                     linkedToWords_copy[fIndex] = linkedToWords_copy[fIndex][1:]
-                    dist += eIndex2 - eIndex1
-        try:
-            dist /= normalizer
-        except:
-            dist = 0.0
-        return {name: dist}
+                    assert eIndex2 > eIndex1
+                    for pos, count in pos_count.iteritems():
+                        dist[pos] += (eIndex2 - eIndex1)*count
+        features = {}
+        for pos in dist:
+            try:
+                dist[pos] /= normalizer
+            except:
+                dist[pos] = 0.0
+            features[self.ff_nonlocal_stringDistance.func_name+'___'+pos+'_nb'] = dist[pos]
+        return features
 
     def ff_nonlocal_treeDistance(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
         """
