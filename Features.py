@@ -724,7 +724,7 @@ class NonlocalFeatures:
         if tgtSpanDist == 0:
             return {}
 
-        normalizer = 0.0  
+        # normalizer = 0.0  
         for fIndex in linkedToWords_copy:
             if len(linkedToWords_copy[fIndex]) < 2:
                 continue
@@ -739,7 +739,7 @@ class NonlocalFeatures:
 
                 linkedToWords_copy[fIndex].sort()
                 listlength = len(linkedToWords_copy[fIndex])
-                normalizer += listlength - 1
+                # normalizer += listlength - 1
                 for i in xrange(listlength-1):
                     # eIndex1 and eIndex2 will always be the smallest, and second-smallest indices, respectively.
                     eIndex1, _ = linkedToWords_copy[fIndex][0]
@@ -747,11 +747,11 @@ class NonlocalFeatures:
                     linkedToWords_copy[fIndex] = linkedToWords_copy[fIndex][1:]
                     assert eIndex2 > eIndex1
                     for pos, count in pos_count.iteritems():
-                        dist[pos] += (eIndex2 - eIndex1)*count
+                        dist[pos] += (eIndex2 - eIndex1 - 1)*count
         features = {}
         for pos in dist:
             try:
-                dist[pos] /= normalizer
+                dist[pos] /= tgtSpanDist
             except:
                 dist[pos] = 0.0
             features[self.ff_nonlocal_stringDistance.func_name+'___'+pos+'_nb'] = dist[pos]
