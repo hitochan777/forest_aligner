@@ -31,6 +31,7 @@ nice -19 mpiexec -n $NUMCPUS $PYTHON ./aligner.py \
   --weights $WEIGHTS \
   --partial $PARTIAL \
   --nto1 $LINK \
+  --binarize=False \
   --decoding_path_out path_out_test  \
   --out $NAME \
   --k $K
