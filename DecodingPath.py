@@ -1,18 +1,24 @@
 import sys
 
-class DecodingPath:
+import depLM
+
+class DependencyTreeNode(depLM.DependencyTreeNode):
     def __init__(self):
         self.children = []
-        self.node = None
+        self.data = None
+        self.parent = None
         self.isDummy = False
     
     def addChild(self, child):
+        """
+        child: instance of DecodingPath
+        """
         self.children.append(child)
 
     def getDecodingPath(self, depth=0):
         path = ""
         if not self.isDummy:
-            path = "%s%s(%d:%s)" % (" "*2*depth, self.node.data['surface'], self.node.data['id'], self.node.data['pos'])
+            path = "%s%s(%d:%s)" % (" "*2*depth, self.data['surface'], self.data['id'], self.data['pos'])
         for child in self.children:
             if len(path)==0:
                 path = child.getDecodingPath(depth+(not self.isDummy))

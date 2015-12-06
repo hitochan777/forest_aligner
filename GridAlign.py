@@ -343,7 +343,7 @@ class Model(object):
     def createDummyEdge(self, childEdges, currentNode, dummyCurrentNode, span, hyperEdge, isLastMerge = True):
 
       newEdge = PartialGridAlignment()
-      newEdge.decodingPath.node = dummyCurrentNode
+      newEdge.decodingPath.data = dummyCurrentNode.data
       newEdge.decodingPath.isDummy = not isLastMerge
       newEdge.scoreVector_local = svector.Vector()
       newEdge.scoreVector = svector.Vector()
@@ -357,8 +357,10 @@ class Model(object):
 
           newEdge.scoreVector_local += e.scoreVector_local
           # TOP node does not have local hypothesis so there is only one childedge
-          if currentNode.data["surface"] != e.decodingPath.node.data["surface"]:
+          if currentNode.data["surface"] != e.decodingPath.data["surface"]:
               newEdge.decodingPath.addChild(e.decodingPath)
+              e.decodingPath.parent = newEdge.decodingPath
+
           newEdge.scoreVector += e.scoreVector
   
           if e.boundingBox is None:
@@ -376,7 +378,7 @@ class Model(object):
       In addition, set the score of the new edge.
       """
       newEdge = PartialGridAlignment()
-      newEdge.decodingPath.node = currentNode
+      newEdge.decodingPath = currentNode.data
       newEdge.decodingPath.isDummy = False
       newEdge.scoreVector_local = svector.Vector()
       newEdge.scoreVector = svector.Vector()
@@ -386,8 +388,10 @@ class Model(object):
           newEdge.links += e.getDepthAddedLink()
           newEdge.scoreVector_local += e.scoreVector_local
           # TOP node does not have local hypothesis so there is only one childedge
-          if currentNode.data["surface"] != e.decodingPath.node.data["surface"]:
+          if currentNode.data["surface"] != e.decodingPath.data["surface"]:
               newEdge.decodingPath.addChild(e.decodingPath)
+              e.decodingPath.parent = newEdge.decodingPath
+
           newEdge.scoreVector += e.scoreVector
   
           if e.boundingBox is None:
@@ -512,7 +516,7 @@ class Model(object):
                     scoreVector[name] += value
   
         nullPartialAlignment = PartialGridAlignment()
-        nullPartialAlignment.decodingPath.node = currentNode
+        nullPartialAlignment.decodingPath.data = currentNode.data
         nullPartialAlignment.score = score = scoreVector.dot(self.weights)
         nullPartialAlignment.scoreVector = scoreVector
         nullPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
@@ -548,7 +552,7 @@ class Model(object):
           singleBestAlignment.append((score, [tgtIndex]))
   
           singleLinkPartialAlignment = PartialGridAlignment()
-          singleLinkPartialAlignment.decodingPath.node = currentNode
+          singleLinkPartialAlignment.decodingPath.data = currentNode.data
           singleLinkPartialAlignment.score = score
           singleLinkPartialAlignment.scoreVector = scoreVector
           singleLinkPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
@@ -611,7 +615,7 @@ class Model(object):
                     newAlignmentList.append((score, na+sa))
   
                     NLinkPartialAlignment = PartialGridAlignment()
-                    NLinkPartialAlignment.decodingPath.node = currentNode
+                    NLinkPartialAlignment.decodingPath.data = currentNode.data
                     NLinkPartialAlignment.score = score
                     NLinkPartialAlignment.scoreVector = scoreVector
                     NLinkPartialAlignment.scoreVector_local = svector.Vector(scoreVector)

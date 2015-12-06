@@ -805,3 +805,10 @@ class NonlocalFeatures:
         """
         name = self.ff_nonlocal_hyperEdgeScore.func_name
         return {name: edge.hyperEdgeScore}
+
+    def ff_nonlocal_dependencyTreeLM(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
+        """
+        Return dependency tree language model score for a partial alignment
+        """
+        name = self.ff_nonlocal_dependencyTreeLM.func_name
+        return {name: edge.hyperEdgeScore}

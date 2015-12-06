@@ -39,6 +39,7 @@ import mpi
 import svector
 from pyglog import *
 from DependencyForestHelper import *
+import depLM_pb2
 
 FLAGS = flags.FLAGS
 
@@ -693,6 +694,7 @@ if __name__ == "__main__":
     flags.DEFINE_boolean('binarize', True, "True: binarize dependency tree while decoding, False: do not binarize; default: True")
     flags.DEFINE_string('decoding_path_out', None, "Output filename for docoding path of of the best hypothesis; Default: None")
     flags.DEFINE_boolean('inverse', False, "If set to True, input data for source and target language are exchanged")
+    flags.DEFINE_string('lm', None , "Path to dependency tree language model(LM); If not set, LM is not used.; default: None")
     argv = FLAGS(sys.argv)
 
     if FLAGS.inverse:
