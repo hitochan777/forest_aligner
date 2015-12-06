@@ -770,7 +770,7 @@ class NonlocalFeatures:
         if tgtSpanDist == 0:
             return {name: 0.}
 
-        # normalizer = 0.0  
+        normalizer = 0.0  
         for fIndex in linkedToWords_copy:
             if len(linkedToWords_copy[fIndex]) < 2:
                 continue
@@ -780,7 +780,7 @@ class NonlocalFeatures:
   
                 linkedToWords_copy[fIndex].sort()
                 listlength = len(linkedToWords_copy[fIndex])
-                # normalizer += listlength - 1
+                normalizer += listlength - 1
                 for i in xrange(listlength-1):
                     # eIndex1 and eIndex2 will always be the smallest, and second-smallest indices, respectively.
                     eIndex1, depth1 = linkedToWords_copy[fIndex][0]
@@ -788,7 +788,8 @@ class NonlocalFeatures:
                     linkedToWords_copy[fIndex] = linkedToWords_copy[fIndex][1:]
                     dist += depth1 + depth2
         try:
-            dist /= tgtSpanDist 
+            # dist /= tgtSpanDist 
+            dist /= normalizer
         except:
             dist = 0.0
         return {name: dist}
