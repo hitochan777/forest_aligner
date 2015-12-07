@@ -8,9 +8,9 @@ pexpect==4.0.1
 pickleshare==0.5
 protobuf==3.0.0a3
 ptyprocess==0.5
--e git+https://github.com/hitochan777/pyglog@72f25910c076c050b3a520884dc02feb793c10a3#egg=pyglog-master
--e git+https://github.com/hitochan777/python-gflags@39b08ee7312754fa44e457033fbbe4530b6dcb5b#egg=python_gflags-master
+git+https://github.com/hitochan777/pyglog
+git+https://github.com/hitochan777/python-gflags
 simplegeneric==0.8.1
--e git+https://github.com/hitochan777/svector@e719b1538cdf223fa853c9786ab6f7eb043b0cf7#egg=svector-master
+git+https://github.com/hitochan777/svector
 traitlets==4.0.0
 wheel==0.24.0
