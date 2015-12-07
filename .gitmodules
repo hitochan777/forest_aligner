@@ -1,12 +1,3 @@
-[submodule "svector"]
-	path = svector
-	url = https://github.com/hitochan777/svector
-[submodule "pyglog"]
-	path = pyglog
-	url = https://github.com/hitochan777/pyglog
-[submodule "python-gflags"]
-	path = python-gflags
-	url = https://github.com/hitochan777/python-gflags
 [submodule "depLM"]
 	path = depLM
 	url = git@github.com:hitochan777/depLM.git
