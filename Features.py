@@ -487,10 +487,11 @@ class LocalFeatures:
     return self.punc.has_key(string)
 
 class NonlocalFeatures:
-    def __init__(self, pef, pfe):
+    def __init__(self, pef, pfe, lm = None):
         self.null_token = "*NULL*"
         self.pef = pef
         self.pfe = pfe
+        self.lm = lm
         self.punc = {',':True,'.':True,'!':True,'?':True,"'":True,'"':True,
                      ')':True,'(':True,':':True,';':True,'-':True,'@':True}
         # Chinese punctuation
@@ -811,4 +812,8 @@ class NonlocalFeatures:
         Return dependency tree language model score for a partial alignment
         """
         name = self.ff_nonlocal_dependencyTreeLM.func_name
-        return {name: edge.hyperEdgeScore}
+
+        if self.lm is None:
+            return {}
+        edge.decodingPath.calcScore(self.lm)
+        return {name: edge.decodingPath.lmScore}

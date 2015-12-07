@@ -127,6 +127,7 @@ class Model(object):
       self.id = id
       self.pef = { }
       self.pfe = { }
+      self.lm = None
   
       self.etree = parser(etree) 
       # self.etree.terminals = self.etree.setTerminals()
@@ -207,6 +208,7 @@ class Model(object):
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_stringDistance)
       self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
+      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_dependencyTreeLM)
       # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_crossb)
   
     def align(self):
@@ -378,7 +380,7 @@ class Model(object):
       In addition, set the score of the new edge.
       """
       newEdge = PartialGridAlignment()
-      newEdge.decodingPath = currentNode.data
+      newEdge.decodingPath.data = currentNode.data
       newEdge.decodingPath.isDummy = False
       newEdge.scoreVector_local = svector.Vector()
       newEdge.scoreVector = svector.Vector()

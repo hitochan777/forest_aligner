@@ -39,7 +39,8 @@ import mpi
 import svector
 from pyglog import *
 from DependencyForestHelper import *
-import depLM_pb2
+import depLM.depLM_pb2
+import depLM.DependencyLM
 
 FLAGS = flags.FLAGS
 
@@ -106,6 +107,16 @@ def readVocab(infile):
             continue
     infile.close()
     return vcb
+
+def readLM(file):
+    """
+    Read language model
+    """
+    if file is None:
+        return None
+    dlm = depLM.DependencyLM.DependencyLM(lambda node: node.data["pos"], "ml")
+    dlm.readModelFromProtocolBuffer(file)
+    return dlm
 
 def readPef(file, e_vcb, f_vcb):
     """
@@ -201,6 +212,10 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
         # Initialize model with data tables
         model.pef = blob['pef']
         model.pfe = blob['pfe']
+
+        # Load language model
+        model.lm = blob['lm']
+
         # Align the current training instance
         # FOR PROFILING: cProfile.run('model.align(1)','profile.out')
         model.align()
@@ -383,6 +398,10 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
       # Initialize model with data tables
       model.pef = blob['pef']
       model.pfe = blob['pfe']
+
+      # Load language model
+      model.lm = blob['lm']
+
       # Align the current training instance
       model.align()
 
@@ -694,7 +713,7 @@ if __name__ == "__main__":
     flags.DEFINE_boolean('binarize', True, "True: binarize dependency tree while decoding, False: do not binarize; default: True")
     flags.DEFINE_string('decoding_path_out', None, "Output filename for docoding path of of the best hypothesis; Default: None")
     flags.DEFINE_boolean('inverse', False, "If set to True, input data for source and target language are exchanged")
-    flags.DEFINE_string('lm', None , "Path to dependency tree language model(LM); If not set, LM is not used.; default: None")
+    flags.DEFINE_string('lm', None , "Path to dependency tree language model(LM) of target language; If not set, LM is not used.; default: None")
     argv = FLAGS(sys.argv)
 
     if FLAGS.inverse:
@@ -761,11 +780,21 @@ if __name__ == "__main__":
     pfe = readPfe(file_handles['pfe'], e_vcb, f_vcb)
     file_handles['pfe'].close()
 
+
+    #######################################################
+    # Load language model
+    #######################################################
+    try:
+        lm = readLM(file_handles['lm'])
+        file_handles['lm'].close()
+    except:
+        lm = None
+   
     ########################################################
     # Initialize Featureset
     ########################################################
     localFeatures = Features.LocalFeatures(pef, pfe)
-    nonlocalFeatures = Features.NonlocalFeatures(pef, pfe)
+    nonlocalFeatures = Features.NonlocalFeatures(pef, pfe, lm)
 
     e_instances = []
     f_instances = []
@@ -895,7 +924,8 @@ if __name__ == "__main__":
         'pfe': pfe,
         'localFeatures': localFeatures,
         'nonlocalFeatures': nonlocalFeatures,
-        'tmpdir': tmpdir
+        'tmpdir': tmpdir,
+        'lm': lm
     }
     training_blob = {
         'f_instances': f_instances,
