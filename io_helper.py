@@ -172,7 +172,7 @@ def open_files(FLAGS):
 
     if FLAGS.lm is not None:
         try:
-            file_handles['lm'] = open(FLAGS.lm , 'rb')
+            file_handles['lm'] = open(FLAGS.lm , 'r')
         except:
             sys.stderr.write("Could not open dependency tree language model file %s for reading\n" % FLAGS.lm)
             sys.exit(3)

@@ -39,7 +39,7 @@ import mpi
 import svector
 from pyglog import *
 from DependencyForestHelper import *
-import depLM.depLM_pb2
+# import depLM.depLM_pb2
 import depLM.DependencyLM
 
 FLAGS = flags.FLAGS
@@ -115,7 +115,7 @@ def readLM(file):
     if file is None:
         return None
     dlm = depLM.DependencyLM.DependencyLM(lambda node: node.data["pos"], "ml")
-    dlm.readModelFromProtocolBuffer(file)
+    dlm.readModelFromPlainText(file)
     return dlm
 
 def readPef(file, e_vcb, f_vcb):
