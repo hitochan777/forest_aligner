@@ -716,6 +716,9 @@ if __name__ == "__main__":
     flags.DEFINE_string('lm', None , "Path to dependency tree language model(LM) of target language; If not set, LM is not used.; default: None")
     argv = FLAGS(sys.argv)
 
+    if FLAGS.lm is not None and FLAGS.binarize:
+        raise ValueError("Currently you cannot use both binarze and lm at the same time...")
+
     if FLAGS.inverse:
         FLAGS.f, FLAGS.e = FLAGS.e, FLAGS.f 
         FLAGS.ftrees, FLAGS.etrees = FLAGS.etrees, FLAGS.ftrees 
