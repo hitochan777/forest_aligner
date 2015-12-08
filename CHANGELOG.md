@@ -1,4 +1,6 @@
 # Change Log
 
-## 1.1.9 (2015/12/6)
-- Change normalizer of tree distance feature to number of links
+## 1.1.10 (2015/12/8)
+- Impletemt Dependency Tree Language Model
+- Implement visualization of tree 
+- Fixed bug in adding children to decodingPath
