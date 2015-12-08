@@ -29,6 +29,7 @@ import sys
 import random
 import tempfile
 import time
+import codecs
 
 import Alignment
 import Fmeasure
@@ -69,7 +70,7 @@ def robustRead(filename):
         LOG(FATAL, "Could not open file %s for reading. Attempted 10 times." % (filename))
     return filehandle
 
-def robustWrite(filename, append=False):
+def robustWrite(filename, append=False, encoding = None):
     """
     A wrapper for more robust opening of files for writing.
     """
@@ -82,7 +83,11 @@ def robustWrite(filename, append=False):
     while (not success) and (attempt_count < 10):
         try:
             attempt_count += 1
-            filehandle = open(filename, mode)
+            if encoding is not None:
+                filehandle = codecs.open(filename, mode, encoding)
+            else:
+                filehandle = open(filename, mode)
+
             success = True
         except:
             time.sleep(10)
@@ -299,7 +304,7 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
 
       # Write decoding path
       if FLAGS.decoding_path_out is not None:
-          path_out = robustWrite(FLAGS.decoding_path_out, True)
+          path_out = robustWrite(FLAGS.decoding_path_out, True, encoding="utf-8")
           for i, instanceID in enumerate(indices):
               node = i % nProcs
               result = cPickle.load(decodePathFiles[node])
@@ -515,7 +520,7 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
 
     # Write decoding path
     if FLAGS.decoding_path_out is not None:
-        path_out = robustWrite(FLAGS.decoding_path_out)
+        path_out = robustWrite(FLAGS.decoding_path_out, encoding="utf-8")
         for i, instanceID in enumerate(indices[:FLAGS.subset]):
             node = i % nProcs
             result = cPickle.load(decodePathFiles[node])

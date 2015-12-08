@@ -228,10 +228,10 @@ class Model(object):
             self.oracle = self.etree.partialAlignments["oracle"]
         if self.SHOW_DECODING_PATH is not None:
             self.decodingPath += "=================Model Decoding Path===================\n"
-            self.decodingPath += self.hyp.decodingPath.getDecodingPath()+"\n"
+            self.decodingPath += self.hyp.decodingPath.children[0].getStringifiedTree()+"\n"
             if self.COMPUTE_HOPE or self.COMPUTE_ORACLE:
                 self.decodingPath += "================Oracle Decoding Path===================\n"
-                self.decodingPath += self.oracle.decodingPath.getDecodingPath()+"\n"
+                self.decodingPath += self.oracle.decodingPath.children[0].getStringifiedTree()+"\n"
 
     def bottom_up_visit(self):
         """
@@ -359,7 +359,7 @@ class Model(object):
 
           newEdge.scoreVector_local += e.scoreVector_local
           # TOP node does not have local hypothesis so there is only one childedge
-          if currentNode.data["surface"] != e.decodingPath.data["surface"]:
+          if currentNode.data["word_id"] != e.decodingPath.data["word_id"]:
               newEdge.decodingPath.addChild(e.decodingPath)
               e.decodingPath.parent = newEdge.decodingPath
 
@@ -390,7 +390,7 @@ class Model(object):
           newEdge.links += e.getDepthAddedLink()
           newEdge.scoreVector_local += e.scoreVector_local
           # TOP node does not have local hypothesis so there is only one childedge
-          if currentNode.data["surface"] != e.decodingPath.data["surface"]:
+          if currentNode.data["word_id"] != e.decodingPath.data["word_id"]:
               newEdge.decodingPath.addChild(e.decodingPath)
               e.decodingPath.parent = newEdge.decodingPath
 
@@ -900,7 +900,7 @@ class Model(object):
                 # Compute neighbor position
                 neighborPosition = list(currentBestCombinedEdge.position)
                 neighborPosition[componentNumber] += 1
-                # Is this neighbor out of range?
+                # Is this neighbor out of range
                 if neighborPosition[componentNumber] >= len(hyperEdge.tail[componentNumber].partialAlignments[type]):
                     continue
                 # Has this neighbor already been visited?
