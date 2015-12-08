@@ -1,6 +1,6 @@
 from collections import defaultdict
 from AlignmentLink import AlignmentLink
-from DecodingPath import DecodingPath
+from DependencyTreeNode import DependencyTreeNode
 import svector
 import sys
 
@@ -35,7 +35,7 @@ class PartialGridAlignment(object):
       self.position = None
       self.boundingBox = None
       self.boundingBoxOrigins = None
-      self.decodingPath = DecodingPath()
+      self.decodingPath = DependencyTreeNode()
   
     def clear(self):
       self.links = []
