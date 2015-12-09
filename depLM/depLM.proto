@@ -1,0 +1,18 @@
+syntax = "proto3";
+package depLM;
+message NgramDistribution {
+
+    message NgramEntry {
+        repeated string ngram = 1;
+        double count = 2;
+        double prob = 3;
+    }
+
+    repeated NgramEntry ngramEntries = 4;
+}
+
+message depLM {
+    NgramDistribution probHead = 1;
+    NgramDistribution probLeft = 2;
+    NgramDistribution probRight = 3;
+}
