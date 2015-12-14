@@ -14,10 +14,10 @@ class DependencyLM(object):
         self.countkey = countkey
         self.smoothing = smoothing
 
-    def train(self, filename, modelFile, progress=100):
+    def train(self, filename, modelFile, progress=10000):
         """
         filename: Filename of CONLL format
-        progress: print dot(.) every #progress trees; default: 100
+        progress: print dot(.) every #progress trees; default: 10000
         """
         cnt = 0
         print "Model training started"
@@ -68,21 +68,27 @@ class DependencyLM(object):
             if line == "":
                 continue
 
-            ngram, count, prob = line.split("\t")
+            ngram, count, logProb = line.split("\t")
             ngram = ngram.split(" ")
             count = int(count)
-            prob = float(prob)
             if state == "[probHead]":
-                self.probHead.addNgramProb(ngram, prob)
                 self.probHead.addNgramCount(ngram, count)
 
             elif state == "[probLeft]":
-                self.probLeft.addNgramProb(ngram, prob)
                 self.probLeft.addNgramCount(ngram, count)
             
-            elif line == "probRight":
-                self.probRight.addNgramProb(ngram, prob)
+            elif state == "[probRight]":
                 self.probRight.addNgramCount(ngram, count)
+
+        if self.smoothing == "ml":
+            # Apppy maximum likelihood estimation to get probability from counts
+            self.probHead.mlEstimate()
+            self.probLeft.mlEstimate()
+            self.probRight.mlEstimate()
+
+        else:
+            raise NotImplemented("Currently only maximum likelihood is supported as a smoothing method (though ML is not smoothing technique)")
+
 
         if isString: # If filestream is opened in this function, close fstream
             model.close()
@@ -130,7 +136,9 @@ class DependencyLM(object):
 
         if len(right) > 0:
             self.probRight.addNgramCount(["___none", self.countkey(right[0].parent)+"___head", self.countkey(right[0])])
+
         for index in xrange(1, len(right)):
             self.probRight.addNgramCount([self.countkey(right[index-1]), self.countkey(right[index].parent)+"___head", self.countkey(right[index])])
+
         for child in node.children:
             self.countFreq(child)
