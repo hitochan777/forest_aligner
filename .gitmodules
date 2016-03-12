@@ -1,0 +1,3 @@
+[submodule "depLM"]
+	path = depLM
+	url = https://github.com/hitochan777/depLM
