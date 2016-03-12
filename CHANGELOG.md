@@ -1,4 +1,4 @@
 # Change Log
 
-## 1.1.12 (2015/12/14)
-- Fixed bug in dependency tree LM
+## 1.1.13 (2015/3/12)
+- Remove depLM from the repo and add it as submodule
