@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # riesa@isi.edu (Jason Riesa)
 # Training and Alignment
 ###############################################
@@ -313,7 +314,9 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
               heappush(decodingPathList, (instanceID, chosenTree))
 
           orderedList = [heappop(decodingPathList)[1] for _ in xrange(len(decodingPathList))] 
-          path_out.write("\n".join(orderedList))
+          path_out.write(u"\n".join(orderedList))
+          # for o in orderedList:
+              # print o.encode('utf-8')
           path_out.close()
           # CLEAN UP
           for i in range(nProcs):
@@ -533,7 +536,7 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
             heappush(decodingPathList, (instanceID, chosenTree))
             
         orderedList = [heappop(decodingPathList)[1] for _ in xrange(len(decodingPathList))]
-        path_out.write("\n".join(orderedList))
+        path_out.write(u"\n".join(orderedList))
         path_out.close()
         # CLEAN UP
         for i in range(nProcs):
