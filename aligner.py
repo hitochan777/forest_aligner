@@ -312,7 +312,8 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
               chosenTree = cPickle.load(decodePathFiles[node])
               heappush(decodingPathList, (instanceID, chosenTree))
 
-          path_out.write("\n".join([heappop(decodingPathList)[1] for _ in xrange(len(decodingPathList))]))
+          orderedList = [heappop(decodingPathList)[1] for _ in xrange(len(decodingPathList))] 
+          path_out.write("\n".join(orderedList))
           path_out.close()
           # CLEAN UP
           for i in range(nProcs):
@@ -531,7 +532,8 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
             chosenTree = cPickle.load(decodePathFiles[node])
             heappush(decodingPathList, (instanceID, chosenTree))
             
-        path_out.write("\n".join([heappop(decodingPathList)[1] for _ in xrange(len(decodingPathList))]))
+        orderedList = [heappop(decodingPathList)[1] for _ in xrange(len(decodingPathList))]
+        path_out.write("\n".join(orderedList))
         path_out.close()
         # CLEAN UP
         for i in range(nProcs):
