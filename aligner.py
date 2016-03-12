@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # riesa@isi.edu (Jason Riesa)
 # Training and Alignment
 ###############################################
@@ -30,6 +31,7 @@ import random
 import tempfile
 import time
 import codecs
+from heapq import heappush, heapify, heappop, heappushpop
 
 import Alignment
 import Fmeasure
@@ -303,12 +305,18 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
               sout.write("%s\n" % (score))
 
       # Write decoding path
+      decodingPathList = []
       if FLAGS.decoding_path_out is not None:
           path_out = robustWrite(FLAGS.decoding_path_out, True, encoding="utf-8")
           for i, instanceID in enumerate(indices):
               node = i % nProcs
-              result = cPickle.load(decodePathFiles[node])
-              path_out.write(result)
+              chosenTree = cPickle.load(decodePathFiles[node])
+              heappush(decodingPathList, (instanceID, chosenTree))
+
+          orderedList = [heappop(decodingPathList)[1] for _ in xrange(len(decodingPathList))] 
+          path_out.write(u"\n".join(orderedList))
+          # for o in orderedList:
+              # print o.encode('utf-8')
           path_out.close()
           # CLEAN UP
           for i in range(nProcs):
@@ -519,12 +527,16 @@ def perceptron_parallel(epoch, indices, blob, weights = None, valid_feature_name
     mw.close()
 
     # Write decoding path
+    decodingPathList = []
     if FLAGS.decoding_path_out is not None:
         path_out = robustWrite(FLAGS.decoding_path_out, encoding="utf-8")
         for i, instanceID in enumerate(indices[:FLAGS.subset]):
             node = i % nProcs
-            result = cPickle.load(decodePathFiles[node])
-            path_out.write(result)
+            chosenTree = cPickle.load(decodePathFiles[node])
+            heappush(decodingPathList, (instanceID, chosenTree))
+            
+        orderedList = [heappop(decodingPathList)[1] for _ in xrange(len(decodingPathList))]
+        path_out.write(u"\n".join(orderedList))
         path_out.close()
         # CLEAN UP
         for i in range(nProcs):
