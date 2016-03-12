@@ -30,6 +30,7 @@ import random
 import tempfile
 import time
 import codecs
+from heapq import heappush, heapify, heappop, heappushpop
 
 import Alignment
 import Fmeasure
