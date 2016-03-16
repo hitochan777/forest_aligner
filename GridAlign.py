@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 #########################################################
 # GridAlign.py
@@ -229,6 +230,7 @@ class Model(object):
         if self.SHOW_DECODING_PATH is not None:
             self.decodingPath += "=================Model Decoding Path===================\n"
             self.decodingPath += self.hyp.decodingPath.children[0].getStringifiedTree()+"\n"
+
             if self.COMPUTE_HOPE or self.COMPUTE_ORACLE:
                 self.decodingPath += "================Oracle Decoding Path===================\n"
                 self.decodingPath += self.oracle.decodingPath.children[0].getStringifiedTree()+"\n"
@@ -392,12 +394,12 @@ class Model(object):
           # TOP node does not have local hypothesis so there is only one childedge
           if currentNode.data["word_id"] != e.decodingPath.data["word_id"]:
               newEdge.decodingPath.addChild(e.decodingPath)
-              e.decodingPath.parent = newEdge.decodingPath
 
           newEdge.scoreVector += e.scoreVector
   
           if e.boundingBox is None:
               e.boundingBox = self.boundingBox(e.links)
+
       score, boundingBox = self.scoreEdge(newEdge, currentNode, span, childEdges)
       return newEdge, boundingBox
   
