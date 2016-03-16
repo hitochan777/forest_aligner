@@ -22,6 +22,7 @@ class DependencyTreeNode:
         right = [] # items bigger than pivot
         pivot = self.data["word_id"]
         for child in self.children:
+            child.parent = self
             if child.data["word_id"] < pivot:
                 left.append(child)
             elif child.data["word_id"] > pivot:
@@ -76,19 +77,23 @@ class DependencyTreeNode:
             leftNodes += node._getOrderedNodeList()
         for node in right:
             rightNodes += node._getOrderedNodeList()
+
+        sortedList = leftNodes + [self] + rightNodes
+        assert all(sortedList[i].data["word_id"] < sortedList[i+1].data["word_id"] for i in xrange(len(sortedList)-1))
         return leftNodes + [self] + rightNodes
 
     def setNodeRef(self):
         nodes = self._getOrderedNodeList()
         for node in nodes:
             node.data.update({"pre_children_ref": [], "post_children_ref": []})
-
+        
         for node in nodes:
             id = node.data["word_id"]
-            if node.parent.data["word_id"] == -1: # if parent does not exist
+            if node.parent is None: # if parent does not exist
                 continue
 
             dependency_id = node.parent.data["word_id"]
+
             if id < dependency_id:
                 nodes[dependency_id].data["pre_children_ref"].append(nodes[id])
             else:
