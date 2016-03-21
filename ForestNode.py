@@ -26,7 +26,7 @@ class ForestNode:
         self.span = None
         self.root = None # pointer to root node
         # self.nodeList = None # list including weakref to each node; sorted by id
-  
+
     def setTerminals(self):
         visited = defaultdict(bool)
         if len(self.hyperEdges) > 0:
@@ -39,7 +39,7 @@ class ForestNode:
         else:
             self.terminals = set([weakref.ref(self)])
         return self.terminals
-  
+
     def getTerminals(self):
         """
         Iterator over terminals.
@@ -48,29 +48,29 @@ class ForestNode:
             self.setTerminals()
         for t in self.terminals:
             yield t()
-  
+
     def isTerminal(self):
         return len(self.hyperEdges) == 0
-  
+
     def span_start(self):
         return self.i
-  
+
     def span_end(self):
         return self.j - 1
-  
+
     def get_span(self):
         if self.span is None:
             start = self.span_start()
             end = self.span_end()
             self.span = (start,end)
         return self.span
-  
+
     def addParent(self, parent, score):
         self.parent.append({"parent": parent, "score": score})
-  
+
     def addHyperEdge(self, head, tail, score):
         self.hyperEdges.append(HyperEdge(head, tail,score))
-  
+
     def containsSpan(self, fspan):
         """
         Does span of node currentNode wholly contain span fspan?
@@ -88,15 +88,15 @@ class ForestNode:
             currentNode = queue.pop(0)
             span = currentNode.get_span()
             for edgeToParent in currentNode.parent:
-                queue.append(edgeToParent["parent"]) 
+                queue.append(edgeToParent["parent"])
             if span[1] - span[0] < minSpan[1] - minSpan[0] and currentNode.containsSpan(fspan):
                 minSpan = span
                 coveringNode = currentNode
         return coveringNode
-    
+
     def getNodesByIndex(self, index):
         assert self.data["pos"] == "TOP", "%s can only be used at root node. " % self.getNodesByIndex.func_name
-        return self.data["nodeTable"][index] 
+        return self.data["nodeTable"][index]
 
     def getParentNodes(self):
         return map(lambda d: d["parent"], self.parent)
@@ -106,7 +106,7 @@ class ForestNode:
         if self in node.getParentNodes() or node in self.getParentNodes():
             return 1
         return 0
-    
+
     def getPOS(self):
         return self.data["pos"]
 

@@ -30,7 +30,7 @@ def parser(string):
     sent_len = 0
     for line in buf:
         if line.startswith("#"):
-            p = re.compile('#\s*ID=(\d+)') 
+            p = re.compile('#\s*ID=(\d+)')
             sentence_ID= int(p.match(line).group(1))
             continue
         if not line.strip():
@@ -54,7 +54,7 @@ def parser(string):
             curWordId = word_id
         node.data = {
                 "id": int(word_infos[0]), # node ID which is unique
-                "word_id": word_id, 
+                "word_id": word_id,
                 "surface": word_infos[3],
                 "pronunciation": pronunciation,
                 "dict_form": dict_form,
@@ -111,7 +111,7 @@ def parser(string):
         node.root = root
         node.unprocessedChildNum = node.childnum = len(nodeChildrenSetList[node.data["id"]])
         if node.i == 0 and node.j == sent_len:
-            node.addParent(root, 0) 
+            node.addParent(root, 0)
             root.addHyperEdge(root,[node], 0.0) # Since root is dummy, it is natural to think scores of incoming hyperedge is zero
-    root.unprocessedChildNum = root.childnum = len(root.hyperEdges) # Since the arity of every incoming hyperedge to root is 0, the number of childrent is equal to the number of the hyperedges. 
+    root.unprocessedChildNum = root.childnum = len(root.hyperEdges) # Since the arity of every incoming hyperedge to root is 0, the number of childrent is equal to the number of the hyperedges.
     return root

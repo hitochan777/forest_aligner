@@ -48,170 +48,170 @@ class Model(object):
                  id = "no-id-given", weights = None, a1 = None, a2 = None,
                  inverse = None, DECODING=False,
                  LOCAL_FEATURES = None, NONLOCAL_FEATURES = None, FLAGS=None):
-  
-      ################################################
-      # Constants and Flags
-      ################################################
-      if FLAGS is None:
-        sys.stderr.write("Program flags not given to alignment model.\n")
-        sys.exit(1)
-  
-      self.FLAGS = FLAGS
-  
-      self.LOCAL_FEATURES = LOCAL_FEATURES
-      self.NONLOCAL_FEATURES = NONLOCAL_FEATURES
-      self.LANG = FLAGS.langpair
-      self.BINARIZE = FLAGS.binarize
-      self.SHOW_DECODING_PATH = FLAGS.decoding_path_out
-      if FLAGS.init_k is not None:
-        self.BEAM_SIZE = FLAGS.init_k
-      else:
-        self.BEAM_SIZE = FLAGS.k
-      self.NT_BEAM = FLAGS.k
-      self.COMPUTE_HOPE = False
-      self.COMPUTE_1BEST = False
-      self.COMPUTE_FEAR = False
-      self.COMPUTE_ORACLE = False
-      self.hypScoreFunc = ScoreFunctions.default
-      self.oracleScoreFunc = ScoreFunctions.default
-      self.DO_RESCORE = FLAGS.rescore
-      self.DECODING = False
-      if DECODING:
-        self.COMPUTE_1BEST = True
-        self.DECODING = True
-      else:
-        if FLAGS.oracle == "gold":
-          self.COMPUTE_ORACLE = True
-        elif FLAGS.oracle == "hope":
-          self.COMPUTE_HOPE = True
-          self.oracleScoreFunc = ScoreFunctions.hope 
-  
-        elif FLAGS.oracle is not None:
-          # During decoding we don't need to compute oracle
-          sys.stderr.write("Unknown value: oracle=%s\n" %(FLAGS.oracle))
-          sys.exit(1)
-  
-        if FLAGS.hyp == "1best":
-          self.COMPUTE_1BEST = True
-        elif FLAGS.hyp == "fear":
-          self.COMPUTE_FEAR = True
-          self.oracleScoreFunc = ScoreFunctions.fear
+
+        ################################################
+        # Constants and Flags
+        ################################################
+        if FLAGS is None:
+            sys.stderr.write("Program flags not given to alignment model.\n")
+            sys.exit(1)
+
+        self.FLAGS = FLAGS
+
+        self.LOCAL_FEATURES = LOCAL_FEATURES
+        self.NONLOCAL_FEATURES = NONLOCAL_FEATURES
+        self.LANG = FLAGS.langpair
+        self.BINARIZE = FLAGS.binarize
+        self.SHOW_DECODING_PATH = FLAGS.decoding_path_out
+        if FLAGS.init_k is not None:
+            self.BEAM_SIZE = FLAGS.init_k
         else:
-          sys.stderr.write("Unknown value: hyp=%s\n" %(FLAGS.hyp))
-          sys.exit(1)
-  
-      # Extra info to pass to feature functions
-      self.info = { }
-      self.decodingPath = "" 
-      self.f = f
-      self.fstring = " ".join(f)
-      self.e = e
-      self.lenE = len(e)
-      self.lenF = len(f)
-      self.nto1 = FLAGS.nto1
-  
-      # GIZA++ alignments
-      self.a1 = { }		# intersection
-      self.a2 = { }		# grow-diag-final
-      self.inverse = { }      # ivi-inverse
-      if FLAGS.inverse_a is not None:
-        self.inverse = readAlignmentString(inverse, FLAGS.inverse)
-      if FLAGS.a1 is not None:
-        self.a1 = readAlignmentString(a1, FLAGS.inverse)
-      if FLAGS.a2 is not None:
-        self.a2 = readAlignmentString(a2, FLAGS.inverse)
-  
-      self.hyp = None
-      self.oracle = None
-      self.gold = None
-  
-      self.id = id
-      self.pef = { }
-      self.pfe = { }
-      self.lm = None
-  
-      self.etree = parser(etree) 
-      # self.etree.terminals = self.etree.setTerminals()
-      if ftree is not None:
-          self.ftree = parser(ftree) 
-          self.ftree.terminals = self.ftree.setTerminals()
-      else:
-        self.ftree = None
-  
-      # Keep track of all of our feature templates
-      self.featureTemplates = [ ]
-      self.featureTemplates_nonlocal= [ ]
-  
-      ########################################
-      # Add weight vector to model
-      ########################################
-      # Initialize local weights
-      if weights is None or len(weights) == 0:
-        self.weights = svector.Vector()
-      else:
-        self.weights = weights
-  
-      ########################################
-      # Add Feature templates to model
-      ########################################
-      self.featureTemplateSetup_local(LOCAL_FEATURES)
-      self.featureTemplateSetup_nonlocal(NONLOCAL_FEATURES)
-  
-      # Data structures for feature function memoization
-      self.diagValues = { }
-      self.treeDistValues = { }
-  
-      # Populate info
-      self.info['a1'] = self.a1
-      self.info['a2'] = self.a2
-      self.info['inverse'] = self.inverse
-      self.info['f'] = self.f
-      self.info['e'] = self.e
-      self.info['etree'] = self.etree
-      self.info['ftree'] = self.ftree
-  
+            self.BEAM_SIZE = FLAGS.k
+        self.NT_BEAM = FLAGS.k
+        self.COMPUTE_HOPE = False
+        self.COMPUTE_1BEST = False
+        self.COMPUTE_FEAR = False
+        self.COMPUTE_ORACLE = False
+        self.hypScoreFunc = ScoreFunctions.default
+        self.oracleScoreFunc = ScoreFunctions.default
+        self.DO_RESCORE = FLAGS.rescore
+        self.DECODING = False
+        if DECODING:
+            self.COMPUTE_1BEST = True
+            self.DECODING = True
+        else:
+            if FLAGS.oracle == "gold":
+                self.COMPUTE_ORACLE = True
+            elif FLAGS.oracle == "hope":
+                self.COMPUTE_HOPE = True
+                self.oracleScoreFunc = ScoreFunctions.hope
+
+            elif FLAGS.oracle is not None:
+                # During decoding we don't need to compute oracle
+                sys.stderr.write("Unknown value: oracle=%s\n" %(FLAGS.oracle))
+                sys.exit(1)
+
+            if FLAGS.hyp == "1best":
+                self.COMPUTE_1BEST = True
+            elif FLAGS.hyp == "fear":
+                self.COMPUTE_FEAR = True
+                self.oracleScoreFunc = ScoreFunctions.fear
+            else:
+                sys.stderr.write("Unknown value: hyp=%s\n" %(FLAGS.hyp))
+                sys.exit(1)
+
+        # Extra info to pass to feature functions
+        self.info = { }
+        self.decodingPath = ""
+        self.f = f
+        self.fstring = " ".join(f)
+        self.e = e
+        self.lenE = len(e)
+        self.lenF = len(f)
+        self.nto1 = FLAGS.nto1
+
+        # GIZA++ alignments
+        self.a1 = { }             # intersection
+        self.a2 = { }             # grow-diag-final
+        self.inverse = { }      # ivi-inverse
+        if FLAGS.inverse_a is not None:
+            self.inverse = readAlignmentString(inverse, FLAGS.inverse)
+        if FLAGS.a1 is not None:
+            self.a1 = readAlignmentString(a1, FLAGS.inverse)
+        if FLAGS.a2 is not None:
+            self.a2 = readAlignmentString(a2, FLAGS.inverse)
+
+        self.hyp = None
+        self.oracle = None
+        self.gold = None
+
+        self.id = id
+        self.pef = { }
+        self.pfe = { }
+        self.lm = None
+
+        self.etree = parser(etree)
+        # self.etree.terminals = self.etree.setTerminals()
+        if ftree is not None:
+            self.ftree = parser(ftree)
+            self.ftree.terminals = self.ftree.setTerminals()
+        else:
+            self.ftree = None
+
+        # Keep track of all of our feature templates
+        self.featureTemplates = [ ]
+        self.featureTemplates_nonlocal= [ ]
+
+        ########################################
+        # Add weight vector to model
+        ########################################
+        # Initialize local weights
+        if weights is None or len(weights) == 0:
+            self.weights = svector.Vector()
+        else:
+            self.weights = weights
+
+        ########################################
+        # Add Feature templates to model
+        ########################################
+        self.featureTemplateSetup_local(LOCAL_FEATURES)
+        self.featureTemplateSetup_nonlocal(NONLOCAL_FEATURES)
+
+        # Data structures for feature function memoization
+        self.diagValues = { }
+        self.treeDistValues = { }
+
+        # Populate info
+        self.info['a1'] = self.a1
+        self.info['a2'] = self.a2
+        self.info['inverse'] = self.inverse
+        self.info['f'] = self.f
+        self.info['e'] = self.e
+        self.info['etree'] = self.etree
+        self.info['ftree'] = self.ftree
+
     ########################################
     # Initialize feature function list
     ########################################
     def featureTemplateSetup_local(self, localFeatures):
-      """
-      Incorporate the following "local" features into our model.
-      """
-      self.featureTemplates.append(localFeatures.ff_identity)
-      self.featureTemplates.append(localFeatures.ff_jumpDistance)
-      self.featureTemplates.append(localFeatures.ff_finalPeriodAlignedToNonPeriod)
-      self.featureTemplates.append(localFeatures.ff_lexprob_zero)
-      self.featureTemplates.append(localFeatures.ff_probEgivenF)
-      self.featureTemplates.append(localFeatures.ff_probFgivenE)
-      self.featureTemplates.append(localFeatures.ff_distToDiag)
-      self.featureTemplates.append(localFeatures.ff_isLinkedToNullWord)
-      self.featureTemplates.append(localFeatures.ff_isPuncAndHasMoreThanOneLink)
-      self.featureTemplates.append(localFeatures.ff_quote1to1)
-      self.featureTemplates.append(localFeatures.ff_unalignedNonfinalPeriod)
-      self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToComma)
-      self.featureTemplates.append(localFeatures.ff_nonPeriodLinkedToPeriod)
-      self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToFinalPeriod)
-      self.featureTemplates.append(localFeatures.ff_tgtTag_srcTag)
-      self.featureTemplates.append(localFeatures.ff_thirdParty)
-      self.featureTemplates.append(localFeatures.ff_continuousAlignment)
-  
+        """
+        Incorporate the following "local" features into our model.
+        """
+        self.featureTemplates.append(localFeatures.ff_identity)
+        self.featureTemplates.append(localFeatures.ff_jumpDistance)
+        self.featureTemplates.append(localFeatures.ff_finalPeriodAlignedToNonPeriod)
+        self.featureTemplates.append(localFeatures.ff_lexprob_zero)
+        self.featureTemplates.append(localFeatures.ff_probEgivenF)
+        self.featureTemplates.append(localFeatures.ff_probFgivenE)
+        self.featureTemplates.append(localFeatures.ff_distToDiag)
+        self.featureTemplates.append(localFeatures.ff_isLinkedToNullWord)
+        self.featureTemplates.append(localFeatures.ff_isPuncAndHasMoreThanOneLink)
+        self.featureTemplates.append(localFeatures.ff_quote1to1)
+        self.featureTemplates.append(localFeatures.ff_unalignedNonfinalPeriod)
+        self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToComma)
+        self.featureTemplates.append(localFeatures.ff_nonPeriodLinkedToPeriod)
+        self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToFinalPeriod)
+        self.featureTemplates.append(localFeatures.ff_tgtTag_srcTag)
+        self.featureTemplates.append(localFeatures.ff_thirdParty)
+        self.featureTemplates.append(localFeatures.ff_continuousAlignment)
+
     ##################################################
     # Inititalize feature function list
     ##################################################
     def featureTemplateSetup_nonlocal(self, nonlocalFeatures):
-      """
-      Incorporate the following combination-cost features into our model.
-      """
-      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_dummy)
-      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_isPuncAndHasMoreThanOneLink)
-      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
-      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_hyperEdgeScore)
-      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
-      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_stringDistance)
-      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
-      self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_dependencyTreeLM)
-      # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_crossb)
-  
+        """
+        Incorporate the following combination-cost features into our model.
+        """
+        # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_dummy)
+        self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_isPuncAndHasMoreThanOneLink)
+        self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
+        self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_hyperEdgeScore)
+        self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
+        # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_stringDistance)
+        self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
+        self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_dependencyTreeLM)
+        # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_crossb)
+
     def align(self):
         """
         Main wrapper for performing alignment.
@@ -221,7 +221,7 @@ class Model(object):
         ##############################################
         self.bottom_up_visit()
         # *DONE* Now finalize everything; final bookkeeping.
-  
+
         self.hyp = self.etree.partialAlignments["hyp"][0]
         if self.COMPUTE_HOPE:
             self.oracle = self.etree.partialAlignments["oracle"][0]
@@ -238,7 +238,7 @@ class Model(object):
     def bottom_up_visit(self):
         """
         Visit each node in the tree, bottom up, and in level-order.
-  
+
         ###########################################################
         # bottom_up_visit(self):
         # traverse etree bottom-up, in level order
@@ -266,14 +266,14 @@ class Model(object):
         # Parent is there already if it is the last one in the queue
         while len(queue) > 0:
             currentNode = queue.pop(0)
-          # Put parent in the queue if it is not there already
-          # We are guaranteed to have visited all of a node's children before we visit that node
+            # Put parent in the queue if it is not there already
+            # We are guaranteed to have visited all of a node's children before we visit that node
             for edgeToParent in currentNode.parent:
                 edgeToParent["parent"].unprocessedChildNum -= 1
                 if edgeToParent["parent"].unprocessedChildNum == 0:
                     queue.append(edgeToParent["parent"])
-      
-          # Visit node here.
+
+            # Visit node here.
             if currentNode.data["pos"] != "TOP":
                 self.terminal_operation(currentNode)
             if len(currentNode.hyperEdges) > 0:
@@ -283,175 +283,175 @@ class Model(object):
     # nonterminal_operation_cube(self, currentNode):
     # Perform alignment for visit of nonterminal currentNode
     ################################################################################
-    def nonterminal_operation_cube(self, currentNode): 
+    def nonterminal_operation_cube(self, currentNode):
         # To speed up each epoch of training (but not necessarily convergence),
         # generate a single forest with model score as thz objective
         # Search through that forest for the oracle hypotheses,
         # e.g. hope (or fear)
-  
+
         # Compute the span of currentNode
         # span is an ordered pair [i,j] where:
         # i = index of the first eword in span of currentNode
         # j = index of the  last eword in span of currentNode
         currentNode.span = (currentNode.span_start(), currentNode.span_end())
 
-    	############################# Start of hypothesis calculation ####################################
+        ############################# Start of hypothesis calculation ####################################
         if self.BINARIZE:
             self.binarizeKbest(currentNode, "hyp")
-        else: 
-            self.kbest(currentNode, "hyp")   
-    	############################# End of hypothesis calculation ####################################
-  
+        else:
+            self.kbest(currentNode, "hyp")
+        ############################# End of hypothesis calculation ####################################
+
         ############################# Start of oracle calculation("oracle" or "hope") ######################################
         if self.COMPUTE_ORACLE:
-          # Oracle BEFORE beam is applied.
-          # Should just copy oracle up from terminal nodes.
-          best = PartialGridAlignment()
-          best.fscore = -1.0 # Any negative value suffices
-          for hyperEdge in currentNode.hyperEdges:
-              if self.BINARIZE:
-                  queue = Queue.Queue()
-                  for child in hyperEdge.tail:
-                      queue.put(child.oracle)
-                  if currentNode.oracle: # TOP node does not have local oracle
-                      queue.put(currentNode.oracle)
-                  while queue.qsize() >= 2:
-                      first = queue.get()
-                      second = queue.get()
-                      dummy = ForestNode(copy.deepcopy(currentNode.data))
-                      if not queue.empty():
-                          dummy.data["surface"] = "__DUMMY__"
-                      dummy.addHyperEdge(dummy, [first, second], hyperEdge.score)
-                      oracleAlignment, boundingBox = self.createDummyEdge([first,second], currentNode, dummy,  currentNode.span, hyperEdge, queue.empty())
-                      queue.put(oracleAlignment)
-                  oracleAlignment = queue.get()
-              else:
-                  oracleChildEdges = [c.oracle for c in hyperEdge.tail]
-                  if currentNode.oracle:
-                      oracleChildEdges.append(currentNode.oracle)
-                  oracleAlignment, boundingBox = self.createEdge(oracleChildEdges, currentNode, currentNode.span, hyperEdge)
-              if oracleAlignment.fscore > best.fscore:
-                  best = oracleAlignment
-          currentNode.partialAlignments["oracle"] = currentNode.oracle = best
-          # Oracle AFTER beam is applied.
-          #oracleCandidates = list(currentNode.partialAlignments)
-          #oracleCandidates.sort(key=attrgetter('fscore'),reverse=True)
-          #oracleAlignment = oracleCandidates[0]
-          # currentNode.oracle = oracleAlignment
+            # Oracle BEFORE beam is applied.
+            # Should just copy oracle up from terminal nodes.
+            best = PartialGridAlignment()
+            best.fscore = -1.0 # Any negative value suffices
+            for hyperEdge in currentNode.hyperEdges:
+                if self.BINARIZE:
+                    queue = Queue.Queue()
+                    for child in hyperEdge.tail:
+                        queue.put(child.oracle)
+                    if currentNode.oracle: # TOP node does not have local oracle
+                        queue.put(currentNode.oracle)
+                    while queue.qsize() >= 2:
+                        first = queue.get()
+                        second = queue.get()
+                        dummy = ForestNode(copy.deepcopy(currentNode.data))
+                        if not queue.empty():
+                            dummy.data["surface"] = "__DUMMY__"
+                        dummy.addHyperEdge(dummy, [first, second], hyperEdge.score)
+                        oracleAlignment, boundingBox = self.createDummyEdge([first,second], currentNode, dummy,  currentNode.span, hyperEdge, queue.empty())
+                        queue.put(oracleAlignment)
+                    oracleAlignment = queue.get()
+                else:
+                    oracleChildEdges = [c.oracle for c in hyperEdge.tail]
+                    if currentNode.oracle:
+                        oracleChildEdges.append(currentNode.oracle)
+                    oracleAlignment, boundingBox = self.createEdge(oracleChildEdges, currentNode, currentNode.span, hyperEdge)
+                if oracleAlignment.fscore > best.fscore:
+                    best = oracleAlignment
+            currentNode.partialAlignments["oracle"] = currentNode.oracle = best
+            # Oracle AFTER beam is applied.
+            #oracleCandidates = list(currentNode.partialAlignments)
+            #oracleCandidates.sort(key=attrgetter('fscore'),reverse=True)
+            #oracleAlignment = oracleCandidates[0]
+            # currentNode.oracle = oracleAlignment
         elif self.COMPUTE_HOPE:
             if self.BINARIZE:
                 self.binarizeKbest(currentNode, "hyp")
             else:
                 self.kbest(currentNode, "oracle")
-             
+
     def createDummyEdge(self, childEdges, currentNode, dummyCurrentNode, span, hyperEdge, isLastMerge = True):
 
-      newEdge = PartialGridAlignment()
-      newEdge.decodingPath.data = dummyCurrentNode.data
-      newEdge.decodingPath.isDummy = not isLastMerge
-      newEdge.scoreVector_local = svector.Vector()
-      newEdge.scoreVector = svector.Vector()
-      newEdge.hyperEdgeScore = hyperEdge.score
-  
-      for index, e in enumerate(childEdges):
-          if isLastMerge:
-              newEdge.links += e.getDepthAddedLink()
-          else:
-              newEdge.links += e.links
+        newEdge = PartialGridAlignment()
+        newEdge.decodingPath.data = dummyCurrentNode.data
+        newEdge.decodingPath.isDummy = not isLastMerge
+        newEdge.scoreVector_local = svector.Vector()
+        newEdge.scoreVector = svector.Vector()
+        newEdge.hyperEdgeScore = hyperEdge.score
 
-          newEdge.scoreVector_local += e.scoreVector_local
-          # TOP node does not have local hypothesis so there is only one childedge
-          if currentNode.data["word_id"] != e.decodingPath.data["word_id"]:
-              newEdge.decodingPath.addChild(e.decodingPath)
-              e.decodingPath.parent = newEdge.decodingPath
+        for index, e in enumerate(childEdges):
+            if isLastMerge:
+                newEdge.links += e.getDepthAddedLink()
+            else:
+                newEdge.links += e.links
 
-          newEdge.scoreVector += e.scoreVector
-  
-          if e.boundingBox is None:
-              e.boundingBox = self.boundingBox(e.links)
-      score, boundingBox = self.scoreEdge(newEdge, currentNode, span, childEdges)
-      return newEdge, boundingBox
+            newEdge.scoreVector_local += e.scoreVector_local
+            # TOP node does not have local hypothesis so there is only one childedge
+            if currentNode.data["word_id"] != e.decodingPath.data["word_id"]:
+                newEdge.decodingPath.addChild(e.decodingPath)
+                e.decodingPath.parent = newEdge.decodingPath
+
+            newEdge.scoreVector += e.scoreVector
+
+            if e.boundingBox is None:
+                e.boundingBox = self.boundingBox(e.links)
+        score, boundingBox = self.scoreEdge(newEdge, currentNode, span, childEdges)
+        return newEdge, boundingBox
 
     def createEdge(self, childEdges, currentNode, span, hyperEdge):
-      """
-      Create a new edge from the list of edges 'edge'.
-      Creating an edge involves:
-      (1) Initializing the PartialGridAlignment data structure
-      (2) Adding links (f,e) to list newEdge.links
-      (3) setting the score of the edge with scoreEdge(newEdge, ...)
-      In addition, set the score of the new edge.
-      """
-      newEdge = PartialGridAlignment()
-      newEdge.decodingPath.data = currentNode.data
-      newEdge.decodingPath.isDummy = False
-      newEdge.scoreVector_local = svector.Vector()
-      newEdge.scoreVector = svector.Vector()
-      newEdge.hyperEdgeScore = hyperEdge.score
-  
-      for index, e in enumerate(childEdges):
-          newEdge.links += e.getDepthAddedLink()
-          newEdge.scoreVector_local += e.scoreVector_local
-          # TOP node does not have local hypothesis so there is only one childedge
-          if currentNode.data["word_id"] != e.decodingPath.data["word_id"]:
-              newEdge.decodingPath.addChild(e.decodingPath)
+        """
+        Create a new edge from the list of edges 'edge'.
+        Creating an edge involves:
+        (1) Initializing the PartialGridAlignment data structure
+        (2) Adding links (f,e) to list newEdge.links
+        (3) setting the score of the edge with scoreEdge(newEdge, ...)
+        In addition, set the score of the new edge.
+        """
+        newEdge = PartialGridAlignment()
+        newEdge.decodingPath.data = currentNode.data
+        newEdge.decodingPath.isDummy = False
+        newEdge.scoreVector_local = svector.Vector()
+        newEdge.scoreVector = svector.Vector()
+        newEdge.hyperEdgeScore = hyperEdge.score
 
-          newEdge.scoreVector += e.scoreVector
-  
-          if e.boundingBox is None:
-              e.boundingBox = self.boundingBox(e.links)
+        for index, e in enumerate(childEdges):
+            newEdge.links += e.getDepthAddedLink()
+            newEdge.scoreVector_local += e.scoreVector_local
+            # TOP node does not have local hypothesis so there is only one childedge
+            if currentNode.data["word_id"] != e.decodingPath.data["word_id"]:
+                newEdge.decodingPath.addChild(e.decodingPath)
 
-      score, boundingBox = self.scoreEdge(newEdge, currentNode, span, childEdges)
-      return newEdge, boundingBox
-  
+            newEdge.scoreVector += e.scoreVector
+
+            if e.boundingBox is None:
+                e.boundingBox = self.boundingBox(e.links)
+
+        score, boundingBox = self.scoreEdge(newEdge, currentNode, span, childEdges)
+        return newEdge, boundingBox
+
     ############################################################################
     # scoreEdge(self, edge, currentNode, srcSpan, childEdges):
     ############################################################################
     def scoreEdge(self, edge, currentNode, srcSpan, childEdges):
-      """
-      Score an edge.
-      (1) edge: new hyperedge in the alignment forest, tail of this hyperedge are the edges in childEdges
-      (2) currentNode: the currentNode in the tree
-      (3) srcSpan: span (i, j) of currentNode; i = index of first terminal node in span, j = index of last terminal node in span
-      (4) childEdges: the two (or more in case of general trees) nodes we are combining with a new hyperedge
-      """
+        """
+        Score an edge.
+        (1) edge: new hyperedge in the alignment forest, tail of this hyperedge are the edges in childEdges
+        (2) currentNode: the currentNode in the tree
+        (3) srcSpan: span (i, j) of currentNode; i = index of first terminal node in span, j = index of last terminal node in span
+        (4) childEdges: the two (or more in case of general trees) nodes we are combining with a new hyperedge
+        """
 
-      if self.COMPUTE_ORACLE:
-          edge.fscore = self.ff_fscore(edge, srcSpan)
-  
-      boundingBox = None
-      if self.DO_RESCORE:
-          ##################################################################
-          # Compute data needed for certain feature functions
-          ##################################################################
-          tgtSpan = None
-          if len(edge.links) > 0:
-              boundingBox = self.boundingBox(edge.links)
-              tgtSpan = (boundingBox[0][0], boundingBox[1][0])
-          edge.boundingBox = boundingBox
-  
-          # TODO: This is an awful O(l) patch of code
-          linkedIndices = defaultdict(list)
-          for link in edge.links:
-              fIndex = link[0]
-              eIndex = link[1]
-              linkedIndices[fIndex].append((eIndex,link.depth))
-  
-          scoreVector = svector.Vector(edge.scoreVector)
-  
-          if currentNode.data is not None and currentNode.data is not '_XXX_':
-              for _, func in enumerate(self.featureTemplates_nonlocal):
-                  value_dict = func(self.info, currentNode, edge, edge.links, srcSpan, tgtSpan, linkedIndices, childEdges, self.diagValues, self.treeDistValues)
-                  for name, value in value_dict.iteritems():
-                      if value != 0:
-                          scoreVector[name] = value
-          edge.scoreVector = scoreVector
-  
-          ##################################################
-          # Compute final score for this partial alignment
-          ##################################################
-          edge.score = edge.scoreVector.dot(self.weights)
-      return edge.score, boundingBox
-  
+        if self.COMPUTE_ORACLE:
+            edge.fscore = self.ff_fscore(edge, srcSpan)
+
+        boundingBox = None
+        if self.DO_RESCORE:
+            ##################################################################
+            # Compute data needed for certain feature functions
+            ##################################################################
+            tgtSpan = None
+            if len(edge.links) > 0:
+                boundingBox = self.boundingBox(edge.links)
+                tgtSpan = (boundingBox[0][0], boundingBox[1][0])
+            edge.boundingBox = boundingBox
+
+            # TODO: This is an awful O(l) patch of code
+            linkedIndices = defaultdict(list)
+            for link in edge.links:
+                fIndex = link[0]
+                eIndex = link[1]
+                linkedIndices[fIndex].append((eIndex,link.depth))
+
+            scoreVector = svector.Vector(edge.scoreVector)
+
+            if currentNode.data is not None and currentNode.data is not '_XXX_':
+                for _, func in enumerate(self.featureTemplates_nonlocal):
+                    value_dict = func(self.info, currentNode, edge, edge.links, srcSpan, tgtSpan, linkedIndices, childEdges, self.diagValues, self.treeDistValues)
+                    for name, value in value_dict.iteritems():
+                        if value != 0:
+                            scoreVector[name] = value
+            edge.scoreVector = scoreVector
+
+            ##################################################
+            # Compute final score for this partial alignment
+            ##################################################
+            edge.score = edge.scoreVector.dot(self.weights)
+        return edge.score, boundingBox
+
     def boundingBox(self, links):
         """
         Return a 2-tuple of ordered paris representing
@@ -460,12 +460,12 @@ class Model(object):
         """
         # upper left corner is (min(fIndices), min(eIndices))
         # lower right corner is (max(fIndices, max(eIndices))
-  
+
         minF = float('inf')
         maxF = float('-inf')
         minE = float('inf')
         maxE = float('-inf')
-  
+
         for link in links:
             fIndex = link[0]
             eIndex = link[1]
@@ -489,12 +489,12 @@ class Model(object):
         ##################################################
         # Setup
         ##################################################
-  
+
         partialAlignments = []
         oracleAlignment = []
-  
+
         heapify(partialAlignments)
-  
+
         tgtWordList = self.f
         srcWordList = self.e
         tgtWord = None
@@ -502,9 +502,9 @@ class Model(object):
         srcTag = currentNode.data["pos"]
         tgtIndex = None
         srcIndex = currentNode.data["word_id"]
-  
+
         span = (srcIndex, srcIndex)
-  
+
         ##################################################
         # null partial alignment ( assign no links )
         ##################################################
@@ -512,13 +512,13 @@ class Model(object):
         tgtWord = '*NULL*'
         scoreVector = svector.Vector()
         # Compute feature score
-  
+
         for k, func in enumerate(self.featureTemplates):
             value_dict = func(self.info, tgtWord, srcWord, tgtIndex, srcIndex, [], self.diagValues, currentNode)
             for name, value in value_dict.iteritems():
                 if value != 0:
                     scoreVector[name] += value
-  
+
         nullPartialAlignment = PartialGridAlignment()
         nullPartialAlignment.decodingPath.data = currentNode.data
         nullPartialAlignment.score = score = scoreVector.dot(self.weights)
@@ -535,48 +535,48 @@ class Model(object):
             oracleAlignment = nullPartialAlignment
         elif self.COMPUTE_HOPE:
             self.addPartialAlignment(oracleAlignments, nullPartialAlignment, self.BEAM_SIZE)
-  
+
         ##################################################
         # Single-link alignment
         ##################################################
         singleBestAlignment = []
         alignmentList = []
         for tgtIndex, tgtWord in enumerate(tgtWordList):
-          currentLinks = [AlignmentLink((tgtIndex, srcIndex))]
-          scoreVector = svector.Vector()
-  
-          for k, func in enumerate(self.featureTemplates):
-            value_dict = func(self.info, tgtWord, srcWord, tgtIndex, srcIndex, currentLinks, self.diagValues, currentNode)
-            for name, value in value_dict.iteritems():
-              if value != 0:
-                scoreVector[name] += value
-  
-          # Keep track of scores for all 1-link partial alignments
-          score = scoreVector.dot(self.weights)
-          singleBestAlignment.append((score, [tgtIndex]))
-  
-          singleLinkPartialAlignment = PartialGridAlignment()
-          singleLinkPartialAlignment.decodingPath.data = currentNode.data
-          singleLinkPartialAlignment.score = score
-          singleLinkPartialAlignment.scoreVector = scoreVector
-          singleLinkPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
-          singleLinkPartialAlignment.links = currentLinks
-  
-          self.addPartialAlignment(partialAlignments, singleLinkPartialAlignment, self.BEAM_SIZE)
-  
-          if not self.DECODING:
-              singleLinkPartialAlignment.fscore = self.ff_fscore(singleLinkPartialAlignment, span)
-  
-          if self.COMPUTE_ORACLE:
-            if singleLinkPartialAlignment.fscore > oracleAlignment.fscore:
-              oracleAlignment = singleLinkPartialAlignment
-          elif self.COMPUTE_HOPE:
-            singleLinkPartialAlignment.score = self.oracleScoreFunc(singleLinkPartialAlignment)
-            self.addPartialAlignment(oracleAlignment, singleLinkPartialAlignment, self.BEAM_SIZE)
-  
-          if self.COMPUTE_FEAR:
-            singleLinkPartialAlignment.score = self.hypScoreFunc(singleLinkPartialAlignment)
+            currentLinks = [AlignmentLink((tgtIndex, srcIndex))]
+            scoreVector = svector.Vector()
+
+            for k, func in enumerate(self.featureTemplates):
+                value_dict = func(self.info, tgtWord, srcWord, tgtIndex, srcIndex, currentLinks, self.diagValues, currentNode)
+                for name, value in value_dict.iteritems():
+                    if value != 0:
+                        scoreVector[name] += value
+
+            # Keep track of scores for all 1-link partial alignments
+            score = scoreVector.dot(self.weights)
+            singleBestAlignment.append((score, [tgtIndex]))
+
+            singleLinkPartialAlignment = PartialGridAlignment()
+            singleLinkPartialAlignment.decodingPath.data = currentNode.data
+            singleLinkPartialAlignment.score = score
+            singleLinkPartialAlignment.scoreVector = scoreVector
+            singleLinkPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
+            singleLinkPartialAlignment.links = currentLinks
+
             self.addPartialAlignment(partialAlignments, singleLinkPartialAlignment, self.BEAM_SIZE)
+
+            if not self.DECODING:
+                singleLinkPartialAlignment.fscore = self.ff_fscore(singleLinkPartialAlignment, span)
+
+            if self.COMPUTE_ORACLE:
+                if singleLinkPartialAlignment.fscore > oracleAlignment.fscore:
+                    oracleAlignment = singleLinkPartialAlignment
+            elif self.COMPUTE_HOPE:
+                singleLinkPartialAlignment.score = self.oracleScoreFunc(singleLinkPartialAlignment)
+                self.addPartialAlignment(oracleAlignment, singleLinkPartialAlignment, self.BEAM_SIZE)
+
+            if self.COMPUTE_FEAR:
+                singleLinkPartialAlignment.score = self.hypScoreFunc(singleLinkPartialAlignment)
+                self.addPartialAlignment(partialAlignments, singleLinkPartialAlignment, self.BEAM_SIZE)
 
         alignmentList = singleBestAlignment
         singleBestAlignment.sort(reverse=True)
@@ -584,8 +584,8 @@ class Model(object):
         # N link alignment(N>=2)
         ##################################################
         # Get ready for N-link alignments(N>=2)
-        for i in xrange(2,self.nto1+1): 
-            # Sort the fwords by score
+        for i in xrange(2,self.nto1+1):
+                # Sort the fwords by score
             alignmentList.sort(reverse=True)
             newAlignmentList = []
             LIMIT_1 = max(10, self.lenF/2)
@@ -603,9 +603,9 @@ class Model(object):
                     if self.LANG == "ar_en":
                         if (abs(tgtIndex_b - tgtIndex_a) > 1):
                             continue
-  
+
                     currentLinks = list(map(lambda x: AlignmentLink((x,srcIndex) ),na+sa))
-                      
+
                     scoreVector = svector.Vector()
                     for k, func in enumerate(self.featureTemplates):
                         value_dict = func(self.info, tgtWord, srcWord,
@@ -614,10 +614,10 @@ class Model(object):
                         for name, value in value_dict.iteritems():
                             if value != 0:
                                 scoreVector[name] += value
-  
+
                     score = scoreVector.dot(self.weights)
                     newAlignmentList.append((score, na+sa))
-  
+
                     NLinkPartialAlignment = PartialGridAlignment()
                     NLinkPartialAlignment.decodingPath.data = currentNode.data
                     NLinkPartialAlignment.score = score
@@ -625,46 +625,46 @@ class Model(object):
                     NLinkPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
                     NLinkPartialAlignment.links = currentLinks
                     self.addPartialAlignment(partialAlignments, NLinkPartialAlignment, self.BEAM_SIZE)
-                   
+
                     if not self.DECODING:
                         NLinkPartialAlignment.fscore = self.ff_fscore(NLinkPartialAlignment, span)
-  
+
                     if self.COMPUTE_ORACLE:
                         if NLinkPartialAlignment.fscore > oracleAlignment.fscore:
                             oracleAlignment = NLinkPartialAlignment
                     elif self.COMPUTE_HOPE:
                         NLinkPartialAlignment.score = self.oracleScoreFunc(NLinkPartialAlignment)
                         self.addPartialAlignment(oracleAlignment, NLinkPartialAlignment, self.BEAM_SIZE)
-  
+
                     if self.COMPUTE_FEAR:
                         NLinkPartialAlignment.score = self.hypScoreFunc(NLinkPartialAlignment)
                         self.addPartialAlignment(partialAlignments, NLinkPartialAlignment, self.BEAM_SIZE)
-            alignmentList = newAlignmentList 
-  
+            alignmentList = newAlignmentList
+
         ########################################################################
         # Finalize. Sort model-score list and then hope list.
         ########################################################################
         # Sort model score list.
         sortedBestFirstPartialAlignments = []
         while len(partialAlignments) > 0:
-          sortedBestFirstPartialAlignments.insert(0,heappop(partialAlignments))
+            sortedBestFirstPartialAlignments.insert(0,heappop(partialAlignments))
         # Sort hope score list.
         if self.COMPUTE_HOPE:
-          sortedBestFirstPartialAlignments_oracle = []
-          while len(oracleAlignment) > 0:
-            sortedBestFirstPartialAlignments_oracle.insert(0,heappop(partialAlignments))
-  
+            sortedBestFirstPartialAlignments_oracle = []
+            while len(oracleAlignment) > 0:
+                sortedBestFirstPartialAlignments_oracle.insert(0,heappop(partialAlignments))
+
         currentNode.partialAlignments["hyp"] = sortedBestFirstPartialAlignments
         if self.COMPUTE_HOPE:
-          currentNode.partialAlignments["oracle"] = sortedBestFirstPartialAlignments_oracle
+            currentNode.partialAlignments["oracle"] = sortedBestFirstPartialAlignments_oracle
         elif self.COMPUTE_ORACLE:
-          # Oracle BEFORE beam is applied
-          currentNode.partialAlignments["oracle"] = currentNode.oracle = oracleAlignment
-  
-          # Oracle AFTER beam is applied
-          #oracleCandidates = list(partialAlignments)
-          #oracleCandidates.sort(key=attrgetter('fscore'),reverse=True)
-          #currentNode.oracle = oracleCandidates[0]
+            # Oracle BEFORE beam is applied
+            currentNode.partialAlignments["oracle"] = currentNode.oracle = oracleAlignment
+
+            # Oracle AFTER beam is applied
+            #oracleCandidates = list(partialAlignments)
+            #oracleCandidates.sort(key=attrgetter('fscore'),reverse=True)
+            #currentNode.oracle = oracleCandidates[0]
     ############################################################################
     # addPartialAlignment(self, list, partialAlignment):
     # Add partial alignment to the list of possible partial alignments
@@ -672,7 +672,7 @@ class Model(object):
     # - If new partial alignment is > than min(list)
     # - - Replace min(list) with new partialAlignment
     ############################################################################
-  
+
     def addPartialAlignment(self, list, partialAlignment, BEAM_SIZE):
         # Sort this heap with size limit self.BEAM_SIZE in worst-first order
         # A low score is worse than a higher score
@@ -683,7 +683,7 @@ class Model(object):
             heappushpop(list, partialAlignment)
             return True
         return False
-  
+
     ############################################################################
     # ff_fscore(self):
     # Compute f-score of an edge with respect to the entire gold alignment
@@ -691,54 +691,54 @@ class Model(object):
     # alignment or wrt the same piece of the gold alignment. The fscore for the
     # former will just have a lower recall figure.
     ############################################################################
-  
-    def ff_fscore(self, edge, span = None):
-      if span is None:
-        span = (0, len(self.e)-1)
-  
-      # get gold matrix span that we are interested in
-      # Will be faster than using the matrix operation since getLinksByEIndex
-      # returns a sparse list. We also memoize.
-      numGoldLinks = self.gold.numLinksInSpan.get(span, None)
-      if numGoldLinks is None:
-        numGoldLinks = len(self.gold.getLinksByEIndex(span))
-        self.gold.numLinksInSpan[span] = numGoldLinks
-      else:
-        numGoldLinks = self.gold.numLinksInSpan[span]
-  
-      # Count our links within this span.
-      numModelLinks = len(edge.links)
-  
-      # (1) special case: both empty
-      if numGoldLinks == 0 and numModelLinks == 0:
-        return 1.0
-      # (2) special case: gold empty, model not empty OR
-      #     gold empty and model not empty
-      elif numGoldLinks == 0 or numModelLinks == 0:
-        return 0.0
-  
-      # The remainder here is executed when numGoldLinks > 0 and
-      # numModelLinks > 0
-  
-      inGold = self.gold.links_dict.has_key
-      numCorrect = 0
 
-      for link in edge.links:
-          numCorrect += inGold(link.link)
-      numCorrect = float(numCorrect)
-  
-      precision = numCorrect / numModelLinks
-      recall = numCorrect / numGoldLinks
-  
-      if precision == 0 or recall == 0:
-        return 0.0
-      f1 = (2*precision*recall) / (precision + recall)
-      # Favor recall a la Fraser '07
-      # f_recall = 1./((0.1/precision)+(0.9/recall))
-      return f1
+    def ff_fscore(self, edge, span = None):
+        if span is None:
+            span = (0, len(self.e)-1)
+
+        # get gold matrix span that we are interested in
+        # Will be faster than using the matrix operation since getLinksByEIndex
+        # returns a sparse list. We also memoize.
+        numGoldLinks = self.gold.numLinksInSpan.get(span, None)
+        if numGoldLinks is None:
+            numGoldLinks = len(self.gold.getLinksByEIndex(span))
+            self.gold.numLinksInSpan[span] = numGoldLinks
+        else:
+            numGoldLinks = self.gold.numLinksInSpan[span]
+
+        # Count our links within this span.
+        numModelLinks = len(edge.links)
+
+        # (1) special case: both empty
+        if numGoldLinks == 0 and numModelLinks == 0:
+            return 1.0
+        # (2) special case: gold empty, model not empty OR
+        #     gold empty and model not empty
+        elif numGoldLinks == 0 or numModelLinks == 0:
+            return 0.0
+
+        # The remainder here is executed when numGoldLinks > 0 and
+        # numModelLinks > 0
+
+        inGold = self.gold.links_dict.has_key
+        numCorrect = 0
+
+        for link in edge.links:
+            numCorrect += inGold(link.link)
+        numCorrect = float(numCorrect)
+
+        precision = numCorrect / numModelLinks
+        recall = numCorrect / numGoldLinks
+
+        if precision == 0 or recall == 0:
+            return 0.0
+        f1 = (2*precision*recall) / (precision + recall)
+        # Favor recall a la Fraser '07
+        # f_recall = 1./((0.1/precision)+(0.9/recall))
+        return f1
 
     def kbest(self, currentNode, type = "hyp", dummy = False, dummyCurrentNode = None):
-        # Initialize
+            # Initialize
         queue = []
         heapify(queue)
         oneColumnAlignments = currentNode.partialAlignments[type] # creates kind of dummy terminal for nonterminal node
@@ -748,13 +748,13 @@ class Model(object):
         count = defaultdict(lambda: defaultdict(int))
 
         for hyperEdgeNumber, hyperEdge in enumerate(currentNode.hyperEdges):
-            arity = len(hyperEdge.tail) 
-        
+            arity = len(hyperEdge.tail)
+
             # Number of components in position vector is the number of children in the current node
             # Position vector uniquely identifies a position in the cube
             # and identifies a unique alignment structure
             position = [0]*(arity+(not dummy))
-  
+
             # Create structure of first object in position [0,0,0,...,0]
             # This path identifies the structure that is the best structure
             # we know of before combination costs (rescoring).
@@ -778,7 +778,7 @@ class Model(object):
             newEdge.hyperEdgeNumber = hyperEdgeNumber
             # Add new edge to the queue/buffer
             heappush(queue, (newEdge.score*-1, newEdge))
-  
+
         # Keep filling up my cell until self.BEAM_SIZE has been reached *or*
         # we have exhausted all possible items in the queue
         while(len(queue) > 0 and len(currentNode.partialAlignments[type]) < self.NT_BEAM):
@@ -818,7 +818,7 @@ class Model(object):
                 if count[currentBestCombinedEdge.hyperEdgeNumber][tuple(neighborPosition)] < arity - dummy - neighborPosition.count(0): # arity + 1 - neighborPosition.count(0) - 1
                     count[currentBestCombinedEdge.hyperEdgeNumber][tuple(neighborPosition)] += 1
                     continue
-  
+
                 # Now build the neighbor edge
                 neighbor = []
                 for cellNumber in xrange(arity):
@@ -862,7 +862,7 @@ class Model(object):
         # Position vector uniquely identifies a position in the cube
         # and identifies a unique alignment structure
         position = [0,0] # because we consider binarized tree
-  
+
         # Create structure of first object in position [0,0,0,...,0]
         # This path identifies the structure that is the best structure
         # we know of before combination costs (rescoring).
@@ -882,7 +882,7 @@ class Model(object):
         newEdge.position = list(position)
         # Add new edge to the queue/buffer
         heappush(queue, (newEdge.score*-1, newEdge))
-  
+
         # Keep filling up my cell until self.BEAM_SIZE has been reached *or*
         # have exhausted all possible items in the queue
         while(len(queue) > 0 and len(dummyCurrentNode.partialAlignments[type]) < self.NT_BEAM):
@@ -917,7 +917,7 @@ class Model(object):
                 if count[tuple(neighborPosition)] < arity - 1 - neighborPosition.count(0): # arity - neighborPosition.count(0) - 1
                     count[tuple(neighborPosition)] += 1
                     continue
-  
+
                 # Now build the neighbor edge
                 neighbor = []
                 for cellNumber in xrange(arity):
@@ -963,11 +963,11 @@ class Model(object):
                 queue.put(dummy)
 
             dummy = queue.get()
-            assert queue.empty(), "queue is not empty!" 
+            assert queue.empty(), "queue is not empty!"
             for partial_alignment in dummy.partialAlignments[type]:
                 if not self.addPartialAlignment(partialAlignments, partial_alignment, self.NT_BEAM):
                     break
-               
+
         sortedItems = []
         while len(partialAlignments) > 0:
             sortedItems.insert(0, heappop(partialAlignments))
