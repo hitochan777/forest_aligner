@@ -1,7 +1,12 @@
+import enum
+
 class AlignmentLink:
-    def __init__(self, link, depth=0):
+    LINK_TAG = enum.Enum("LinkTag","possible sure")
+
+    def __init__(self, link, linkTag = LINK_TAG.sure, depth=0):
         self.depth = depth
         self.link = link
+        self.linkTag = linkTag
 
     def __getitem__(self, index):
         return self.link[index]

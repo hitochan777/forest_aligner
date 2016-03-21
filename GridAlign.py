@@ -542,41 +542,42 @@ class Model(object):
         singleBestAlignment = []
         alignmentList = []
         for tgtIndex, tgtWord in enumerate(tgtWordList):
-            currentLinks = [AlignmentLink((tgtIndex, srcIndex))]
-            scoreVector = svector.Vector()
+            for linkTag in AlignmentLink.LINK_TAG:
+                currentLinks = [AlignmentLink((tgtIndex, srcIndex), linkTag)]
+                scoreVector = svector.Vector()
 
-            for k, func in enumerate(self.featureTemplates):
-                value_dict = func(self.info, tgtWord, srcWord, tgtIndex, srcIndex, currentLinks, self.diagValues, currentNode)
-                for name, value in value_dict.iteritems():
-                    if value != 0:
-                        scoreVector[name] += value
+                for k, func in enumerate(self.featureTemplates):
+                    value_dict = func(self.info, tgtWord, srcWord, tgtIndex, srcIndex, currentLinks, self.diagValues, currentNode)
+                    for name, value in value_dict.iteritems():
+                        if value != 0:
+                            scoreVector[name] += value
 
-            # Keep track of scores for all 1-link partial alignments
-            score = scoreVector.dot(self.weights)
-            singleBestAlignment.append((score, [tgtIndex]))
+                # Keep track of scores for all 1-link partial alignments
+                score = scoreVector.dot(self.weights)
+                singleBestAlignment.append((score, [tgtIndex]))
 
-            singleLinkPartialAlignment = PartialGridAlignment()
-            singleLinkPartialAlignment.decodingPath.data = currentNode.data
-            singleLinkPartialAlignment.score = score
-            singleLinkPartialAlignment.scoreVector = scoreVector
-            singleLinkPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
-            singleLinkPartialAlignment.links = currentLinks
+                singleLinkPartialAlignment = PartialGridAlignment()
+                singleLinkPartialAlignment.decodingPath.data = currentNode.data
+                singleLinkPartialAlignment.score = score
+                singleLinkPartialAlignment.scoreVector = scoreVector
+                singleLinkPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
+                singleLinkPartialAlignment.links = currentLinks
 
-            self.addPartialAlignment(partialAlignments, singleLinkPartialAlignment, self.BEAM_SIZE)
-
-            if not self.DECODING:
-                singleLinkPartialAlignment.fscore = self.ff_fscore(singleLinkPartialAlignment, span)
-
-            if self.COMPUTE_ORACLE:
-                if singleLinkPartialAlignment.fscore > oracleAlignment.fscore:
-                    oracleAlignment = singleLinkPartialAlignment
-            elif self.COMPUTE_HOPE:
-                singleLinkPartialAlignment.score = self.oracleScoreFunc(singleLinkPartialAlignment)
-                self.addPartialAlignment(oracleAlignment, singleLinkPartialAlignment, self.BEAM_SIZE)
-
-            if self.COMPUTE_FEAR:
-                singleLinkPartialAlignment.score = self.hypScoreFunc(singleLinkPartialAlignment)
                 self.addPartialAlignment(partialAlignments, singleLinkPartialAlignment, self.BEAM_SIZE)
+
+                if not self.DECODING:
+                    singleLinkPartialAlignment.fscore = self.ff_fscore(singleLinkPartialAlignment, span)
+
+                if self.COMPUTE_ORACLE:
+                    if singleLinkPartialAlignment.fscore > oracleAlignment.fscore:
+                        oracleAlignment = singleLinkPartialAlignment
+                elif self.COMPUTE_HOPE:
+                    singleLinkPartialAlignment.score = self.oracleScoreFunc(singleLinkPartialAlignment)
+                    self.addPartialAlignment(oracleAlignment, singleLinkPartialAlignment, self.BEAM_SIZE)
+
+                if self.COMPUTE_FEAR:
+                    singleLinkPartialAlignment.score = self.hypScoreFunc(singleLinkPartialAlignment)
+                    self.addPartialAlignment(partialAlignments, singleLinkPartialAlignment, self.BEAM_SIZE)
 
         alignmentList = singleBestAlignment
         singleBestAlignment.sort(reverse=True)
