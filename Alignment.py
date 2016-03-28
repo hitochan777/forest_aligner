@@ -11,10 +11,16 @@ def readAlignmentString(str, inverse = False):
     d = { }
     for link in str.split():
         try:
-            f, e = link.split('-')
+            matchObj = re.match(r"(\d+)-(\d+)(?:\[(.+)\])?", link)
+            f, e, linkTag = matchObj.groups() 
             if inverse:
                 f, e = e, f
-            d[(int(f), int(e))] = True
+
+            if linkTag is None:
+                linkTag = False
+
+            d[(int(f), int(e))] = linkTag 
+
         except:
             sys.stderr.write("Couldn't process link '%s'\n" %(link))
             sys.stderr.write("Alignment: %s\n" %(str))
