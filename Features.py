@@ -74,6 +74,24 @@ class LocalFeatures:
 
         return values
 
+    def ff_probEgivenFTag(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
+        """
+        """
+        values = defaultdict(float)
+        if currentNode is not None:
+            pos = currentNode.getPOS()
+
+        name = self.ff_probEgivenFTag.func_name + '___' + pos
+        # Calculate feature function value
+        sum = 0.0
+        numLinks = len(links)
+        for link in links:
+            fWord = info['f'][link[0]]
+            eWord = info['e'][link[1]]
+            values[name+'___' + pos + '___' + link.linkTag + '_nb'] += self.pef.get(fWord, {}).get(eWord, 0.0)/numLinks
+
+        return values
+
     def ff_probEgivenF(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
         """
         Return average p(e|f)
@@ -111,13 +129,52 @@ class LocalFeatures:
                 return {name: 1.0}
         return {name: 0.0}
 
-    def ff_distToDiag(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
+    def ff_identityTag(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
+        """
+        Return 1 if fWord == eWord; 0 otherwise.
+        """
+        name = self.ff_identityTag.func_name
+        if len(links) == 1:
+            link = links[0]
+            CHECK_GT(len(info['f']), 0, "Length of f sentence is 0.")
+            CHECK_GT(len(info['e']), 0, "Length of e sentence is 0.")
+            name = name + '___' + link.linkTag
+            if info['f'][link[0]] == info['e'][link[1]]:
+                return {name: 1.0}
+
+        return {name: 0.0}
+
+    # def ff_distToDiag(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
+    #     """
+    #     Average (Normalized) Distance from the point (fIndex,eIndex) to the grid diagonal
+    #     """
+    #     if currentNode is not None:
+    #         pos = currentNode.getPOS()
+    #     name = self.ff_distToDiag.func_name + '___' + pos + '_nb'
+    #
+    #     val = 0.0
+    #
+    #     if len(links) > 0:
+    #         for link in links:
+    #             fIndex = link[0]
+    #             eIndex = link[1]
+    #             if diagValues.has_key((fIndex, eIndex)):
+    #                 val += abs(diagValues[(fIndex, eIndex)])
+    #             else:
+    #                 val += abs(self.pointLineGridDistance(info['f'], info['e'], fIndex, eIndex))
+    #                 # Save value for later use.
+    #                 diagValues[(fIndex, eIndex)] = val
+    #         val /= len(links)
+    #     return {name: val}
+
+    def ff_distToDiagTag(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
         """
         Average (Normalized) Distance from the point (fIndex,eIndex) to the grid diagonal
         """
         if currentNode is not None:
             pos = currentNode.getPOS()
-        name = self.ff_distToDiag.func_name + '___' + pos + '_nb'
+        values = defaultdict(float)
+        name = self.ff_distToDiagTag.func_name + '___' + pos
 
         val = 0.0
 
@@ -131,6 +188,7 @@ class LocalFeatures:
                     val += abs(self.pointLineGridDistance(info['f'], info['e'], fIndex, eIndex))
                     # Save value for later use.
                     diagValues[(fIndex, eIndex)] = val
+                values[name + '___' + link.linkTag + '_nb'] += 
             val /= len(links)
         return {name: val}
 
@@ -192,6 +250,41 @@ class LocalFeatures:
                 # print key, values[key]
         return values
 
+    def ff_tgtTag_srcTagTag(self, info,  fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
+        """
+        Compute targetTag, srcTag indicator features.
+        We also lexicalize by the eWord.
+        """
+        name = self.ff_tgtTag_srcTagTag.func_name
+
+        if info['ftree'] is None:
+            return {}
+        if len(info['ftree'].terminals) == 0:
+            return {}
+        if len(links) == 0:
+            return {}
+
+        tgtTag = currentNode.getPOS()
+        srcTags = ""
+
+        values = {}
+        pos_count = defaultdict(float)
+
+        for i ,link in enumerate(links):
+            findex = link[0]
+            nodes =  info['ftree'].getNodesByIndex(findex)
+            for node in nodes:
+                pos_count[(node.getPOS(), link.linkTag)] += 1.0/len(nodes)
+
+        for key in pos_count:
+            pos_count[key] /= len(links)
+
+        for (srcTag, linkTag), prob in pos_count.iteritems():
+            values["%s___%s:%s___%s" % (name, tgtTag, srcTag, linkTag)] = prob
+            values["%s___%s(%s):%s___%s"% (name, tgtTag, eWord, srcTag, linkTag)] = prob
+
+        return values
+ 
     def ff_englishCommaLinkedToNonComma(self, info,  fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
         """
         Binary feature fires if eWord ',' is linked to a non-comma.
@@ -204,6 +297,27 @@ class LocalFeatures:
                 if eWord == ',' and fword != ',':
                     return {name: 1.0}
         return {name: 0.0}
+
+    def ff_englishCommaLinkedToNonCommaTag(self, info,  fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
+        """
+        Binary feature fires if eWord ',' is linked to a non-comma.
+        """
+        name = self.ff_englishCommaLinkedToNonCommaTag.func_name
+        count = defaultdict(float)
+        values = defaultdict(float)
+
+        if eWord == ',':
+            for link in links:
+                fword = info['f'][link[0]]
+                if fword != ',':
+                    count[link.linkTag] += 1.0/len(links)
+            
+            for linkTag, cnt in count.iteritems():
+                values["%s___%s" % (name, linkTag)] = cnt
+
+            return values
+
+        return {}
 
     def ff_finalPeriodAlignedToNonPeriod(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
         """
@@ -225,6 +339,28 @@ class LocalFeatures:
                 if info['f'][link[0]] != ".":
                     return {name: 1.}
         return {name: 0.}
+
+    def ff_finalPeriodAlignedToNonPeriodTag(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
+        """
+        Binary feature fires if last token in e-sentence is a period and is
+        aligned to a non-period.
+        """
+        name = self.ff_finalPeriodAlignedToNonPeriodTag.func_name
+        if eIndex != len(info['e']) - 1:
+            flag=False
+            for link in links:
+                if link[0] == len(info['f'])-1:
+                    flag=True
+                    break
+            if not flag:
+                return {name: 0.}
+
+        if eWord == ".":
+            for link in links:
+                if info['f'][link[0]] != ".":
+                    return {name: 1.}
+        return {name: 0.}
+
 
     def ff_isLinkedToNullWord(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
         """
