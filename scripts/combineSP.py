@@ -18,13 +18,13 @@ def combineLine(sline, spline):
 def combine(sure, surePossible):
     with open(sure, "r") as s, open(surePossible, "r") as sp:
         while True:
-            sline = s.readline()
-            spline = sp.readline()
+            sline = s.readline().strip()
+            spline = sp.readline().strip()
             spset = set()
             if sline == "" or spline == "":
                 break
 
-            print(_combineLine(sline, spline))
+            print(combineLine(sline, spline))
 
 
 if __name__ == "__main__":
