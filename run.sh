@@ -5,12 +5,12 @@ _CORES=`echo "$CPU * 0.8" | bc`
 
 ################### CUSTOMIZABLE #####################
 LINK=2
-ITER=100
+ITER=5
 PARTIAL=-1
 LANG="ja_en"
 export DATA=/windroot/otsuki/data/ASPEC-JE # Absolute path to the base directory which has data
-export TARGET_FOREST_DATA=$DATA/forest/1best
-export SOURCE_FOREST_DATA=$DATA/forest/1best
+export TARGET_FOREST_DATA=$DATA/berkeley/forest/1best
+export SOURCE_FOREST_DATA=$DATA/KNP/forest/1best
 ######################################################
 
 export CORES=${_CORES%.*}

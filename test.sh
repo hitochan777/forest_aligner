@@ -5,7 +5,7 @@ export PYTHONPATH=/home/chu/tools/boost_1_54_0/lib:$PYTHONPATH
 export LD_LIBRARY_PATH=/home/chu/tools/boost_1_54_0/lib:$LD_LIBRARY_PATH
 
 NUMCPUS=$CORES
-K=128
+K=10
 LINK=$1
 MAXEPOCH=$2
 PARTIAL=$3
@@ -36,4 +36,4 @@ nice -19 mpiexec -n $NUMCPUS $PYTHON ./aligner.py \
   --out $NAME \
   --k $K
 
-./Fmeasure.py $NAME $DATA/test.a.s
+./Fmeasure.py $NAME $DATA/test.a.tagged

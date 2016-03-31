@@ -3,7 +3,8 @@
 export PATH=/home/chu/mpich-install/bin:$PATH
 export PYTHONPATH=/home/chu/tools/boost_1_54_0/lib:$PYTHONPATH
 export LD_LIBRARY_PATH=/home/chu/tools/boost_1_54_0/lib:$LD_LIBRARY_PATH
-NUMCPUS=$CORES
+# NUMCPUS=$CORES
+NUMCPUS=10
 
 K=128
 LINK=$1
@@ -15,14 +16,14 @@ NAME=k${K}.$LANGPAIR.$MAXEPOCH.$PARTIAL.$LINK
 nice -15 mpiexec -n $NUMCPUS $PYTHON ./aligner.py \
   --f $DATA/train.f \
   --e $DATA/train.e \
-  --gold $DATA/train.a.s \
+  --gold $DATA/train.a.tagged \
   --ftrees $SOURCE_FOREST_DATA/train.f.forest \
   --etrees $TARGET_FOREST_DATA/train.e.forest \
   --fdev $DATA/dev.f \
   --edev $DATA/dev.e \
   --ftreesdev $SOURCE_FOREST_DATA/dev.f.forest \
   --etreesdev $TARGET_FOREST_DATA/dev.e.forest \
-  --golddev $DATA/dev.a.s \
+  --golddev $DATA/dev.a.tagged \
   --evcb $DATA/e.vcb \
   --fvcb $DATA/f.vcb \
   --pef $DATA/GIZA++.m4.pef \
