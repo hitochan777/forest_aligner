@@ -4,7 +4,7 @@ export PATH=/home/chu/mpich-install/bin:$PATH
 export PYTHONPATH=/home/chu/tools/boost_1_54_0/lib:$PYTHONPATH
 export LD_LIBRARY_PATH=/home/chu/tools/boost_1_54_0/lib:$LD_LIBRARY_PATH
 # NUMCPUS=$CORES
-NUMCPUS=10
+NUMCPUS=20
 
 K=128
 LINK=$1
