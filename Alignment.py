@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 import sys
+import re
 
 def readAlignmentString(str, inverse = False):
     """
@@ -44,9 +45,12 @@ class Alignment(object):
         Reads and records a string encoded sequence of links, f-e f-e f-e ...
         """
         for linkstr in links_str.strip().split():
-            f, e = map(int, linkstr.split(delim))
+            matchObj = re.match(r"(\d+)-(\d+)(?:\[(.+)\])?", linkstr)
+            f, e, linkTag = matchObj.groups() 
+            f, e = int(f), int(e)
             if inverse:
                 f, e = e, f
+
             link = (f,e)
             self.eLinks[e].append(link)
             self.links_dict[link] = True
