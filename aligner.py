@@ -298,9 +298,16 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
                 modelBestLinks = resultTuple[0]
                 score = resultTuple[1]
                 if FLAGS.inverse:
-                    out.write("%s\n" %(" ".join(map(lambda link: "%s-%s" %(link[1], link[0]), modelBestLinks))))
+                    if FLGAS.joint:
+                        out.write("%s\n" %(" ".join(map(lambda link: "%s-%s[%s]" % (link[1], link[0], link.linkTag.name), modelBestLinks))))
+                    else:
+                        out.write("%s\n" %(" ".join(map(lambda link: "%s-%s" %(link[1], link[0]), modelBestLinks))))
                 else:
-                    out.write("%s\n" %(" ".join(map(lambda link: "%s-%s" %(link[0], link[1]), modelBestLinks))))
+                    if FLGAS.joint:
+                        out.write("%s\n" %(" ".join(map(lambda link: "%s-%s[%s]" % (link[0], link[1], link.linkTag.name), modelBestLinks))))
+                    else:
+                        out.write("%s\n" %(" ".join(map(lambda link: "%s-%s" %(link[0], link[1]), modelBestLinks))))
+
                 if(score_out!=None):
                     sout.write("%s\n" % (score))
 
@@ -591,7 +598,8 @@ def f1accumulator(hyp, gold):
 
     numCorrect = 0.0
     for link in hyp:
-        numCorrect += link.link in gold #TODO: change this to also include linkTag comparison 
+        numCorrect += ( link.link in gold and gold[link.link] == link.linkTag )
+
     return numCorrect, numModelLinks, numGoldLinks
 
 def validate_features(weights, valid_feature_names):
@@ -731,6 +739,7 @@ if __name__ == "__main__":
     flags.DEFINE_string('decoding_path_out', None, "Output filename for docoding path of of the best hypothesis; Default: None")
     flags.DEFINE_boolean('inverse', False, "If set to True, input data for source and target language are exchanged")
     flags.DEFINE_string('lm', None , "Path to dependency tree language model(LM) of target language; If not set, LM is not used.; default: None")
+    flags.DEFINE_boolean('joint', False , "Train joint model of alignment link and link tag?; default: False")
     argv = FLAGS(sys.argv)
 
     if FLAGS.lm is not None and FLAGS.binarize:

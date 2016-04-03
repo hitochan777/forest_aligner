@@ -51,9 +51,12 @@ class Alignment(object):
             if inverse:
                 f, e = e, f
 
+            if linkTag is None:
+                linkTag = False
+
             link = (f,e)
             self.eLinks[e].append(link)
-            self.links_dict[link] = True
+            self.links_dict[link] = linkTag 
 
     def getLinksByEIndex(self, span):
         """
