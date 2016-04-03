@@ -3,7 +3,7 @@ from invoke import run, task
 
 @task
 def clean():
-    run("rm -rf *.pyc")
+    run("rm -rf *.pyc k*.*.* weights.*")
 
 
 @task
