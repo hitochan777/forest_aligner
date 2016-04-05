@@ -77,6 +77,7 @@ class Model(object):
         self.oracleScoreFunc = ScoreFunctions.default
         self.DO_RESCORE = FLAGS.rescore
         self.DECODING = False
+        self.JOINT = FLAGS.joint
         if DECODING:
             self.COMPUTE_1BEST = True
             self.DECODING = True
@@ -198,22 +199,22 @@ class Model(object):
         self.featureTemplates.append(localFeatures.ff_continuousAlignment)
 
         # link Tag features
-        self.featureTemplates.append(localFeatures.ff_identityTag)
-        self.featureTemplates.append(localFeatures.ff_jumpDistanceTag)
-        self.featureTemplates.append(localFeatures.ff_probFgivenETag)
-        self.featureTemplates.append(localFeatures.ff_probEgivenFTag)
-        self.featureTemplates.append(localFeatures.ff_tgtTag_srcTagTag)
-        self.featureTemplates.append(localFeatures.ff_lexprob_zeroTag)
-        self.featureTemplates.append(localFeatures.ff_distToDiagTag)
-        self.featureTemplates.append(localFeatures.ff_quote1to1Tag)
-        self.featureTemplates.append(localFeatures.ff_finalPeriodAlignedToNonPeriodTag)
-        self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToFinalPeriodTag)
-        self.featureTemplates.append(localFeatures.ff_nonPeriodLinkedToPeriodTag)
-        self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToCommaTag)
-        self.featureTemplates.append(localFeatures.ff_sameWordLinksTag)
-        self.featureTemplates.append(localFeatures.ff_englishCommaLinkedToNonCommaTag)
-        self.featureTemplates.append(localFeatures.ff_isPuncAndHasMoreThanOneLinkTag)
-
+        if self.JOINT: 
+            self.featureTemplates.append(localFeatures.ff_identityTag)
+            self.featureTemplates.append(localFeatures.ff_jumpDistanceTag)
+            self.featureTemplates.append(localFeatures.ff_probFgivenETag)
+            self.featureTemplates.append(localFeatures.ff_probEgivenFTag)
+            self.featureTemplates.append(localFeatures.ff_tgtTag_srcTagTag)
+            self.featureTemplates.append(localFeatures.ff_lexprob_zeroTag)
+            self.featureTemplates.append(localFeatures.ff_distToDiagTag)
+            self.featureTemplates.append(localFeatures.ff_quote1to1Tag)
+            self.featureTemplates.append(localFeatures.ff_finalPeriodAlignedToNonPeriodTag)
+            self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToFinalPeriodTag)
+            self.featureTemplates.append(localFeatures.ff_nonPeriodLinkedToPeriodTag)
+            self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToCommaTag)
+            self.featureTemplates.append(localFeatures.ff_sameWordLinksTag)
+            self.featureTemplates.append(localFeatures.ff_englishCommaLinkedToNonCommaTag)
+            self.featureTemplates.append(localFeatures.ff_isPuncAndHasMoreThanOneLinkTag)
 
     ##################################################
     # Inititalize feature function list
