@@ -39,6 +39,7 @@ import Fmeasure
 import svector
 import ScoreFunctions
 from AlignmentLink import AlignmentLink
+from LinkTag import LinkTag
 
 class Model(object):
     """
@@ -235,7 +236,6 @@ class Model(object):
         """
         Main wrapper for performing alignment.
         """
-        print "hoge"
         ##############################################
         # Do the alignment, traversing tree bottom up.
         ##############################################
@@ -562,7 +562,7 @@ class Model(object):
         singleBestAlignment = []
         alignmentList = []
         for tgtIndex, tgtWord in enumerate(tgtWordList):
-            for linkTag in AlignmentLink.LINK_TAG:
+            for linkTag in LinkTag:
                 currentLinks = [AlignmentLink((tgtIndex, srcIndex), linkTag)]
                 scoreVector = svector.Vector()
 
@@ -574,7 +574,7 @@ class Model(object):
 
                 # Keep track of scores for all 1-link partial alignments
                 score = scoreVector.dot(self.weights)
-                singleBestAlignment.append((score, [tgtIndex]))
+                singleBestAlignment.append((score, currentLinks))
 
                 singleLinkPartialAlignment = PartialGridAlignment()
                 singleLinkPartialAlignment.decodingPath.data = currentNode.data
@@ -613,11 +613,11 @@ class Model(object):
             LIMIT_N = max(10, self.lenF/i)
             for (_,na) in alignmentList[0:LIMIT_N]:# na means n link alignment
                 for (_, sa) in singleBestAlignment[0:LIMIT_1]:#sa means single-link alignment
-                    if(na[-1]>=sa[0]):#sa actually always have only one element
+                    if(na[-1].link[1] >= sa[0].link[1]):#sa actually always have only one element
                         continue
                     # clear contents of twoLinkPartialAlignment
-                    tgtIndex_a = na[-1]
-                    tgtIndex_b = sa[0]
+                    tgtIndex_a = na[-1].link[1]
+                    tgtIndex_b = sa[0].link[1]
                     # Don't consider a pair (tgtIndex_a, tgtIndex_b) if distance between
                     # these indices > 1 (Arabic/English only).
                     # Need to debug feature that is supposed to deal with this naturally.
@@ -625,8 +625,7 @@ class Model(object):
                         if (abs(tgtIndex_b - tgtIndex_a) > 1):
                             continue
 
-                    currentLinks = list(map(lambda x: AlignmentLink((x,srcIndex) ),na+sa))
-
+                    currentLinks = na + sa 
                     scoreVector = svector.Vector()
                     for k, func in enumerate(self.featureTemplates):
                         value_dict = func(self.info, tgtWord, srcWord,
@@ -637,7 +636,7 @@ class Model(object):
                                 scoreVector[name] += value
 
                     score = scoreVector.dot(self.weights)
-                    newAlignmentList.append((score, na+sa))
+                    newAlignmentList.append((score, currentLinks))
 
                     NLinkPartialAlignment = PartialGridAlignment()
                     NLinkPartialAlignment.decodingPath.data = currentNode.data

@@ -8,6 +8,7 @@ from collections import defaultdict
 import sys
 from pyglog import *
 from AlignmentLink import AlignmentLink
+from LinkTag import LinkTag
 
 class LocalFeatures:
     def __init__(self, pef, pfe):
@@ -177,7 +178,7 @@ class LocalFeatures:
         values = defaultdict(float)
         name = self.ff_distToDiagTag.func_name + '___' + pos
 
-        for linkTag in AlignmentLink.LINK_TAG:
+        for linkTag in LinkTag:
             values[name + '___' + linkTag.name + '_nb'] = 0.0
 
         if len(links) > 0:
@@ -307,7 +308,7 @@ class LocalFeatures:
         count = defaultdict(float)
         values = defaultdict(float)
 
-        for linkTag in AlignmentLink.LINK_TAG:
+        for linkTag in LinkTag:
             values["%s___%s" % (name, linkTag.name)] = 0.0 
         if eWord == ',':
             for link in links:
@@ -348,7 +349,7 @@ class LocalFeatures:
         """
         name = self.ff_finalPeriodAlignedToNonPeriodTag.func_name
         values = defaultdict(float)
-        for linkTag in AlignmentLink.LINK_TAG:
+        for linkTag in LinkTag:
             values["%s___%s" % (name, linkTag.name)] = 0.0
 
         if eWord == "." and eIndex != len(info['e']) - 1:
@@ -392,7 +393,7 @@ class LocalFeatures:
 
         values = defaultdict(float)
 
-        for linkTag in AlignmentLink.LINK_TAG:
+        for linkTag in LinkTag:
             values["%s___%s" % (name, linkTag.name)] = 0.0
 
         if self.isPunctuation(eWord) and len(links) > 1:
@@ -690,7 +691,7 @@ class LocalFeatures:
                 eWord = info['e'][eIndex]
                 linkedToWords[fWord] += 1
                 if linkedToWords[fWord] > 1:
-                    for linkTag in AlignmentLink.LINK_TAG:
+                    for linkTag in LinkTag:
                         feature["%s___%s" % (name, linkTag.name)] = count[linkTag.name]
 
         return {}
