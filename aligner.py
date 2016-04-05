@@ -298,12 +298,12 @@ def decode_parallel(weights, indices, blob, name="", out=sys.stdout, score_out=N
                 modelBestLinks = resultTuple[0]
                 score = resultTuple[1]
                 if FLAGS.inverse:
-                    if FLGAS.joint:
+                    if FLAGS.joint:
                         out.write("%s\n" %(" ".join(map(lambda link: "%s-%s[%s]" % (link[1], link[0], link.linkTag.name), modelBestLinks))))
                     else:
                         out.write("%s\n" %(" ".join(map(lambda link: "%s-%s" %(link[1], link[0]), modelBestLinks))))
                 else:
-                    if FLGAS.joint:
+                    if FLAGS.joint:
                         out.write("%s\n" %(" ".join(map(lambda link: "%s-%s[%s]" % (link[0], link[1], link.linkTag.name), modelBestLinks))))
                     else:
                         out.write("%s\n" %(" ".join(map(lambda link: "%s-%s" %(link[0], link[1]), modelBestLinks))))
@@ -598,7 +598,10 @@ def f1accumulator(hyp, gold):
 
     numCorrect = 0.0
     for link in hyp:
-        numCorrect += ( link.link in gold and gold[link.link] == link.linkTag )
+        numCorrect += ( link.link in gold and gold[link.link] == link.linkTag.name )
+        # numCorrect += ( link.link in gold )
+        if link.link in gold:
+            print gold[link.link], link.linkTag.name
 
     return numCorrect, numModelLinks, numGoldLinks
 
