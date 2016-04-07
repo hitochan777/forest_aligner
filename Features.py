@@ -75,6 +75,48 @@ class LocalFeatures:
 
         return values
 
+    def ff_probFgivenE(self, info,  fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
+        """
+        Return p(f|e)
+        """
+        if currentNode is not None:
+            pos = currentNode.getPOS()
+        name = self.ff_probFgivenE.func_name + '___' + pos + '_nb'
+
+        # Calculate feature function value
+        sum = 0.0
+        numLinks = len(links)
+        if numLinks > 0:
+            for link in links:
+                fWord = info['f'][link[0]]
+                eWord = info['e'][link[1]]
+                sum += self.pfe.get(eWord, {}).get(fWord, 0.0)
+        else:
+            sum = self.pfe.get(eWord, {}).get(fWord, 0.0)
+        if numLinks > 1:
+            sum /= float(numLinks)
+
+        return {name: sum}
+
+    def ff_probFgivenETag(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
+        """
+        Return p(e|f)
+        """
+        values = defaultdict(float)
+        if currentNode is not None:
+            pos = currentNode.getPOS()
+
+        name = self.ff_probFgivenETag.func_name + '___' + pos
+        # Calculate feature function value
+        sum = 0.0
+        numLinks = len(links)
+        for link in links:
+            fWord = info['f'][link[0]]
+            eWord = info['e'][link[1]]
+            values[name+'___' + link.linkTag.name + '_nb'] += self.pfe.get(eWord, {}).get(fWord, 0.0)/numLinks
+
+        return values
+
     def ff_probEgivenFTag(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
         """
         """
@@ -89,7 +131,7 @@ class LocalFeatures:
         for link in links:
             fWord = info['f'][link[0]]
             eWord = info['e'][link[1]]
-            values[name+'___' + pos + '___' + link.linkTag.name + '_nb'] += self.pef.get(fWord, {}).get(eWord, 0.0)/numLinks
+            values[name+'___' + link.linkTag.name + '_nb'] += self.pef.get(fWord, {}).get(eWord, 0.0)/numLinks
 
         return values
 
@@ -135,6 +177,7 @@ class LocalFeatures:
         Return 1 if fWord == eWord; 0 otherwise.
         """
         name = self.ff_identityTag.func_name
+
         if len(links) == 1:
             link = links[0]
             CHECK_GT(len(info['f']), 0, "Length of f sentence is 0.")
@@ -274,7 +317,7 @@ class LocalFeatures:
 
         for i ,link in enumerate(links):
             findex = link[0]
-            nodes =  info['ftree'].getNodesByIndex(findex)
+            nodes = info['ftree'].getNodesByIndex(findex)
             for node in nodes:
                 pos_count[(node.getPOS(), link.linkTag.name)] += 1.0/len(nodes)
 
@@ -605,47 +648,6 @@ class LocalFeatures:
             return {name: 0.0}
 
 
-    def ff_probFgivenE(self, info,  fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
-        """
-        Return p(f|e)
-        """
-        if currentNode is not None:
-            pos = currentNode.getPOS()
-        name = self.ff_probFgivenE.func_name + '___' + pos + '_nb'
-
-        # Calculate feature function value
-        sum = 0.0
-        numLinks = len(links)
-        if numLinks > 0:
-            for link in links:
-                fWord = info['f'][link[0]]
-                eWord = info['e'][link[1]]
-                sum += self.pfe.get(eWord, {}).get(fWord, 0.0)
-        else:
-            sum = self.pfe.get(eWord, {}).get(fWord, 0.0)
-        if numLinks > 1:
-            sum /= float(numLinks)
-
-        return {name: sum}
-
-    def ff_probFgivenETag(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
-        """
-        Return p(e|f)
-        """
-        values = defaultdict(float)
-        if currentNode is not None:
-            pos = currentNode.getPOS()
-
-        name = self.ff_probFgivenETag.func_name + '___' + pos
-        # Calculate feature function value
-        sum = 0.0
-        numLinks = len(links)
-        for link in links:
-            fWord = info['f'][link[0]]
-            eWord = info['e'][link[1]]
-            values[name+'___' + pos + '___' + link.linkTag.name + '_nb'] += self.pef.get(eWord, {}).get(fWord, 0.0)/numLinks
-
-        return values
 
     def ff_quote1to1(self, info,  fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
         """
