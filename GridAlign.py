@@ -200,21 +200,21 @@ class Model(object):
 
         # link Tag features
         if self.JOINT:
-            self.featureTemplates.append(localFeatures.ff_identityTag)
-            self.featureTemplates.append(localFeatures.ff_jumpDistanceTag)
+            # self.featureTemplates.append(localFeatures.ff_identityTag)
+            # self.featureTemplates.append(localFeatures.ff_jumpDistanceTag)
             self.featureTemplates.append(localFeatures.ff_probFgivenETag)
-            # self.featureTemplates.append(localFeatures.ff_probEgivenFTag)
+            self.featureTemplates.append(localFeatures.ff_probEgivenFTag)
             # self.featureTemplates.append(localFeatures.ff_tgtTag_srcTagTag)
-            self.featureTemplates.append(localFeatures.ff_lexprob_zeroTag)
+            # self.featureTemplates.append(localFeatures.ff_lexprob_zeroTag)
             # self.featureTemplates.append(localFeatures.ff_distToDiagTag)
-            self.featureTemplates.append(localFeatures.ff_quote1to1Tag)
-            self.featureTemplates.append(localFeatures.ff_finalPeriodAlignedToNonPeriodTag)
-            self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToFinalPeriodTag)
-            self.featureTemplates.append(localFeatures.ff_nonPeriodLinkedToPeriodTag)
-            self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToCommaTag)
-            self.featureTemplates.append(localFeatures.ff_sameWordLinksTag)
-            self.featureTemplates.append(localFeatures.ff_englishCommaLinkedToNonCommaTag)
-            self.featureTemplates.append(localFeatures.ff_isPuncAndHasMoreThanOneLinkTag)
+            # self.featureTemplates.append(localFeatures.ff_quote1to1Tag)
+            # self.featureTemplates.append(localFeatures.ff_finalPeriodAlignedToNonPeriodTag)
+            # self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToFinalPeriodTag)
+            # self.featureTemplates.append(localFeatures.ff_nonPeriodLinkedToPeriodTag)
+            # self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToCommaTag)
+            # self.featureTemplates.append(localFeatures.ff_sameWordLinksTag)
+            # self.featureTemplates.append(localFeatures.ff_englishCommaLinkedToNonCommaTag)
+            # self.featureTemplates.append(localFeatures.ff_isPuncAndHasMoreThanOneLinkTag)
 
     ##################################################
     # Inititalize feature function list
@@ -567,7 +567,7 @@ class Model(object):
             if self.JOINT:
                tags = LinkTag
 
-            for linkTag in LinkTag:
+            for linkTag in tags:
                 currentLinks = [AlignmentLink((tgtIndex, srcIndex), linkTag)]
                 scoreVector = svector.Vector()
 
@@ -618,11 +618,11 @@ class Model(object):
             LIMIT_N = max(10, self.lenF/i)
             for (_,na) in alignmentList[0:LIMIT_N]:# na means n link alignment
                 for (_, sa) in singleBestAlignment[0:LIMIT_1]:#sa means single-link alignment
-                    if(na[-1].link[1] >= sa[0].link[1]):#sa actually always have only one element
+                    if(na[-1].link[0] >= sa[0].link[0]):#sa actually always have only one element
                         continue
                     # clear contents of twoLinkPartialAlignment
-                    tgtIndex_a = na[-1].link[1]
-                    tgtIndex_b = sa[0].link[1]
+                    tgtIndex_a = na[-1].link[0]
+                    tgtIndex_b = sa[0].link[0]
                     # Don't consider a pair (tgtIndex_a, tgtIndex_b) if distance between
                     # these indices > 1 (Arabic/English only).
                     # Need to debug feature that is supposed to deal with this naturally.
@@ -630,7 +630,7 @@ class Model(object):
                         if (abs(tgtIndex_b - tgtIndex_a) > 1):
                             continue
 
-                    currentLinks = na + sa 
+                    currentLinks = na + sa
                     scoreVector = svector.Vector()
                     for k, func in enumerate(self.featureTemplates):
                         value_dict = func(self.info, tgtWord, srcWord,
