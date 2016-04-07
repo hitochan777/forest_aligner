@@ -745,13 +745,13 @@ class Model(object):
         # The remainder here is executed when numGoldLinks > 0 and
         # numModelLinks > 0
 
-        inGold = self.gold.links_dict.has_key
+
         numCorrect = 0
 
         for link in edge.links:
-            numCorrect += inGold(link.link)
-        numCorrect = float(numCorrect)
-
+            numCorrect += self.inGold(link) 
+            
+        numCorrect = float(numCorrect) 
         precision = numCorrect / numModelLinks
         recall = numCorrect / numGoldLinks
 
@@ -997,3 +997,16 @@ class Model(object):
         while len(partialAlignments) > 0:
             sortedItems.insert(0, heappop(partialAlignments))
         currentNode.partialAlignments[type] = sortedItems
+
+    def inGold(self, link):
+        if self.gold.links_dict.has_key(link.link):
+            if self.JOINT:
+                if self.gold.links_dict[link.link] == link.linkTag.name: 
+                    return True
+                else:
+                    return False
+            else:
+                return True
+        else:
+            return False
+
