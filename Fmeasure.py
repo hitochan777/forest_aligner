@@ -4,6 +4,7 @@
 ''' Calculate fmeasure and related figures, given two Alignment objects '''
 
 import sys
+import re
 from collections import defaultdict
 from itertools import izip_longest, izip
 
@@ -14,15 +15,18 @@ class Fmeasure:
         self.numMeTotal = 0
         self.numGoldTotal = 0
 
+    def extract(self, links):
+        return links
+        # return list(map(lambda link: re.match(r"(\d+-\d+)(?:\[(.+)\])?", link).group(1) , links))
+
     def accumulate(self, me, gold):
         #Accumulate counts
 
-        meLinks = me.strip().split()
-        goldLinks = gold.strip().split()
+        meLinks = self.extract(me.strip().split())
+        goldLinks = self.extract(gold.strip().split())
 
         self.numMeTotal += len(meLinks)
         self.numGoldTotal += len(goldLinks)
-
         goldLinksDict = dict(izip_longest(goldLinks, [None]))
         for link in meLinks:
             if link in goldLinksDict:
