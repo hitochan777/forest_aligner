@@ -1,3 +1,6 @@
 [submodule "depLM"]
 	path = depLM
 	url = https://github.com/hitochan777/depLM
+[submodule "svector"]
+	path = svector
+	url = git@github.com:hitochan777/svector.git
