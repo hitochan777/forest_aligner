@@ -200,21 +200,21 @@ class Model(object):
 
         # link Tag features
         if self.JOINT:
-            # self.featureTemplates.append(localFeatures.ff_identityTag)
-            # self.featureTemplates.append(localFeatures.ff_jumpDistanceTag)
+            self.featureTemplates.append(localFeatures.ff_identityTag)
+            self.featureTemplates.append(localFeatures.ff_jumpDistanceTag)
             self.featureTemplates.append(localFeatures.ff_probFgivenETag)
             self.featureTemplates.append(localFeatures.ff_probEgivenFTag)
-            # self.featureTemplates.append(localFeatures.ff_tgtTag_srcTagTag)
-            # self.featureTemplates.append(localFeatures.ff_lexprob_zeroTag)
-            # self.featureTemplates.append(localFeatures.ff_distToDiagTag)
-            # self.featureTemplates.append(localFeatures.ff_quote1to1Tag)
-            # self.featureTemplates.append(localFeatures.ff_finalPeriodAlignedToNonPeriodTag)
-            # self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToFinalPeriodTag)
-            # self.featureTemplates.append(localFeatures.ff_nonPeriodLinkedToPeriodTag)
-            # self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToCommaTag)
-            # self.featureTemplates.append(localFeatures.ff_sameWordLinksTag)
-            # self.featureTemplates.append(localFeatures.ff_englishCommaLinkedToNonCommaTag)
-            # self.featureTemplates.append(localFeatures.ff_isPuncAndHasMoreThanOneLinkTag)
+            self.featureTemplates.append(localFeatures.ff_tgtTag_srcTagTag)
+            self.featureTemplates.append(localFeatures.ff_lexprob_zeroTag)
+            self.featureTemplates.append(localFeatures.ff_distToDiagTag)
+            self.featureTemplates.append(localFeatures.ff_quote1to1Tag)
+            self.featureTemplates.append(localFeatures.ff_finalPeriodAlignedToNonPeriodTag)
+            self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToFinalPeriodTag)
+            self.featureTemplates.append(localFeatures.ff_nonPeriodLinkedToPeriodTag)
+            self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToCommaTag)
+            self.featureTemplates.append(localFeatures.ff_sameWordLinksTag)
+            self.featureTemplates.append(localFeatures.ff_englishCommaLinkedToNonCommaTag)
+            self.featureTemplates.append(localFeatures.ff_isPuncAndHasMoreThanOneLinkTag)
 
     ##################################################
     # Inititalize feature function list
@@ -232,6 +232,11 @@ class Model(object):
         self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
         self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_dependencyTreeLM)
         # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_crossb)
+
+        # link Tag features
+        if self.JOINT:
+            pass
+
 
     def align(self):
         """
