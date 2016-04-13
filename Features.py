@@ -696,7 +696,7 @@ class LocalFeatures:
                     for linkTag in LinkTag:
                         feature["%s___%s" % (name, linkTag.name)] = count[linkTag.name]
 
-        return {}
+        return feature
 
     def ff_sameWordLinks(self, info,  fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
         """
