@@ -825,12 +825,43 @@ class NonlocalFeatures:
                 continue
             else:   # fIndex is aligned to at least two different eIndices
                     # compute distance in pairs: if list = [1,2,3], compute dist(1,2), dist(2,3)
-                for i, (eIndex1, _ ) in enumerate(linkedToWords[fIndex]):
-                    for _, (eIndex2, _ ) in enumerate(linkedToWords[fIndex][i+1:i+2]):
+                for i, link1 in enumerate(linkedToWords[fIndex]):
+                    eIndex1 = link1[1]
+                    for _, link2 in enumerate(linkedToWords[fIndex][i+1:i+2]):
+                        eIndex2 = link2[1]
                         dist += max(0.0,abs(eIndex2 - eIndex1)-1)/spanLength
         dist /= len(linkedToWords)
         return {name: dist}
 
+    def ff_nonlocal_horizGridDistanceTag(self, info,  treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
+        """
+        A distance metric quantifying horizontal distance between two links (f, i); (f, j)
+        d((f,i),(f,j)) = j - i
+        """
+        name = self.ff_nonlocal_horizGridDistanceTag.func_name + '_nb'
+        features = defaultdict(float)
+
+        dist = 0.0
+        if len(linkedToWords) == 0:
+            return {name: 0.}
+
+        spanLength = float(srcSpan[1] - srcSpan[0])
+
+        for fIndex in linkedToWords:
+            if len(linkedToWords[fIndex]) < 2:
+                continue
+            else:   # fIndex is aligned to at least two different eIndices
+                    # compute distance in pairs: if list = [1,2,3], compute dist(1,2), dist(2,3)
+                for i, link1 in enumerate(linkedToWords[fIndex]):
+                    eIndex1 = link1[1]
+                    for _, link2 in enumerate(linkedToWords[fIndex][i+1:i+2]):
+                        eIndex2 = link2[1]
+                        features["%s___%s:%s___nb" % (name, link1.linkTag.name, link2.linkTag.name)] += max(0.0,abs(eIndex2 - eIndex1)-1)/spanLength
+
+        for key in features:
+            features[key] /= len(linkedToWords)
+
+        return features 
 
 
     def ff_nonlocal_isPuncAndHasMoreThanOneLink(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
@@ -847,6 +878,24 @@ class NonlocalFeatures:
             if self.isPunctuation(fWord) and len(linkedToWords[fIndex]) > 1:
                 val += 1.0
         return {name: val}
+
+    def ff_nonlocal_isPuncAndHasMoreThanOneLinkTag(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
+        """
+        Binary feature fires when fWord is punctuation token and is aligned
+        to more than one e token. In a good alignment, we expect this to happen
+        rarely or never.
+        """
+        name = self.ff_nonlocal_isPuncAndHasMoreThanOneLinkTag.func_name
+        
+        features = defaultdict(float)
+        for fIndex in linkedToWords:
+            fWord = info['f'][fIndex]
+            if self.isPunctuation(fWord) and len(linkedToWords[fIndex]) > 1:
+                for link in linkedToWords[fIndex]:
+                    features["%s___%s" % (name, link.linkTag.name)] += 1.0/len(linkedToWords[fIndex])
+
+        return features
+
 
 
     def ff_nonlocal_tgtTag_srcTag(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
@@ -907,13 +956,43 @@ class NonlocalFeatures:
                 if len(linkedToWords[fIndex]) < 2:
                     continue
                 eWords = defaultdict(int)
-                for (eIndex, _) in linkedToWords[fIndex]:
+                for link in linkedToWords[fIndex]:
+                    eIndex = link[1]
                     eWord = info['e'][eIndex]
                     eWords[eWord] += 1
                 penalty += sum([count-1 for count in eWords.values()])
                 # Normalize
                 penalty /= (tgtSpan[1] - tgtSpan[0] + 1)
         return {name: penalty}
+
+    def ff_nonlocal_sameWordLinksTag(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
+        """
+        Fire feature when fWord linked to more than one eWord of the same type.
+        """
+        name = self.ff_nonlocal_sameWordLinksTag.func_name
+        features = defaultdict(float)
+        penalty = dict((linkTag.name, 0.0) for linkTag in LinkTag)
+
+        if len(links) > 1:
+            for fIndex in linkedToWords:
+                if len(linkedToWords[fIndex]) < 2:
+                    continue
+
+                eWords = dict((linkTag.name, defaultdict(int)) for linkTag in LinkTag)
+                for link in linkedToWords[fIndex]:
+                    eIndex = link[1]
+                    eWord = info['e'][eIndex]
+                    eWords[link.linkTag.name][eWord] += 1.0
+                    
+                for linkTag in LinkTag:
+                    penalty[linkTag.name] += sum([count - 1 for count in eWords[linkTag.name].values()])
+                    # Normalize
+                    penalty[linkTag.name] /= (tgtSpan[1] - tgtSpan[0] + 1)
+
+        for linkTag in LinkTag:
+            features["%s___%s" % (name, linkTag.name)] = penalty[linkTag.name]
+
+        return features
 
     def ff_nonlocal_stringDistance(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
         dist = defaultdict(float)
@@ -984,8 +1063,10 @@ class NonlocalFeatures:
                 normalizer += listlength - 1
                 for i in xrange(listlength-1):
                     # eIndex1 and eIndex2 will always be the smallest, and second-smallest indices, respectively.
-                    eIndex1, depth1 = linkedToWords_copy[fIndex][0]
-                    eIndex2, depth2 = linkedToWords_copy[fIndex][1]
+                    link1 = linkedToWords_copy[fIndex][0]
+                    link2 = linkedToWords_copy[fIndex][1]
+                    eIndex1, depth1 = link1[1], link1.depth
+                    eIndex2, depth2 = link2[1], link2.depth
                     linkedToWords_copy[fIndex] = linkedToWords_copy[fIndex][1:]
                     dist += depth1 + depth2
         try:
@@ -994,6 +1075,49 @@ class NonlocalFeatures:
         except:
             dist = 0.0
         return {name: dist}
+
+    def ff_nonlocal_treeDistanceTag(self, info, treeNode, edge, links, srcSpan, tgtSpan, linkedToWords, childEdges, diagValues, treeDistValues):
+        """
+        A distance metric quantifying "tree distance" between two links (f, i); (f, j)
+        """
+        name = self.ff_nonlocal_treeDistanceTag.func_name + '_nb'
+        features = defaultdict(float)
+        dist = defaultdict(float) 
+        linkedToWords_copy = dict(linkedToWords)
+        if tgtSpan is None:
+            return {name: 0.}
+        tgtSpanDist = tgtSpan[1] - tgtSpan[0]
+        if tgtSpanDist == 0:
+            return {name: 0.}
+
+        normalizer = 0.0
+        for fIndex in linkedToWords_copy:
+            if len(linkedToWords_copy[fIndex]) < 2:
+                continue
+            else:   
+                # fIndex is aligned to at least two different eIndices
+                # compute distance in pairs: if list = [1,2,3], compute dist(1,2), dist(2,3)
+                # if list has length n, we will have n-1 distance computations
+
+                linkedToWords_copy[fIndex].sort()
+                listlength = len(linkedToWords_copy[fIndex])
+                normalizer += listlength - 1
+                for i in xrange(listlength-1):
+                    # eIndex1 and eIndex2 will always be the smallest, and second-smallest indices, respectively.
+                    link1 = linkedToWords_copy[fIndex][0]
+                    link2 = linkedToWords_copy[fIndex][1]
+                    eIndex1, depth1 = link1[1], link1.depth
+                    eIndex2, depth2 = link2[1], link2.depth
+                    linkedToWords_copy[fIndex] = linkedToWords_copy[fIndex][1:]
+                    dist["%s:%s" % (link1.linkTag.name, link2.linkTag.name)] += depth1 + depth2
+        try:
+            for key in dist:
+                dist[key] /= normalizer
+                features["%s___%s_nb" % (name, key)] = dist[key] 
+        except:
+            pass
+
+        return features 
 
     def isPunctuation(self, string):
         """

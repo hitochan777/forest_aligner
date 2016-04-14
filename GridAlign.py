@@ -228,6 +228,7 @@ class Model(object):
         self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
         self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_hyperEdgeScore)
         self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
+        # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_horizGridDistanceTag)
         # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_stringDistance)
         self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
         self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_dependencyTreeLM)
@@ -235,8 +236,10 @@ class Model(object):
 
         # link Tag features
         if self.JOINT:
-            pass
-
+            self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_isPuncAndHasMoreThanOneLinkTag)
+            self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinksTag)
+            self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistanceTag)
+            self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_horizGridDistanceTag)
 
     def align(self):
         """
@@ -459,8 +462,9 @@ class Model(object):
             linkedIndices = defaultdict(list)
             for link in edge.links:
                 fIndex = link[0]
-                eIndex = link[1]
-                linkedIndices[fIndex].append((eIndex,link.depth))
+                # fIndex = link[0]
+                # eIndex = link[1]
+                linkedIndices[fIndex].append(link)
 
             scoreVector = svector.Vector(edge.scoreVector)
 
