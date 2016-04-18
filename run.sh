@@ -5,7 +5,7 @@ _CORES=`echo "$CPU * 0.8" | bc`
 
 ################### CUSTOMIZABLE #####################
 LINK=2
-ITER=5
+ITER=100
 PARTIAL=-1
 LANG="ja_en"
 export DATA=/windroot/otsuki/data/ASPEC-JE # Absolute path to the base directory which has data
