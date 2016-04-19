@@ -598,7 +598,10 @@ def f1accumulator(hyp, gold):
 
     numCorrect = 0.0
     for link in hyp:
-        numCorrect += ( link.link in gold and gold[link.link] == link.linkTag.name )
+        if FLAGS.joint:
+            numCorrect += ( link.link in gold and gold[link.link] == link.linkTag.name )
+        else:
+            numCorrect += ( link.link in gold )
 
     return numCorrect, numModelLinks, numGoldLinks
 
