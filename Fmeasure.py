@@ -7,23 +7,25 @@ import sys
 import re
 from collections import defaultdict
 from itertools import izip_longest, izip
+import argparse 
 
 class Fmeasure:
+    evaluateMethod = {
+        "link": lambda links: list(map(lambda link: re.match(r"(\d+-\d+)(?:\[(.+)\])?", link).group(1), links)), 
+        "all": lambda links: links
+    }
 
-    def __init__(self):
+    def __init__(self, evaluateMethod = "link"):
         self.correct = 0
         self.numMeTotal = 0
         self.numGoldTotal = 0
-
-    def extract(self, links):
-        return links
-        # return list(map(lambda link: re.match(r"(\d+-\d+)(?:\[(.+)\])?", link).group(1) , links))
+        self.evaluateMethod = Fmeasure.evaluateMethod[evaluateMethod]
 
     def accumulate(self, me, gold):
         #Accumulate counts
 
-        meLinks = self.extract(me.strip().split())
-        goldLinks = self.extract(gold.strip().split())
+        meLinks = self.evaluateMethod(me.strip().split())
+        goldLinks = self.evaluateMethod(gold.strip().split())
 
         self.numMeTotal += len(meLinks)
         self.numGoldTotal += len(goldLinks)
@@ -104,16 +106,21 @@ class Fmeasure:
         self.numMeTotal = 0.0
 
 
-def score(file1, file2):
+def score(file1, file2, evaluateMethod):
 
-    fmeasure = Fmeasure()
+    fmeasure = Fmeasure(evaluateMethod)
     for (me_str, gold_str) in izip(open(file1, 'r'), open(file2, 'r')):
         fmeasure.accumulate(me_str, gold_str)
+
     fmeasure.report()
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        sys.stderr.write("Syntax: %s <ALIGNMENT> <GOLD_ALIGNMENT>\n" % (sys.argv[0]))
-        sys.exit(1)
-    score(sys.argv[1], sys.argv[2])
+    parser = argparse.ArgumentParser(description="""
+""")
+    parser.add_argument('alignment', type=str, help='Alignment')
+    parser.add_argument('gold_alignment', type=str, help='Gold alignment')
+    parser.add_argument('--evaluate', type=str, choices=["link", "all"], default="link", help='Gold alignment')
+
+    args = parser.parse_args()
+    score(args.alignment, args.gold_alignment, args.evaluate)
