@@ -299,37 +299,44 @@ class LocalFeatures:
         """
         Compute targetTag, srcTag indicator features.
         We also lexicalize by the eWord.
+        Uncomment value3 below to include lexicalized features by fword.
         """
         name = self.ff_tgtTag_srcTagTag.func_name
 
-        if info['ftree'] is None:
-            return {}
-        if len(info['ftree'].terminals) == 0:
-            return {}
-        if len(links) == 0:
+        if info['ftree'] is None or len(info['ftree'].terminals) == 0:
             return {}
 
         tgtTag = currentNode.getPOS()
         srcTags = ""
+        values = defaultdict(float) 
+        probDictList = [defaultdict(float), defaultdict(float)]
 
-        values = {}
-        pos_count = defaultdict(float)
+        if len(links) == 0:
+            return {}
+        else:
+            for i ,link in enumerate(links):
+                findex = link[0]
+                probDictList[(i+1)%2] = defaultdict(float)
+                nodes =  info['ftree'].getNodesByIndex(findex)
+                pos_count = defaultdict(float)
+                for node in nodes:
+                    pos_count["%s(%s)" % (node.getPOS(), link.linkTag.name)] += 1.0/len(nodes)
 
-        for i ,link in enumerate(links):
-            findex = link[0]
-            nodes = info['ftree'].getNodesByIndex(findex)
-            for node in nodes:
-                pos_count[(node.getPOS(), link.linkTag.name)] += 1.0/len(nodes)
+                if len(probDictList[i%2])==0:
+                    probDictList[(i+1)%2] = pos_count
+                else:
+                    for srcTags, prob in probDictList[i%2].iteritems():
+                        for srcTag in pos_count:
+                            probDictList[(i+1)%2]["%s,%s" % (srcTags, srcTag)] = prob*pos_count[srcTag]
 
-        for key in pos_count:
-            pos_count[key] /= len(links)
-
-        for (srcTag, linkTag), prob in pos_count.iteritems():
-            values["%s___%s:%s___%s" % (name, tgtTag, srcTag, linkTag)] = prob
-            values["%s___%s(%s):%s___%s"% (name, tgtTag, eWord, srcTag, linkTag)] = prob
+            for srcTags, prob in probDictList[len(links)%2].iteritems():
+                values["%s___%s:%s" % (name, tgtTag, srcTags)] = prob
+                values["%s___%s(%s):%s"% (name, tgtTag, eWord, srcTags)] = prob
+                # Uncomment to add feature lexicalized by fword
+                # values["%s___%s:%s(%s)"% (name, tgtTag, srcTags, fWord)] = prob
 
         return values
- 
+
     def ff_englishCommaLinkedToNonComma(self, info,  fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
         """
         Binary feature fires if eWord ',' is linked to a non-comma.
@@ -492,20 +499,22 @@ class LocalFeatures:
             pos = currentNode.getPOS()
 
         name = self.ff_jumpDistanceTag.func_name + '___' + pos
-        values = defaultdict(float)
+        features = defaultdict(float)
+        maxdiff = defaultdict(float)
 
-        maxdiff = 0
         if len(links) <= 1:
             return {name: 0}
 
-        delta = 1.0 / len(links)
         for i, link1 in enumerate(links):
             for link2 in links[i+1:i+2]:
                 diff = abs(link2[0]-link1[0])
-                diff = min(diff, 5)
-                values["%s___%d(%s:%s)___nb" % (name, diff, link1.linkTag.name, link2.linkTag.name)] += delta 
+                key = "%s:%s" % (link1.linkTag.name, link2.linkTag.name)
+                maxdiff[key] = max(maxdiff[key], diff)
 
-        return values
+        for key in maxdiff: 
+            features["%s___%d(%s)___nb" % (name, min(maxdiff[key], 5), key)] = 1 
+
+        return features 
 
 
     def ff_lexprob_zero(self, info,  fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
@@ -557,14 +566,13 @@ class LocalFeatures:
         val = 0.0
         numLinks = len(links)
         if numLinks > 0:
-            delta = 1.0/numLinks
             for link in links:
                 fWord = info['f'][link[0]]
                 eWord = info['e'][link[1]]
                 val = (self.pef.get(fWord, {}).get(eWord, 0.0) +
                       self.pfe.get(eWord, {}).get(fWord, 0.0))
                 if val == 0:
-                    features["%s___%s___nb"  % (name, link.linkTag.name)] += delta
+                    features["%s___%s___nb"  % (name, link.linkTag.name)] = 1.0
 
         return features
 
@@ -590,12 +598,11 @@ class LocalFeatures:
         if len(links) == 0:
             return features
 
-        delta = 1.0/len(links)
         if eWord != '.':
             for link in links:
                 fword = info['f'][link[0]]
                 if fword == '.':
-                    features["%s___%s" % (name, link.linkTag.name)] += delta
+                    features["%s___%s" % (name, link.linkTag.name)] = 1.0
 
         return features
 
@@ -681,20 +688,15 @@ class LocalFeatures:
         feature = defaultdict(float)
 
         if len(links) > 1:
-            linkedToWords = defaultdict(int)
-            for link in links:
-                if count[link.linkTag.name] < 5:
-                    count[link.linkTag.name] += 1               
-
+            linkedToWords = defaultdict(lambda: defaultdict(int))
             for link in links:
                 fIndex = link[0]
                 eIndex = link[1]
                 fWord = info['f'][fIndex]
                 eWord = info['e'][eIndex]
-                linkedToWords[fWord] += 1
-                if linkedToWords[fWord] > 1:
-                    for linkTag in LinkTag:
-                        feature["%s___%s" % (name, linkTag.name)] = count[linkTag.name]
+                linkedToWords[fWord][link.linkTag.name] += 1
+                if linkedToWords[fWord][link.linkTag.name] > 1:
+                    feature["%s___%s" % (name, link.linkTag.name)] = 1 
 
         return feature
 
