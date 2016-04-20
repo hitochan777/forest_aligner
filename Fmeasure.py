@@ -9,10 +9,22 @@ from collections import defaultdict
 from itertools import izip_longest, izip
 import argparse 
 
+def sure(links):
+    result = []
+    for link in links:
+        obj = re.match(r"(\d+-\d+)(?:\[(.+)\])?", link)
+        alignment = obj.group(1)
+        tag = obj.group(2)
+        if tag == "sure":
+            result.append(alignment)
+
+    return result 
+
 class Fmeasure:
     evaluateMethod = {
         "link": lambda links: list(map(lambda link: re.match(r"(\d+-\d+)(?:\[(.+)\])?", link).group(1), links)), 
-        "all": lambda links: links
+        "all": lambda links: links,
+        "sure": sure
     }
 
     def __init__(self, evaluateMethod = "link"):
@@ -20,6 +32,8 @@ class Fmeasure:
         self.numMeTotal = 0
         self.numGoldTotal = 0
         self.evaluateMethod = Fmeasure.evaluateMethod[evaluateMethod]
+
+
 
     def accumulate(self, me, gold):
         #Accumulate counts
@@ -120,7 +134,7 @@ if __name__ == "__main__":
 """)
     parser.add_argument('alignment', type=str, help='Alignment')
     parser.add_argument('gold_alignment', type=str, help='Gold alignment')
-    parser.add_argument('--evaluate', type=str, choices=["link", "all"], default="link", help='Gold alignment')
+    parser.add_argument('--evaluate', type=str, choices=["link", "all", "sure"], default="link", help='Gold alignment')
 
     args = parser.parse_args()
     score(args.alignment, args.gold_alignment, args.evaluate)
