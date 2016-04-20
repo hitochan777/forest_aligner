@@ -9,18 +9,17 @@ from collections import defaultdict
 from itertools import izip_longest, izip
 import argparse 
 
-def sure(links):
-    result = []
-    for link in links:
-        obj = re.match(r"(\d+-\d+)(?:\[(.+)\])?", link)
-        alignment = obj.group(1)
-        tag = obj.group(2)
-        if tag == "sure":
-            result.append(alignment)
-
-    return result 
-
 class Fmeasure:
+    def sure(links):
+        dic = {}
+        for link in links:
+            obj = re.match(r"(?P<link>\d+-\d+)(?:\[(?P<linktag>.+)\])?", link)
+            linkStr = obj.group("link")
+            dic[linkStr] = obj.group("linktag")
+
+        return dic
+
+
     evaluateMethod = {
         "link": lambda links: list(map(lambda link: re.match(r"(\d+-\d+)(?:\[(.+)\])?", link).group(1), links)), 
         "all": lambda links: links,
@@ -31,23 +30,32 @@ class Fmeasure:
         self.correct = 0
         self.numMeTotal = 0
         self.numGoldTotal = 0
-        self.evaluateMethod = Fmeasure.evaluateMethod[evaluateMethod]
-
+        self.evaluateMethod = evaluateMethod
 
 
     def accumulate(self, me, gold):
         #Accumulate counts
 
-        meLinks = self.evaluateMethod(me.strip().split())
-        goldLinks = self.evaluateMethod(gold.strip().split())
+        meLinks = Fmeasure.evaluateMethod[self.evaluateMethod](me.strip().split())
+        goldLinks = Fmeasure.evaluateMethod[self.evaluateMethod](gold.strip().split())
 
         self.numMeTotal += len(meLinks)
         self.numGoldTotal += len(goldLinks)
-        goldLinksDict = dict(izip_longest(goldLinks, [None]))
+        goldLinksDict = goldLinks
+        if type(goldLinks) == list:
+            goldLinksDict = dict(izip_longest(goldLinks, [None]))
+        else: # type is dict
+            if self.evaluateMethod == "sure":
+                self.numGoldTotal -= goldLinks.values().count("possible")
+
         for link in meLinks:
             if link in goldLinksDict:
-                self.correct += 1.0
+                if self.evaluateMethod == "sure":
+                    if goldLinksDict[link] == "possible":
+                        self.numMeTotal -= 1
+                        self.correct -= 1.0
 
+                self.correct += 1.0
 
     def accumulate_o(self, edge, goldmatrix):
 
