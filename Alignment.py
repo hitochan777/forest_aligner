@@ -13,7 +13,7 @@ def readAlignmentString(str, inverse = False):
     for link in str.split():
         try:
             matchObj = re.match(r"(\d+)-(\d+)(?:\[(.+)\])?", link)
-            f, e, linkTag = matchObj.groups() 
+            f, e, linkTag = matchObj.groups()
             if inverse:
                 f, e = e, f
 
