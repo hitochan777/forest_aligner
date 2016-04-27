@@ -30,8 +30,8 @@ def parser(string):
     sent_len = 0
     for line in buf:
         if line.startswith("#"):
-            p = re.compile('#\s*ID=(\d+)')
-            sentence_ID= int(p.match(line).group(1))
+            p = re.compile('#\s*ID=(\S+)')
+            sentence_ID= p.match(line).group(1)
             continue
         if not line.strip():
             break
