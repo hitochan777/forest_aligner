@@ -16,16 +16,16 @@ WEIGHTS=k${K}.$LANGPAIR.$MAXEPOCH.$PARTIAL.$LINK.weights-$H
 NAME=$WEIGHTS.test-output.a
 
 nice -19 mpiexec -n $NUMCPUS $PYTHON ./aligner.py \
-  --f $DATA/test.f \
-  --e $DATA/test.e \
-  --ftrees $SOURCE_FOREST_DATA/test.f.forest \
-  --etrees $TARGET_FOREST_DATA/test.e.forest \
-  --evcb $DATA/test.e.vcb \
-  --fvcb $DATA/test.f.vcb \
+  --f $DATA/test.zh \
+  --e $DATA/test.en \
+  --ftrees $SOURCE_FOREST_DATA/test.zh.forest \
+  --etrees $TARGET_FOREST_DATA/test.en.forest \
+  --evcb $DATA/test.en.vcb \
+  --fvcb $DATA/test.zh.vcb \
   --pef $DATA/GIZA++.m4.pef  \
   --pfe $DATA/GIZA++.m4.pfe \
   --a1 $DATA/test.m4gdfa.e-f \
-  --a2 $DATA/test.nakazawa.e-f.s \
+  --a2 $DATA/test.nakazawa.e-f.tagged \
   --align \
   --langpair $LANGPAIR \
   --weights $WEIGHTS \
@@ -34,7 +34,7 @@ nice -19 mpiexec -n $NUMCPUS $PYTHON ./aligner.py \
   --binarize=False \
   --decoding_path_out path_out_test  \
   --out $NAME \
-  --joint=True \
+  --joint=False \
   --k $K
 
-./Fmeasure.py $NAME $DATA/test.a.tagged
+./Fmeasure.py $NAME $DATA/test.a.sp.tagged
