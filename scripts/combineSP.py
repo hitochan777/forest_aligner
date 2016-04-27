@@ -3,29 +3,38 @@
 import argparse
 
 def combineLine(sline, spline):
+    if sline == "":
+        sset = set()
+    else:
+        sset = set(sline.split(" "))
+
+    if spline == "":
+        spset = set()
+    else:
+        spset = set(spline.split(" "))
+
     result = []
-    sset = set(sline.split(" "))
-    spset = set(spline.split(" "))
     pset = spset - sset
     for element in sset:
-        result.append("%s[%s]" % (element, "S"))
+        result.append("%s[%s]" % (element, "sure"))
 
     for element in pset:
-        result.append("%s[%s]" % (element, "P"))
+        result.append("%s[%s]" % (element, "possible"))
 
     return " ".join(result)
 
 def combine(sure, surePossible):
     with open(sure, "r") as s, open(surePossible, "r") as sp:
         while True:
-            sline = s.readline().strip()
-            spline = sp.readline().strip()
-            spset = set()
+            sline = s.readline()
+            spline = sp.readline()
             if sline == "" or spline == "":
                 break
 
+            sline = sline.strip()
+            spline = spline.strip()
+            spset = set()
             print(combineLine(sline, spline))
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="""
