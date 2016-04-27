@@ -32,6 +32,7 @@ import tempfile
 import time
 import codecs
 from heapq import heappush, heapify, heappop, heappushpop
+import logging
 
 import Alignment
 import Fmeasure
@@ -132,7 +133,7 @@ def readPef(file, e_vcb, f_vcb):
     """
     pef = defaultdict(dict)
     for line in file:
-        (eword, fword, prob) = line.split()
+        (eword, fword, prob) = line.split(" ")
         # Filter by vocabulary
         # Do not store tuples that we will never use
         if e_vcb.has_key(eword) and f_vcb.has_key(fword):
@@ -147,7 +148,7 @@ def readPfe(file, e_vcb, f_vcb):
     """
     pfe = defaultdict(dict)
     for line in file:
-        (fword, eword, prob) = line.split()
+        (fword, eword, prob) = line.split(" ")
         # Filter by vocabulary
         # Do not store tuples that we will never use
         if e_vcb.has_key(eword) and f_vcb.has_key(fword):
