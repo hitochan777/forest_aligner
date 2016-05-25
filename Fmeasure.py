@@ -47,13 +47,14 @@ class Fmeasure:
         else: # type is dict
             if self.evaluateMethod == "sure":
                 self.numGoldTotal -= goldLinks.values().count("possible")
+                if type(meLinks) == dict: 
+                    self.numMeTotal -= meLinks.values().count("possible")
 
         for link in meLinks:
             if link in goldLinksDict:
                 if self.evaluateMethod == "sure":
-                    if goldLinksDict[link] == "possible":
-                        self.numMeTotal -= 1
-                        self.correct -= 1.0
+                    if (type(meLinks) == dict and meLinks[link] == "possible") or goldLinksDict[link] == "possible":
+                        continue
 
                 self.correct += 1.0
 
