@@ -6,7 +6,7 @@ _CORES=`echo "$CPU * 0.8" | bc`
 ################### CUSTOMIZABLE #####################
 LINK=2
 ITER=100
-PARTIAL=300
+PARTIAL=-1
 LANG="ja_en"
 export DATA=/windroot/otsuki/data/LDC2012/LDC2012-SP # Absolute path to the base directory which has data
 export TARGET_FOREST_DATA=$DATA/YaraParser/forest/1best

@@ -16,22 +16,22 @@ NAME=k${K}.$LANGPAIR.$MAXEPOCH.$PARTIAL.$LINK
 nice -15 mpiexec -n $NUMCPUS $PYTHON ./aligner.py \
   --f $DATA/train.zh \
   --e $DATA/train.en \
-  --gold $DATA/train.a.sp.tagged \
+  --gold $DATA/train.a.s.tagged \
   --ftrees $SOURCE_FOREST_DATA/train.zh.forest \
   --etrees $TARGET_FOREST_DATA/train.en.forest \
   --fdev $DATA/dev.zh \
   --edev $DATA/dev.en \
   --ftreesdev $SOURCE_FOREST_DATA/dev.zh.forest \
   --etreesdev $TARGET_FOREST_DATA/dev.en.forest \
-  --golddev $DATA/dev.a.sp.tagged \
+  --golddev $DATA/dev.a.s.tagged \
   --evcb $DATA/en.vcb \
   --fvcb $DATA/zh.vcb \
   --pef $DATA/GIZA++.m4.pef \
   --pfe $DATA/GIZA++.m4.pfe \
   --a1 $DATA/train.m4gdfa.e-f \
-  --a2 $DATA/train.nakazawa.e-f.tagged \
+  --a2 $DATA/train.nakazawa.e-f.s.tagged \
   --a1_dev $DATA/dev.m4gdfa.e-f \
-  --a2_dev $DATA/dev.nakazawa.e-f.tagged \
+  --a2_dev $DATA/dev.nakazawa.e-f.s.tagged \
   --langpair $LANGPAIR \
   --partial $PARTIAL \
   --maxepochs $MAXEPOCH \
