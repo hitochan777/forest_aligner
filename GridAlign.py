@@ -31,6 +31,7 @@ import Queue
 from collections import defaultdict
 import collections
 import copy
+import logging
 
 from DependencyForestHelper import *
 from Alignment import readAlignmentString
@@ -40,6 +41,8 @@ import svector
 import ScoreFunctions
 from AlignmentLink import AlignmentLink
 from LinkTag import LinkTag
+
+logging.basicConfig()
 
 class Model(object):
     """
@@ -110,6 +113,7 @@ class Model(object):
         self.e = e
         self.lenE = len(e)
         self.lenF = len(f)
+
         self.nto1 = FLAGS.nto1
 
         # GIZA++ alignments
@@ -171,6 +175,11 @@ class Model(object):
         self.info['e'] = self.e
         self.info['etree'] = self.etree
         self.info['ftree'] = self.ftree
+
+        # logger 
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+
 
     ########################################
     # Initialize feature function list
@@ -246,24 +255,42 @@ class Model(object):
         """
         Main wrapper for performing alignment.
         """
+        self.logger.debug("Start processing %d-th sentence" % (int(self.id) + 1))
         ##############################################
         # Do the alignment, traversing tree bottom up.
         ##############################################
+        status = True
         self.bottom_up_visit()
         # *DONE* Now finalize everything; final bookkeeping.
+        
+        try:
+            self.hyp = self.etree.partialAlignments["hyp"][0]
+        except IndexError:
+            self.logger.info("Ignoring %d-th sentence due to malformed forest" % (int(self.id) + 1))
+            self.etree.partialAlignments["hyp"].append(PartialGridAlignment())
+            self.etree.partialAlignments["oracle"] = PartialGridAlignment()
+            self.hyp = self.etree.partialAlignments["hyp"][0]
+            status = False
 
-        self.hyp = self.etree.partialAlignments["hyp"][0]
         if self.COMPUTE_HOPE:
             self.oracle = self.etree.partialAlignments["oracle"][0]
         elif self.COMPUTE_ORACLE:
             self.oracle = self.etree.partialAlignments["oracle"]
         if self.SHOW_DECODING_PATH is not None:
             self.decodingPath += "=================Model Decoding Path===================\n"
-            self.decodingPath += self.hyp.decodingPath.children[0].getStringifiedTree()+"\n"
+            if status:
+                self.decodingPath += self.hyp.decodingPath.children[0].getStringifiedTree()+"\n"
+            else:
+                self.decodingPath += "Ignored"
 
             if self.COMPUTE_HOPE or self.COMPUTE_ORACLE:
                 self.decodingPath += "================Oracle Decoding Path===================\n"
-                self.decodingPath += self.oracle.decodingPath.children[0].getStringifiedTree()+"\n"
+                if status:
+                    self.decodingPath += self.oracle.decodingPath.children[0].getStringifiedTree()+"\n"
+                else:
+                    self.decodingPath += "Ignored"
+
+        self.logger.debug("End processing %d-th sentence" % (int(self.id) + 1))
 
     def bottom_up_visit(self):
         """
@@ -291,6 +318,8 @@ class Model(object):
         # for terminal in sorted(list(self.etree.getTerminals()),key=lambda x: x.data["word_id"]):
         for terminal in self.etree.getTerminals():
             queue.append(terminal)
+
+
         # Visit each node in the queue and put parent
         # in queue if not there already
         # Parent is there already if it is the last one in the queue
@@ -308,6 +337,8 @@ class Model(object):
                 self.terminal_operation(currentNode)
             if len(currentNode.hyperEdges) > 0:
                 self.nonterminal_operation_cube(currentNode)
+
+        return
 
     ################################################################################
     # nonterminal_operation_cube(self, currentNode):
