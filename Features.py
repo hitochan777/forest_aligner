@@ -66,8 +66,6 @@ class LocalFeatures:
             if link.link not in info['inverse'] or info["inverse"][link.link] != link.linkTag.name:
                 inverse[link.linkTag.name] = False
 
-        print inverse
-
         # Encode results as features
         for linkTag, ok in inverse.iteritems():
             if ok:
