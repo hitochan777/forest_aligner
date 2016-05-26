@@ -35,6 +35,63 @@ class LocalFeatures:
                        'jun.':True,'jul.':True,'aug.':True,'sep.':True,
                        'nov.':True,'dec.':True}
 
+    def ff_thirdPartyTag(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
+        """
+        Fire feature if links appear in third-party alignments.
+        """
+        values = { }
+        if len(links) == 0:
+            return values
+
+        name = self.ff_thirdPartyTag.func_name
+        a1 = {} 
+        a2 = {} 
+        inverse = {}
+
+        for link in links:
+            if link.linkTag.name not in a1:
+                a1[link.linkTag.name] = True 
+
+            if link.linkTag.name not in a2:
+                a2[link.linkTag.name] = True 
+
+            if link.linkTag.name not in inverse:
+                inverse[link.linkTag.name] = True
+
+            if link.link not in info['a1'] or info["a1"][link.link] != link.linkTag.name:
+                a1[link.linkTag.name] = False
+
+            if link.link not in info['a2'] or info["a2"][link.link] != link.linkTag.name:
+                a2[link.linkTag.name] = False
+            if link.link not in info['inverse'] or info["inverse"][link.link] != link.linkTag.name:
+                inverse[link.linkTag.name] = False
+
+        print inverse
+
+        # Encode results as features
+        for linkTag, ok in inverse.iteritems():
+            if ok:
+                values[name+'_inv___%s' % (linkTag,)] = 1
+                values[name+'_inv_%s___%s' % (currentNode.getPOS(), linkTag)] = 1
+                values[name+'_inv_(%s)___%s' % (currentNode.data["surface"], linkTag)] = 1
+                values[name+'_inv_%s(%s)___%s' % (currentNode.getPOS(), currentNode.data["surface"], linkTag)] = 1
+
+        for linkTag, ok in a1.iteritems(): 
+            if ok:
+                values[name+'_a1___%s' % (linkTag,)] = 1
+                values[name+'_a1_%s___%s' % (currentNode.getPOS(), linkTag)] = 1
+                values[name+'_a1_(%s)___%s' % (currentNode.data["surface"], linkTag)] = 1
+                values[name+'_a1_%s(%s)___%s' % (currentNode.getPOS(), currentNode.data["surface"], linkTag)] = 1
+
+        for linkTag, ok in a2.iteritems():
+            if ok:
+                values[name+'_a2___%s' % (linkTag,)] = 1
+                values[name+'_a2_%s___%s' % (currentNode.getPOS(), linkTag)] = 1
+                values[name+'_a2_(%s)___%s' % (currentNode.data["surface"], linkTag)] = 1
+                values[name+'_a2_%s(%s)___%s' % (currentNode.getPOS(), currentNode.data["surface"], linkTag)] = 1
+
+        return values
+
     def ff_thirdParty(self, info, fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
         """
         Fire feature if links appear in third-party alignments.
@@ -74,6 +131,7 @@ class LocalFeatures:
             values[name+'_a2_%s(%s)' % (currentNode.getPOS(), currentNode.data["surface"])] = 1
 
         return values
+
 
     def ff_probFgivenE(self, info,  fWord, eWord, fIndex, eIndex, links, diagValues, currentNode = None):
         """
