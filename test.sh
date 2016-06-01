@@ -25,7 +25,7 @@ nice -19 mpiexec -n $NUMCPUS $PYTHON ./aligner.py \
   --pef $DATA/GIZA++.m4.pef  \
   --pfe $DATA/GIZA++.m4.pfe \
   --a1 $DATA/test.m4gdfa.e-f \
-  --a2 $DATA/test.nakazawa.e-f.s.tagged \
+  --a2 $DATA/test.nakazawa.e-f.sp.tagged \
   --align \
   --langpair $LANGPAIR \
   --weights $WEIGHTS \
@@ -34,7 +34,7 @@ nice -19 mpiexec -n $NUMCPUS $PYTHON ./aligner.py \
   --binarize=False \
   --decoding_path_out path_out_test  \
   --out $NAME \
-  --joint=False \
+  --joint=True \
   --k $K
 
-./Fmeasure.py $NAME $DATA/test.a.s.tagged
+./Fmeasure.py $NAME $DATA/test.a.sp.tagged
