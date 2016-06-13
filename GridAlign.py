@@ -31,6 +31,7 @@ import Queue
 from collections import defaultdict
 import collections
 import copy
+import logging
 
 from DependencyForestHelper import *
 from Alignment import readAlignmentString
@@ -39,6 +40,9 @@ import Fmeasure
 import svector
 import ScoreFunctions
 from AlignmentLink import AlignmentLink
+from LinkTag import LinkTag
+
+logging.basicConfig()
 
 class Model(object):
     """
@@ -76,6 +80,7 @@ class Model(object):
         self.oracleScoreFunc = ScoreFunctions.default
         self.DO_RESCORE = FLAGS.rescore
         self.DECODING = False
+        self.JOINT = FLAGS.joint
         if DECODING:
             self.COMPUTE_1BEST = True
             self.DECODING = True
@@ -108,6 +113,7 @@ class Model(object):
         self.e = e
         self.lenE = len(e)
         self.lenF = len(f)
+
         self.nto1 = FLAGS.nto1
 
         # GIZA++ alignments
@@ -170,6 +176,11 @@ class Model(object):
         self.info['etree'] = self.etree
         self.info['ftree'] = self.ftree
 
+        # logger 
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+
+
     ########################################
     # Initialize feature function list
     ########################################
@@ -177,6 +188,7 @@ class Model(object):
         """
         Incorporate the following "local" features into our model.
         """
+        # link features
         self.featureTemplates.append(localFeatures.ff_identity)
         self.featureTemplates.append(localFeatures.ff_jumpDistance)
         self.featureTemplates.append(localFeatures.ff_finalPeriodAlignedToNonPeriod)
@@ -193,7 +205,27 @@ class Model(object):
         self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToFinalPeriod)
         self.featureTemplates.append(localFeatures.ff_tgtTag_srcTag)
         self.featureTemplates.append(localFeatures.ff_thirdParty)
+        self.featureTemplates.append(localFeatures.ff_sameWordLinks)
         self.featureTemplates.append(localFeatures.ff_continuousAlignment)
+
+        # link Tag features
+        if self.JOINT:
+            self.featureTemplates.append(localFeatures.ff_identityTag)
+            self.featureTemplates.append(localFeatures.ff_jumpDistanceTag)
+            self.featureTemplates.append(localFeatures.ff_probFgivenETag)
+            self.featureTemplates.append(localFeatures.ff_probEgivenFTag)
+            self.featureTemplates.append(localFeatures.ff_tgtTag_srcTagTag)
+            self.featureTemplates.append(localFeatures.ff_lexprob_zeroTag)
+            self.featureTemplates.append(localFeatures.ff_distToDiagTag)
+            self.featureTemplates.append(localFeatures.ff_quote1to1Tag)
+            self.featureTemplates.append(localFeatures.ff_finalPeriodAlignedToNonPeriodTag)
+            self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToFinalPeriodTag)
+            self.featureTemplates.append(localFeatures.ff_nonPeriodLinkedToPeriodTag)
+            self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToCommaTag)
+            # self.featureTemplates.append(localFeatures.ff_thirdPartyTag)
+            self.featureTemplates.append(localFeatures.ff_sameWordLinksTag)
+            self.featureTemplates.append(localFeatures.ff_englishCommaLinkedToNonCommaTag)
+            self.featureTemplates.append(localFeatures.ff_isPuncAndHasMoreThanOneLinkTag)
 
     ##################################################
     # Inititalize feature function list
@@ -207,33 +239,59 @@ class Model(object):
         self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinks)
         self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_hyperEdgeScore)
         self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistance)
+        # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_horizGridDistanceTag)
         # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_stringDistance)
         self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_tgtTag_srcTag)
         self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_dependencyTreeLM)
         # self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_crossb)
 
+        # link Tag features
+        if self.JOINT:
+            self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_isPuncAndHasMoreThanOneLinkTag)
+            self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_sameWordLinksTag)
+            self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_treeDistanceTag)
+            self.featureTemplates_nonlocal.append(nonlocalFeatures.ff_nonlocal_horizGridDistanceTag)
+
     def align(self):
         """
         Main wrapper for performing alignment.
         """
+        self.logger.debug("Start processing %d-th sentence" % (int(self.id) + 1))
         ##############################################
         # Do the alignment, traversing tree bottom up.
         ##############################################
+        status = True
         self.bottom_up_visit()
         # *DONE* Now finalize everything; final bookkeeping.
+        
+        try:
+            self.hyp = self.etree.partialAlignments["hyp"][0]
+        except IndexError:
+            self.logger.info("Ignoring %d-th sentence due to malformed forest" % (int(self.id) + 1))
+            self.etree.partialAlignments["hyp"].append(PartialGridAlignment())
+            self.etree.partialAlignments["oracle"] = PartialGridAlignment()
+            self.hyp = self.etree.partialAlignments["hyp"][0]
+            status = False
 
-        self.hyp = self.etree.partialAlignments["hyp"][0]
         if self.COMPUTE_HOPE:
             self.oracle = self.etree.partialAlignments["oracle"][0]
         elif self.COMPUTE_ORACLE:
             self.oracle = self.etree.partialAlignments["oracle"]
         if self.SHOW_DECODING_PATH is not None:
             self.decodingPath += "=================Model Decoding Path===================\n"
-            self.decodingPath += self.hyp.decodingPath.children[0].getStringifiedTree()+"\n"
+            if status:
+                self.decodingPath += self.hyp.decodingPath.children[0].getStringifiedTree()+"\n"
+            else:
+                self.decodingPath += "Ignored"
 
             if self.COMPUTE_HOPE or self.COMPUTE_ORACLE:
                 self.decodingPath += "================Oracle Decoding Path===================\n"
-                self.decodingPath += self.oracle.decodingPath.children[0].getStringifiedTree()+"\n"
+                if status:
+                    self.decodingPath += self.oracle.decodingPath.children[0].getStringifiedTree()+"\n"
+                else:
+                    self.decodingPath += "Ignored"
+
+        self.logger.debug("End processing %d-th sentence" % (int(self.id) + 1))
 
     def bottom_up_visit(self):
         """
@@ -261,6 +319,8 @@ class Model(object):
         # for terminal in sorted(list(self.etree.getTerminals()),key=lambda x: x.data["word_id"]):
         for terminal in self.etree.getTerminals():
             queue.append(terminal)
+
+
         # Visit each node in the queue and put parent
         # in queue if not there already
         # Parent is there already if it is the last one in the queue
@@ -278,6 +338,8 @@ class Model(object):
                 self.terminal_operation(currentNode)
             if len(currentNode.hyperEdges) > 0:
                 self.nonterminal_operation_cube(currentNode)
+
+        return
 
     ################################################################################
     # nonterminal_operation_cube(self, currentNode):
@@ -433,8 +495,9 @@ class Model(object):
             linkedIndices = defaultdict(list)
             for link in edge.links:
                 fIndex = link[0]
-                eIndex = link[1]
-                linkedIndices[fIndex].append((eIndex,link.depth))
+                # fIndex = link[0]
+                # eIndex = link[1]
+                linkedIndices[fIndex].append(link)
 
             scoreVector = svector.Vector(edge.scoreVector)
 
@@ -542,41 +605,46 @@ class Model(object):
         singleBestAlignment = []
         alignmentList = []
         for tgtIndex, tgtWord in enumerate(tgtWordList):
-            currentLinks = [AlignmentLink((tgtIndex, srcIndex))]
-            scoreVector = svector.Vector()
+            tags = [LinkTag.sure]
+            if self.JOINT:
+               tags = LinkTag
 
-            for k, func in enumerate(self.featureTemplates):
-                value_dict = func(self.info, tgtWord, srcWord, tgtIndex, srcIndex, currentLinks, self.diagValues, currentNode)
-                for name, value in value_dict.iteritems():
-                    if value != 0:
-                        scoreVector[name] += value
+            for linkTag in tags:
+                currentLinks = [AlignmentLink((tgtIndex, srcIndex), linkTag)]
+                scoreVector = svector.Vector()
 
-            # Keep track of scores for all 1-link partial alignments
-            score = scoreVector.dot(self.weights)
-            singleBestAlignment.append((score, [tgtIndex]))
+                for k, func in enumerate(self.featureTemplates):
+                    value_dict = func(self.info, tgtWord, srcWord, tgtIndex, srcIndex, currentLinks, self.diagValues, currentNode)
+                    for name, value in value_dict.iteritems():
+                        if value != 0:
+                            scoreVector[name] += value
 
-            singleLinkPartialAlignment = PartialGridAlignment()
-            singleLinkPartialAlignment.decodingPath.data = currentNode.data
-            singleLinkPartialAlignment.score = score
-            singleLinkPartialAlignment.scoreVector = scoreVector
-            singleLinkPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
-            singleLinkPartialAlignment.links = currentLinks
+                # Keep track of scores for all 1-link partial alignments
+                score = scoreVector.dot(self.weights)
+                singleBestAlignment.append((score, currentLinks))
 
-            self.addPartialAlignment(partialAlignments, singleLinkPartialAlignment, self.BEAM_SIZE)
+                singleLinkPartialAlignment = PartialGridAlignment()
+                singleLinkPartialAlignment.decodingPath.data = currentNode.data
+                singleLinkPartialAlignment.score = score
+                singleLinkPartialAlignment.scoreVector = scoreVector
+                singleLinkPartialAlignment.scoreVector_local = svector.Vector(scoreVector)
+                singleLinkPartialAlignment.links = currentLinks
 
-            if not self.DECODING:
-                singleLinkPartialAlignment.fscore = self.ff_fscore(singleLinkPartialAlignment, span)
-
-            if self.COMPUTE_ORACLE:
-                if singleLinkPartialAlignment.fscore > oracleAlignment.fscore:
-                    oracleAlignment = singleLinkPartialAlignment
-            elif self.COMPUTE_HOPE:
-                singleLinkPartialAlignment.score = self.oracleScoreFunc(singleLinkPartialAlignment)
-                self.addPartialAlignment(oracleAlignment, singleLinkPartialAlignment, self.BEAM_SIZE)
-
-            if self.COMPUTE_FEAR:
-                singleLinkPartialAlignment.score = self.hypScoreFunc(singleLinkPartialAlignment)
                 self.addPartialAlignment(partialAlignments, singleLinkPartialAlignment, self.BEAM_SIZE)
+
+                if not self.DECODING:
+                    singleLinkPartialAlignment.fscore = self.ff_fscore(singleLinkPartialAlignment, span)
+
+                if self.COMPUTE_ORACLE:
+                    if singleLinkPartialAlignment.fscore > oracleAlignment.fscore:
+                        oracleAlignment = singleLinkPartialAlignment
+                elif self.COMPUTE_HOPE:
+                    singleLinkPartialAlignment.score = self.oracleScoreFunc(singleLinkPartialAlignment)
+                    self.addPartialAlignment(oracleAlignment, singleLinkPartialAlignment, self.BEAM_SIZE)
+
+                if self.COMPUTE_FEAR:
+                    singleLinkPartialAlignment.score = self.hypScoreFunc(singleLinkPartialAlignment)
+                    self.addPartialAlignment(partialAlignments, singleLinkPartialAlignment, self.BEAM_SIZE)
 
         alignmentList = singleBestAlignment
         singleBestAlignment.sort(reverse=True)
@@ -592,11 +660,11 @@ class Model(object):
             LIMIT_N = max(10, self.lenF/i)
             for (_,na) in alignmentList[0:LIMIT_N]:# na means n link alignment
                 for (_, sa) in singleBestAlignment[0:LIMIT_1]:#sa means single-link alignment
-                    if(na[-1]>=sa[0]):#sa actually always have only one element
+                    if(na[-1].link[0] >= sa[0].link[0]):#sa actually always have only one element
                         continue
                     # clear contents of twoLinkPartialAlignment
-                    tgtIndex_a = na[-1]
-                    tgtIndex_b = sa[0]
+                    tgtIndex_a = na[-1].link[0]
+                    tgtIndex_b = sa[0].link[0]
                     # Don't consider a pair (tgtIndex_a, tgtIndex_b) if distance between
                     # these indices > 1 (Arabic/English only).
                     # Need to debug feature that is supposed to deal with this naturally.
@@ -604,8 +672,7 @@ class Model(object):
                         if (abs(tgtIndex_b - tgtIndex_a) > 1):
                             continue
 
-                    currentLinks = list(map(lambda x: AlignmentLink((x,srcIndex) ),na+sa))
-
+                    currentLinks = na + sa
                     scoreVector = svector.Vector()
                     for k, func in enumerate(self.featureTemplates):
                         value_dict = func(self.info, tgtWord, srcWord,
@@ -616,7 +683,7 @@ class Model(object):
                                 scoreVector[name] += value
 
                     score = scoreVector.dot(self.weights)
-                    newAlignmentList.append((score, na+sa))
+                    newAlignmentList.append((score, currentLinks))
 
                     NLinkPartialAlignment = PartialGridAlignment()
                     NLinkPartialAlignment.decodingPath.data = currentNode.data
@@ -720,13 +787,13 @@ class Model(object):
         # The remainder here is executed when numGoldLinks > 0 and
         # numModelLinks > 0
 
-        inGold = self.gold.links_dict.has_key
+
         numCorrect = 0
 
         for link in edge.links:
-            numCorrect += inGold(link.link)
-        numCorrect = float(numCorrect)
-
+            numCorrect += self.inGold(link) 
+            
+        numCorrect = float(numCorrect) 
         precision = numCorrect / numModelLinks
         recall = numCorrect / numGoldLinks
 
@@ -972,3 +1039,16 @@ class Model(object):
         while len(partialAlignments) > 0:
             sortedItems.insert(0, heappop(partialAlignments))
         currentNode.partialAlignments[type] = sortedItems
+
+    def inGold(self, link):
+        if self.gold.links_dict.has_key(link.link):
+            if self.JOINT:
+                if self.gold.links_dict[link.link] == link.linkTag.name: 
+                    return True
+                else:
+                    return False
+            else:
+                return True
+        else:
+            return False
+

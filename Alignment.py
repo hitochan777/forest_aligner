@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 import sys
+import re
 
 def readAlignmentString(str, inverse = False):
     """
@@ -11,10 +12,16 @@ def readAlignmentString(str, inverse = False):
     d = { }
     for link in str.split():
         try:
-            f, e = link.split('-')
+            matchObj = re.match(r"(\d+)-(\d+)(?:\[(.+)\])?", link)
+            f, e, linkTag = matchObj.groups()
             if inverse:
                 f, e = e, f
-            d[(int(f), int(e))] = True
+
+            if linkTag is None:
+                linkTag = False
+
+            d[(int(f), int(e))] = linkTag 
+
         except:
             sys.stderr.write("Couldn't process link '%s'\n" %(link))
             sys.stderr.write("Alignment: %s\n" %(str))
@@ -38,12 +45,18 @@ class Alignment(object):
         Reads and records a string encoded sequence of links, f-e f-e f-e ...
         """
         for linkstr in links_str.strip().split():
-            f, e = map(int, linkstr.split(delim))
+            matchObj = re.match(r"(\d+)-(\d+)(?:\[(.+)\])?", linkstr)
+            f, e, linkTag = matchObj.groups() 
+            f, e = int(f), int(e)
             if inverse:
                 f, e = e, f
+
+            if linkTag is None:
+                linkTag = False
+
             link = (f,e)
             self.eLinks[e].append(link)
-            self.links_dict[link] = True
+            self.links_dict[link] = linkTag 
 
     def getLinksByEIndex(self, span):
         """

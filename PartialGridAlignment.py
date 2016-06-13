@@ -49,6 +49,6 @@ class PartialGridAlignment(object):
     def getDepthAddedLink(self, delta=1):
         newAlignmentLinks = []
         for link in self.links:
-            newAlignment = AlignmentLink(link.link, link.depth + delta)
+            newAlignment = AlignmentLink(link.link, link.linkTag, link.depth + delta)
             newAlignmentLinks.append(newAlignment)
         return newAlignmentLinks

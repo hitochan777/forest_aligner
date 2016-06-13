@@ -4,30 +4,59 @@
 ''' Calculate fmeasure and related figures, given two Alignment objects '''
 
 import sys
+import re
 from collections import defaultdict
 from itertools import izip_longest, izip
+import argparse 
 
 class Fmeasure:
+    def sure(links):
+        dic = {}
+        for link in links:
+            obj = re.match(r"(?P<link>\d+-\d+)(?:\[(?P<linktag>.+)\])?", link)
+            linkStr = obj.group("link")
+            dic[linkStr] = obj.group("linktag")
 
-    def __init__(self):
+        return dic
+
+
+    evaluateMethod = {
+        "link": lambda links: list(map(lambda link: re.match(r"(\d+-\d+)(?:\[(.+)\])?", link).group(1), links)), 
+        "all": lambda links: links,
+        "sure": sure
+    }
+
+    def __init__(self, evaluateMethod = "link"):
         self.correct = 0
         self.numMeTotal = 0
         self.numGoldTotal = 0
+        self.evaluateMethod = evaluateMethod
+
 
     def accumulate(self, me, gold):
         #Accumulate counts
 
-        meLinks = me.strip().split()
-        goldLinks = gold.strip().split()
+        meLinks = Fmeasure.evaluateMethod[self.evaluateMethod](me.strip().split())
+        goldLinks = Fmeasure.evaluateMethod[self.evaluateMethod](gold.strip().split())
 
         self.numMeTotal += len(meLinks)
         self.numGoldTotal += len(goldLinks)
+        goldLinksDict = goldLinks
+        if type(goldLinks) == list:
+            goldLinksDict = dict(izip_longest(goldLinks, [None]))
+        else: # type is dict
+            if self.evaluateMethod == "sure":
+                self.numGoldTotal -= goldLinks.values().count("possible")
+                if type(meLinks) == dict: 
+                    self.numMeTotal -= meLinks.values().count("possible")
 
-        goldLinksDict = dict(izip_longest(goldLinks, [None]))
         for link in meLinks:
             if link in goldLinksDict:
-                self.correct += 1.0
+                if self.evaluateMethod == "sure":
+                    if (type(meLinks) == dict and meLinks[link] == "possible") or goldLinksDict[link] == "possible":
+                        continue
 
+                self.correct += 1.0
 
     def accumulate_o(self, edge, goldmatrix):
 
@@ -100,16 +129,21 @@ class Fmeasure:
         self.numMeTotal = 0.0
 
 
-def score(file1, file2):
+def score(file1, file2, evaluateMethod):
 
-    fmeasure = Fmeasure()
+    fmeasure = Fmeasure(evaluateMethod)
     for (me_str, gold_str) in izip(open(file1, 'r'), open(file2, 'r')):
         fmeasure.accumulate(me_str, gold_str)
+
     fmeasure.report()
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        sys.stderr.write("Syntax: %s <ALIGNMENT> <GOLD_ALIGNMENT>\n" % (sys.argv[0]))
-        sys.exit(1)
-    score(sys.argv[1], sys.argv[2])
+    parser = argparse.ArgumentParser(description="""
+""")
+    parser.add_argument('alignment', type=str, help='Alignment')
+    parser.add_argument('gold_alignment', type=str, help='Gold alignment')
+    parser.add_argument('--evaluate', type=str, choices=["link", "all", "sure"], default="link", help='Gold alignment')
+
+    args = parser.parse_args()
+    score(args.alignment, args.gold_alignment, args.evaluate)
