@@ -75,7 +75,7 @@ def open_files(FLAGS):
         except:
             write_master("Could not open ftrees file %s for reading\n" %(FLAGS.ftrees))
             sys.exit(3)
-            
+
     try:
         file_handles['f'] = open(FLAGS.f, 'r')
     except:
@@ -83,7 +83,7 @@ def open_files(FLAGS):
         sys.exit(3)
 
     try:
-       file_handles['e'] = open(FLAGS.e, 'r')
+        file_handles['e'] = open(FLAGS.e, 'r')
     except:
         write_master("Could not open etrain file %s for reading\n" % FLAGS.e)
         sys.exit(3)

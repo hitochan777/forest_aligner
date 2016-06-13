@@ -1,5 +1,4 @@
 # Change Log
 
-## 1.1.15 (2015/3/16)
-- Fix bug in visualization.
-The bug was because the parents of children had been updated multiple times.
+## 1.2.0(2016/6/13)
+- Add Joint option

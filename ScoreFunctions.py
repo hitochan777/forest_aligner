@@ -4,9 +4,7 @@ def default(partialAlignment):
     return partialAlignment.score
 
 def hope(partialAlignment):
-    return partialAlignment.fscore + partialAlignment.score    
+    return partialAlignment.fscore + partialAlignment.score
 
 def fear(partialAlignment):
     return (1 - partialAlignment.fscore) + partialAlignment.score
-        
-

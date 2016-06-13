@@ -10,7 +10,7 @@ class DependencyTreeNode:
         self.isDummy = False
         self.lmScore = None
         self.nodeRefList = None
-    
+
     def addChild(self, child):
         """
         child: instance of DecodingPath
@@ -32,7 +32,7 @@ class DependencyTreeNode:
 
         left = sorted(left, key=lambda x: x.data["word_id"], reverse=True)
         # By default reverse is False, but this is just for emphasizing right is not reversed as opposed to left
-        right = sorted(right, key=lambda x: x.data["word_id"], reverse=False) 
+        right = sorted(right, key=lambda x: x.data["word_id"], reverse=False)
         return left, right
 
     def calcScore(self, depLM, clearCache = False):
@@ -64,10 +64,10 @@ class DependencyTreeNode:
         for child in self.children:
             if len(path)==0:
                 path = child.getDecodingPath(depth+(not self.isDummy))
-            else: 
+            else:
                 path = path+"\n"+child.getDecodingPath(depth+(not self.isDummy))
         return path
-    
+
     def _getOrderedNodeList(self):
         left, right = self.partitionChildren()
         left.reverse() # since left is reversed in partitionChildren
@@ -86,7 +86,7 @@ class DependencyTreeNode:
         nodes = self._getOrderedNodeList()
         for node in nodes:
             node.data.update({"pre_children_ref": [], "post_children_ref": []})
-        
+
         for node in nodes:
             id = node.data["word_id"]
             if node.parent is None: # if parent does not exist
@@ -98,7 +98,7 @@ class DependencyTreeNode:
                 nodes[dependency_id].data["pre_children_ref"].append(nodes[id])
             else:
                 nodes[dependency_id].data["post_children_ref"].append(nodes[id])
-       
+
     def getStringifiedTree(self, horizontal = False):
         buffer = []
         self.setNodeRef()
@@ -141,10 +141,10 @@ class DependencyTreeNode:
                 if markList[m] == "l" or markList[m] == "r" or \
                     (markList[m] == "L" and (markList[m+1] == "r" or markList[m+1] == "R")) or \
                     (markList[m] == "R" and (markList[m+1] == "l" or markList[m+1] == "L")):
-                        if horizontal:
-                            local_buffer += u'─'
-                        else:
-                            local_buffer += u'│'
+                    if horizontal:
+                        local_buffer += u'─'
+                    else:
+                        local_buffer += u'│'
                 else:
                     local_buffer += u'　'
 
@@ -162,4 +162,3 @@ class DependencyTreeNode:
                 self._getVisualizedDependencyTree(c.data, mark+"r", b_ref, horizontal)
 
             self._getVisualizedDependencyTree(last_child.data, mark+"R", b_ref, horizontal)
-
