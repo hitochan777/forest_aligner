@@ -222,7 +222,7 @@ class Model(object):
             self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToFinalPeriodTag)
             self.featureTemplates.append(localFeatures.ff_nonPeriodLinkedToPeriodTag)
             self.featureTemplates.append(localFeatures.ff_nonfinalPeriodLinkedToCommaTag)
-            self.featureTemplates.append(localFeatures.ff_thirdPartyTag)
+            # self.featureTemplates.append(localFeatures.ff_thirdPartyTag)
             self.featureTemplates.append(localFeatures.ff_sameWordLinksTag)
             self.featureTemplates.append(localFeatures.ff_englishCommaLinkedToNonCommaTag)
             self.featureTemplates.append(localFeatures.ff_isPuncAndHasMoreThanOneLinkTag)
