@@ -23,7 +23,8 @@ class Fmeasure:
     evaluateMethod = {
         "link": lambda links: list(map(lambda link: re.match(r"(\d+-\d+)(?:\[(.+)\])?", link).group(1), links)), 
         "all": lambda links: links,
-        "sure": sure
+        "sure": sure,
+        "tag": sure 
     }
 
     def __init__(self, evaluateMethod = "link"):
@@ -56,7 +57,14 @@ class Fmeasure:
                     if (type(meLinks) == dict and meLinks[link] == "possible") or goldLinksDict[link] == "possible":
                         continue
 
+                elif self.evaluateMethod == "tag":
+                    if meLinks[link] != goldLinksDict[link]:
+                        self.correct -= 1.0
+
                 self.correct += 1.0
+            else:
+                if self.evaluateMethod == "tag":
+                    self.numMeTotal -= 1
 
     def accumulate_o(self, edge, goldmatrix):
 
@@ -81,6 +89,9 @@ class Fmeasure:
 
     def report(self):
         ''' Report f-score and related figures '''
+
+        if self.evaluateMethod == "tag":
+            self.numGoldTotal = self.numMeTotal
 
         precision = self.precision()
         recall = self.recall()
@@ -143,7 +154,7 @@ if __name__ == "__main__":
 """)
     parser.add_argument('alignment', type=str, help='Alignment')
     parser.add_argument('gold_alignment', type=str, help='Gold alignment')
-    parser.add_argument('--evaluate', type=str, choices=["link", "all", "sure"], default="link", help='Gold alignment')
+    parser.add_argument('--evaluate', type=str, choices=["link", "all", "sure","tag"], default="link", help='Gold alignment')
 
     args = parser.parse_args()
     score(args.alignment, args.gold_alignment, args.evaluate)
