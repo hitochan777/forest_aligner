@@ -31,6 +31,7 @@ nice -19 mpiexec -n $NUMCPUS -hostfile hosts nice -19 $PYTHON ./aligner.py \
   --decoding_path_out path_out_test  \
   --out $NAME \
   --joint=True \
+  --tempdir ./tmp \
   --k $K
 
 ./Fmeasure.py $NAME $DATA/test.a.sp.tagged

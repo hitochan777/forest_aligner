@@ -36,6 +36,7 @@ nice -19 mpiexec -n $NUMCPUS -hostfile hosts nice -19 $PYTHON ./aligner.py \
   --nto1 $LINK \
   --train \
   --joint=True \
+  --tempdir ./tmp \
   --k $K 3>&1 2>&3 >$NAME.out | tee $NAME.err
 
 ITER=`grep F-score-dev $NAME.err | awk '{print $2}' | cat -n | sort -nr -k 2 | head -1 | cut -f 1 | tr -d '[[:space:]]'`
