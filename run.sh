@@ -2,20 +2,22 @@
 
 export PATH=$HOME/.local/bin:/home/chu/mpich-install/bin:$PATH
 
-CPU=`nproc`
-_CORES=`echo "$CPU * 0.8" | bc`
+# CPU=`nproc`
+# _CORES=`echo "$CPU * 0.8" | bc`
 
 ################### CUSTOMIZABLE #####################
 LINK=2
 ITER=100
 PARTIAL=-1
-LANG="ja_en"
+LANG="zh_en"
+K=128
 export DATA=/windroot/otsuki/data/LDC2012/LDC2012-SP # Absolute path to the base directory which has data
 export TARGET_FOREST_DATA=$DATA/YaraParser/forest/1best
 export SOURCE_FOREST_DATA=$DATA/SKP/forest/1best
 ######################################################
 
-export CORES=${_CORES%.*}
+# export CORES=${_CORES%.*}
+export CORES=100
 
 rm -rf weights-*
 rm -rf weights\.*
@@ -24,5 +26,5 @@ rm -rf *output*
 
 set -e
 
-./train.sh $LINK $ITER $PARTIAL $LANG
-./test.sh $LINK $ITER $PARTIAL $LANG
+./train.sh $LINK $ITER $PARTIAL $LANG $K
+./test.sh $LINK $ITER $PARTIAL $LANG $K

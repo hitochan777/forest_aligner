@@ -1,17 +1,17 @@
 #!/bin/bash
 
 NUMCPUS=$CORES
-K=128
 LINK=$1
 MAXEPOCH=$2
 PARTIAL=$3
 LANGPAIR=$4
+K=$5
 ERR_FILE_NAME=k${K}.$LANGPAIR.$MAXEPOCH.$PARTIAL.$LINK
 H=`grep F-score-dev $ERR_FILE_NAME.err | awk '{print $2}' | cat -n | sort -nr -k 2 | head -1 | cut -f 1 | tr -d '[[:space:]]'`
 WEIGHTS=k${K}.$LANGPAIR.$MAXEPOCH.$PARTIAL.$LINK.weights-$H
 NAME=$WEIGHTS.test-output.a
 
-nice -19 mpiexec -n $NUMCPUS $PYTHON ./aligner.py \
+nice -19 mpiexec -n $NUMCPUS -hostfile hosts nice -19 $PYTHON ./aligner.py \
   --f $DATA/test.zh \
   --e $DATA/test.en \
   --ftrees $SOURCE_FOREST_DATA/test.zh.forest \

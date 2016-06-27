@@ -2,14 +2,14 @@
 
 NUMCPUS=$CORES
 
-K=128
 LINK=$1
 MAXEPOCH=$2
 PARTIAL=$3
 LANGPAIR=$4
+K=$5
 NAME=k${K}.$LANGPAIR.$MAXEPOCH.$PARTIAL.$LINK
 
-nice -15 mpiexec -n $NUMCPUS $PYTHON ./aligner.py \
+nice -19 mpiexec -n $NUMCPUS -hostfile hosts nice -19 $PYTHON ./aligner.py \
   --f $DATA/train.zh \
   --e $DATA/train.en \
   --gold $DATA/train.a.sp.tagged \
