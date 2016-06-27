@@ -179,6 +179,7 @@ class Model(object):
         # logger 
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
+        self.logger.propagate = False
 
 
     ########################################
