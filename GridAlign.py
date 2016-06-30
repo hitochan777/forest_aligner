@@ -646,14 +646,14 @@ class Model(object):
                     self.addPartialAlignment(partialAlignments, singleLinkPartialAlignment, self.BEAM_SIZE)
 
         alignmentList = singleBestAlignment
-        singleBestAlignment.sort(reverse=True)
+        singleBestAlignment.sort(reverse=True, key=lambda x: x[0])
         ##################################################
         # N link alignment(N>=2)
         ##################################################
         # Get ready for N-link alignments(N>=2)
         for i in xrange(2,self.nto1+1):
                 # Sort the fwords by score
-            alignmentList.sort(reverse=True)
+            alignmentList.sort(reverse=True, key=lambda x: x[0])
             newAlignmentList = []
             LIMIT_1 = max(10, self.lenF/2)
             LIMIT_N = max(10, self.lenF/i)
