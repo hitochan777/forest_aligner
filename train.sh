@@ -35,7 +35,7 @@ nice -19 mpiexec -n $NUMCPUS -hostfile hosts nice -19 $PYTHON ./aligner.py \
   --decoding_path_out path_out_train \
   --nto1 $LINK \
   --train \
-  --joint=True \
+  --joint=False \
   --tempdir ./tmp \
   --k $K 3>&1 2>&3 >$NAME.out | tee $NAME.err
 

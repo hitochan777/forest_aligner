@@ -30,7 +30,7 @@ nice -19 mpiexec -n $NUMCPUS -hostfile hosts nice -19 $PYTHON ./aligner.py \
   --binarize=False \
   --decoding_path_out path_out_test  \
   --out $NAME \
-  --joint=True \
+  --joint=False \
   --tempdir ./tmp \
   --k $K
 
