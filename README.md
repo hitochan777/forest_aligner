@@ -3,7 +3,7 @@ a hierarchical, forest-based discriminative alignment package
 
 This document describes how to use and run forest-aligner.
 
-###1. Requirements
+### 1. Requirements
 forest-aligner currently depends on a few packages for
 logging, ui, implementation, and parallelization:
 
@@ -23,7 +23,7 @@ logging, ui, implementation, and parallelization:
      Installation instructions:
      http://www.boost.org/doc/libs/1_49_0/doc/html/mpi.html
 
-###2. Preparing your data
+### 2. Preparing your data
 
 1.  To train an alignment model you will need some data.
     We use some simple canonical filenames below in describing each, but
@@ -88,7 +88,7 @@ logging, ui, implementation, and parallelization:
          or the Berkeley parser default failure string: (())
          to tell forest-aligner to skip the affected sentence pair.
 
-###3.  Tables from GIZA++ output (Brown et al., 1993; Och and Ney, 2003)
+### 3.  Tables from GIZA++ output (Brown et al., 1993; Och and Ney, 2003)
 We run GIZA++ Model-4 on a large corpus, and compute p(e|f) and p(f|w) word association tables from simply counting links in the final Viterbi alignment. If you don't have time to run Model-4, that's fine. We've seen benefits from using counts from just HMM or Model-1 training.
 
     p(e|f) file format:
@@ -97,10 +97,10 @@ We run GIZA++ Model-4 on a large corpus, and compute p(e|f) and p(f|w) word asso
     p(f|e) file format:
     <f-word> <e-word> p(f|e)
 
-###4.  Alignment files from GIZA++ (OPTIONAL)
+### 4.  Alignment files from GIZA++ (OPTIONAL)
 You can pass up to two third-party alignment files to the trainer with flags --a1 and --a2 in nile.py. For --a1 we use intersection of Model-4 alignments from e->f and f->e directions. For --a2 we use grow-diag-final-and symmetrizatized alignments. These alignments will allow the trainer to fire indicator features for making the same predictions as your supplied alignments. Feel free to substitute any other type of alignments here as input. Using GIZA++ Model-4 intersection and grow-diag-final-and alignments here, we generally see a large F-score increase.
 
-###5.  Vocabulary files. 
+### 5.  Vocabulary files. 
 We'll need to give the trainer (and aligner) some vocabulary files it will use to filter potentially large p(e|f) and p(f|e) data files. Keeping these full data files in memory can be prohibitively expensive.
 
     Concatenate your training and development e and f files and run
@@ -110,8 +110,7 @@ We'll need to give the trainer (and aligner) some vocabulary files it will use t
 
     Use these files as input to nile.py with flags --evcb and --fvcb.
 
-============================================
-III. Training
+Training
 ============================================
 
 Training a new model with forest-aligner involves (1) specifying your data files
@@ -156,8 +155,7 @@ flags required to get going.
    Weights will be written to file:
    <name>.weights-H
 
-=====================================================
-IV. User-defined features
+User-defined features
 =====================================================
 You can add your own feature functions to Features.py
 or maintain several different Feature modules for different
@@ -176,8 +174,7 @@ nile.py --e train.e \
         ...
         --langpair ar_en
 
-=====================================================
-V. Iterative viterbi training & inference (optional)
+Iterative viterbi training & inference (optional)
 =====================================================
 This procedure is somewhat time-consuming because you will need to train several
 models, and align your data several times. However, if you have the time, the
@@ -240,9 +237,8 @@ Parse trees for both target and source text are required for this procedure.
       ```
       python aligner.py --e train.f --f train.e --a train.e.e-f --inverse train-tt.a.e-f ... etc.
       ```
-      
-============================================
-VI. Testing
+     
+Testing
 ============================================
 At test time, it is important to use the same types of parameters and input data you used
 during training. If you trained a model with a beam of K=128, then keep that beam at test time.
@@ -294,8 +290,7 @@ data the same way you did for training and development data.
      $ ./Fmeasure.py <your-file> <gold-file>`
      ```
 
-============================================
-VII. Other options
+Other options
 ============================================
   A. L1 Regularization (Feature Selection; experimental)
   forest-aligner implements a parallelized version of L1 Regularization via projection after each epoch.
@@ -347,8 +342,7 @@ C. Advanced Perceptron Updates
      To use a different learning rate, use:
      `--learning_rate <new learning rate>`
 
-============================================
-VIII. Questions/comments
+Questions/comments
 ============================================
 
 Troubleshooting:
@@ -359,8 +353,7 @@ Technical correspondence also welcomed.
 
 If you are interested in contributing to this project please also let us know!
 
-============================================
-IX. References
+References
 ============================================
 Peter F. Brown, Stephen A. Della Pietra, Vincent J. Della Pietra, Robert L. Mercer.
 The Mathematics of Statistical Machine Translation: Parameter Estimation.
